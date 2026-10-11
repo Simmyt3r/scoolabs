@@ -72,3 +72,6 @@ This is a **pre-branding development build**. Classroom testing on a real Window
 
 ## Captured instrument observations (pre-branding)
 The titration and Ohm's law laboratories now have manual **Capture reading** controls. A student may record up to 20 distinct setpoints, view results as a table and 2D graph, and include the observation series in their saved lab report. Changing base concentration or resistor value clears the previous run, so incompatible settings are not silently mixed. The Ohm's-law sheet estimates resistance from the captured V/I observations. These are *ideal simulation calculations* and not independent readings from physical apparatus. TypeScript and browser tests validate input bounds, duplicate setpoints, measurement reset and graph/worksheet navigation.
+
+## v0.6 formative self-checks (pre-branding)
+Each of the twelve experiments now has two offline multiple-choice questions with explanations and retry. Signed-in desktop students' latest result out of 2 is saved in native SQLite, scoped by student ID; native Rust checks answers independently of client-supplied scores. The teacher Knowledge checks tab shows only formative results, filterable by class. These do not enter the gradebook. Browser-preview scores are temporary. Classroom validation is still pending: see docs/CLASSROOM_ACCEPTANCE.md.

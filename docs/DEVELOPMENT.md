@@ -53,3 +53,9 @@ SQLite persistence and import/restore, local classes and teacher marking, curric
 - `src/measurements.test.ts` checks manual-only capture, bounded and sorted data, duplicate-setpoint replacement, and ideal Ohm resistance fitting.
 - Chromium tests capture titration/circuit readings, clear observations, and verify changing resistance resets the circuit run.
 - Graphs use bundled SVG and no internet-dependent plotting library. A school pilot must compare visual axes, tables and printed notebook series against independent calculations.
+
+## Formative checks quality gates
+- Knowledge bank unit tests cover all 12 experiments, correct answers and invalid selection rejection.
+- Rust tests validate score keys, repeated attempts and isolation between students with identical names.
+- Chromium tests verify scoring feedback, retry and non-duplicated guides when changing experiments.
+- Physical classroom acceptance remains pending until after branding (see docs/CLASSROOM_ACCEPTANCE.md).

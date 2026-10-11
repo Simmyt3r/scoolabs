@@ -363,7 +363,7 @@ function App() {
       </nav>
       <div className="side-spacer"/>
       <div className="offline-card"><div><WifiOff size={17}/> 100% offline learning</div><p>All experiments and observations work without internet access.</p><span className="offline-dot"/> Ready to learn</div>
-      <div className="side-footer">Scoolabs v0.5.0 <span>·</span> Silabs Technologies</div>
+      <div className="side-footer">Scoolabs v0.6.0 <span>·</span> Silabs Technologies</div>
     </aside>
     <main className="main-content">
       <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={()=>setSidebar(true)} aria-label="Open menu"><Menu size={22}/></button><span className="breadcrumb">Workspace</span><span className="breadcrumb-sep">/</span><strong>{page==='notebook'?'My notebook':page==='assignments'?'My assignments':page==='teacher'?'Teacher workspace':SUBJECTS[page].label}</strong></div><div className="topbar-right"><span className="offline-indicator"><span/> Offline ready</span><button className="user-button" onClick={()=>{if(isTauri()){if(studentSession)void signOut();else navigate('chemistry');}else{setProfileDraft(profile);getClassCatalog().then(setClassCatalog).catch(()=>undefined);setShowProfile(true);}}}><GraduationCap size={16}/>{isTauri()?(studentSession?'Sign out: '+studentSession.studentName:'Student sign in'):(profile.name||'Student profile')}<ChevronDown size={14}/></button></div></header>

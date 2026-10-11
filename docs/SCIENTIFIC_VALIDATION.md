@@ -37,3 +37,6 @@ Every newly added mathematical function has deterministic unit tests, explicit i
 - Potometer graph plots **water uptake (µL) versus elapsed time (min)**, computed using cylindrical capillary cross-section and bubble movement. Its through-origin slope estimates water-uptake rate and must never be labelled direct transpiration.
 - Angle/oscillation-count changes reset the pendulum trial, while capillary diameter changes reset the potometer run, so differing controlled settings are not silently combined.
 - All charts are intentionally identified as simulated, not sensor-calibrated, and require classroom review before adoption.
+
+## Review boundaries for self-check questions
+Twenty-four short classroom questions and explanations have internal coverage tests, and Rust stores results using independently checked local answer keys. This is not independent curriculum alignment or expert pedagogical validation. Subject-teacher review and classroom pilot acceptance remain required.

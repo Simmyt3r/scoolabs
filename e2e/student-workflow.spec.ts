@@ -144,3 +144,34 @@ test('potometer captures modelled uptake and resets observations if capillary di
   await page.locator('.lab-controls label.control').filter({hasText:'Capillary diameter'}).locator('input[type="range"]').fill('2');
   await expect(sheet.getByText('Waiting for a reading')).toBeVisible();
 });
+
+test('formative knowledge checks show explanations, permit retry and reset when navigating',async({page})=>{
+ await page.goto('/');
+ const check=page.getByRole('region',{name:'Knowledge check'});
+ await expect(check.getByRole('button',{name:'Check answers'})).toBeDisabled();
+ const questions=check.locator('fieldset.knowledge-question');
+ await questions.nth(0).locator('input[type="radio"]').nth(0).check();
+ await questions.nth(1).locator('input[type="radio"]').nth(1).check();
+ await check.getByRole('button',{name:'Check answers'}).click();
+ await expect(check.getByText('2/2 correct')).toBeVisible();
+ await expect(check.getByText(/Browser preview only/)).toBeVisible();
+ await expect(check.locator('.knowledge-explanation')).toHaveCount(2);
+ await check.getByRole('button',{name:'Try again'}).click();
+ await expect(check.getByRole('button',{name:'Check answers'})).toBeDisabled();
+ await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Biology'}).click();
+ await expect(page.locator('.practical-manual')).toHaveCount(1);
+ await expect(page.locator('.knowledge-check')).toHaveCount(1);
+ await expect(check.locator('fieldset.knowledge-question')).toHaveCount(2);
+});
+test('all twelve experiments display one guide and two formative questions',async({page})=>{
+ await page.goto('/');
+ for(const subject of ['Chemistry','Physics','Biology','Agriculture']){
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:subject}).click();
+  for(const tab of await page.locator('.experiment-pill').all()){
+   await tab.click();
+   await expect(page.locator('.practical-manual')).toHaveCount(1);
+   await expect(page.locator('.knowledge-check')).toHaveCount(1);
+   await expect(page.locator('.knowledge-question')).toHaveCount(2);
+  }
+ }
+});

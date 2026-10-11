@@ -68,3 +68,6 @@ Open Chemistry → Titration or Physics → Ohm's law. Adjust the instruments an
 
 ## Per-student assignment checklist
 In Teacher workspace → Assignments, select **Show student roster** beside an assignment to display its enrolled students and their individual submission and marking status. The roster is read from SQLite using the authenticated teacher session and students' actual database IDs. Two pupils with the same full name remain distinct. **View submissions** opens the relevant grading list.
+
+## Two-question knowledge checks
+At the end of each practical, students select one answer for each of two short questions. The app shows explanations and offers Try again. Signed-in desktop results are saved to the student's offline account, while browser preview remains temporary. Teachers view latest formative scores under Knowledge checks and may filter by class. A formative score of 0–2 never alters the separately graded practical report.
