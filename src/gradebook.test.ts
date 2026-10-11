@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {gradebookSummary,makeGradebookCsv} from './gradebook';
+import {gradebookSummary,makeGradebookCsv,assignmentProgress} from './gradebook';
 import type {LabRecord} from './store';
 const r=(x:Partial<LabRecord>={}):LabRecord=>({id:'1',timestamp:'2026-10-11T12:00:00Z',student:'Amina',classroom:'SS2A',experimentId:'titration',experimentTitle:'Titration',subject:'chemistry',settings:'25mL',observation:'Neutral',conclusion:'Result',grade:null,feedback:null,...x});
 describe('offline gradebook',()=>{
@@ -16,5 +16,20 @@ describe('offline gradebook',()=>{
   });
   it('does not fabricate marks on ungraded records',()=>{
     expect(makeGradebookCsv([r()])).toContain('"Result","",""');
+  });
+});
+
+describe('teacher assignment status',()=>{
+  it('counts submissions by the exact assignment identifier, not matching experiment titles',()=>{
+    const classrooms=[{id:'c1',name:'SS2A',level:'SS2'}];
+    const children=[{id:'u1',classId:'c1',name:'Amina'},{id:'u2',classId:'c1',name:'Bello'}];
+    const work=[r({id:'report1',assignmentId:'a1',grade:75}),r({id:'practice',assignmentId:null,grade:90})];
+    const progress=assignmentProgress([{id:'a1',classId:'c1'}],children,classrooms,work)[0];
+    expect(progress).toMatchObject({enrolled:2,submitted:1,graded:1,missing:1});
+  });
+  it('keeps empty class assignments distinct from individual practice reports',()=>{
+    const progress=assignmentProgress([{id:'a1',classId:'c1'}],[],[{id:'c1',name:'SS2A',level:'SS2'}],[r({id:'practice'})])[0];
+    expect(progress).toMatchObject({enrolled:0,submitted:0,graded:0,missing:0});
+    expect(makeGradebookCsv([r({assignmentId:'a1'})])).toContain('"a1"');
   });
 });

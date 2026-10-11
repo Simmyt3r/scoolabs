@@ -193,7 +193,7 @@ function AgricultureLab({ onRecord }: { onRecord: (settings: string, observation
   </div>;
 }
 
-function Records({records, onBack}: {records:LabRecord[];onBack:()=>void}) {
+function Records({records, assignments, onBack}: {records:LabRecord[];assignments:Assignment[];onBack:()=>void}) {
   return <section className="records-page">
     <button className="text-button" onClick={onBack}><ArrowLeft size={16}/> Back to laboratory</button>
     <div className="page-title"><div><span className="eyebrow">MY LEARNING</span><h1>Laboratory notebook</h1><p>Every observation is saved on this computer, including when you are offline.</p></div>
@@ -201,7 +201,7 @@ function Records({records, onBack}: {records:LabRecord[];onBack:()=>void}) {
     </div>
     <div className="record-note"><ShieldCheck size={18}/> Your notes stay on this device. Export a backup before uninstalling Scoolabs or clearing the app data.</div>
     {records.length===0 ? <div className="empty-state"><ClipboardList size={38}/><h3>No observations saved yet</h3><p>Complete an experiment and choose “Record these results” to begin.</p><button className="button-primary" onClick={onBack}>Explore experiments <ArrowRight size={16}/></button></div>:
-    <div className="records-table"><table><thead><tr><th>Experiment</th><th>Student</th><th>Class</th><th>Recorded</th><th>Observation</th></tr></thead><tbody>{records.map(r=><tr key={r.id}><td><strong>{r.experimentTitle}</strong><span>{SUBJECTS[r.subject].label}</span></td><td>{r.student}</td><td>{r.classroom}</td><td>{new Date(r.timestamp).toLocaleString()}</td><td><span>{r.observation}</span>{r.conclusion && <small>Conclusion: {r.conclusion}</small>}{r.assignmentId&&<small>Assignment submission: {r.assignmentId}</small>}{r.grade!==null&&r.grade!==undefined&&<small><strong>Teacher score: {r.grade}/100</strong>{r.feedback?' · '+r.feedback:''}</small>}</td></tr>)}</tbody></table></div>}
+    <div className="records-table"><table><thead><tr><th>Experiment</th><th>Student</th><th>Class</th><th>Recorded</th><th>Observation</th></tr></thead><tbody>{records.map(r=><tr key={r.id}><td><strong>{r.experimentTitle}</strong><span>{SUBJECTS[r.subject].label}</span></td><td>{r.student}</td><td>{r.classroom}</td><td>{new Date(r.timestamp).toLocaleString()}</td><td><span>{r.observation}</span>{r.conclusion && <small>Conclusion: {r.conclusion}</small>}{r.assignmentId&&<small>Submitted for: {assignments.find(a=>a.id===r.assignmentId)?.title??'Class assignment'}</small>}{r.grade!==null&&r.grade!==undefined&&<small><strong>Teacher score: {r.grade}/100</strong>{r.feedback?' · '+r.feedback:''}</small>}</td></tr>)}</tbody></table></div>}
   </section>;
 }
 
@@ -331,7 +331,7 @@ function App() {
       <div className="content-pad">
         {storageError&&<div role="alert" className="storage-warning">{storageError}</div>}
         {!storageReady&&<div className="record-note">Opening offline database...</div>}
-        {page==='teacher'?<TeacherPanel/>:isTauri()&&!studentSession?<StudentSignIn onSignedIn={onSignedIn}/>:page==='notebook'?<Records records={records} onBack={()=>navigate('chemistry')}/>:
+        {page==='teacher'?<TeacherPanel/>:isTauri()&&!studentSession?<StudentSignIn onSignedIn={onSignedIn}/>:page==='notebook'?<Records records={records} assignments={assignments} onBack={()=>navigate('chemistry')}/>:
           <>
           <div className="page-title"><div><span className="eyebrow">DISCOVER · EXPERIMENT · LEARN</span><h1>Welcome to the {SUBJECTS[subject].label} Lab<span className="title-period">.</span></h1><p>{SUBJECTS[subject].subtitle}. Explore through practice, not just theory.</p></div><div className="progress-badge"><CheckCircle2 size={18}/><div><strong>{completed} activities recorded</strong><small>{records.length} saved observations</small></div></div></div>
           <div className="subject-grid">
