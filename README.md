@@ -4,7 +4,7 @@
 
 Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 
-## Current prototype (v0.7)
+## Current prototype (v0.9 branding candidate)
 
 | Subject | Working simulation | Current controls |
 | --- | --- | --- |
@@ -96,3 +96,6 @@ Keyboard navigation and offline experiment report-writing were improved: skip-to
 The source-of-truth emblem is a flask rising from an open book, supplied as `public/brand/scoolabs-mark.svg`. A shared `BrandLockup` component displays it in the interface. The favicon, welcome/loading screen and report heading use the same local asset. Every GitHub Windows build now runs `npm run brand:icons` before bundling and verifies its generated ICO/PNG files, so the executable/installer icon is not left as a generic placeholder. See `docs/BRAND_GUIDE.md`.
 
 For a local **branded** developer build use `npm run desktop:build`. The installer remains unsigned unless the owner supplies a legitimate code-signing certificate. Branding is a candidate until approved, and Windows device acceptance must still be completed before external release.
+
+## v0.9 branded desktop candidate
+The first-run welcome screen now presents a distinct student access area and a direct teacher setup path. The Help & About page explains the offline school workflow, printer support, local data retention limits, and official company support details. The SVG logo is the authoritative source for both the installed UI and Windows icon assets. The Tauri bundle sets Simeon's Laboratories and Co Technologies Ltd as the Windows installer publisher metadata. This is **metadata, not a digital signature**: Windows may still warn about an unsigned installer. The official branded installer is built in the Windows GitHub workflow and must still be checked on a real PC before a school pilot.

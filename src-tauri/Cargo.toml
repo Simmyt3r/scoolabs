@@ -1,6 +1,6 @@
 [package]
 name = "scoolabs"
-version = "0.8.0"
+version = "0.9.0"
 description = "Scoolabs offline virtual science laboratory"
 authors = ["Simeon's Laboratories and Co Technologies Ltd"]
 license = "Proprietary"

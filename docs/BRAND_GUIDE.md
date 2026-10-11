@@ -44,3 +44,6 @@ This invokes `tauri icon public/brand/scoolabs-mark.svg --output src-tauri/icons
 - Check contrast at 200% Windows text scaling and in high-contrast mode.
 - Verify NSIS shows the Scoolabs icon; unsigned releases can still trigger Windows SmartScreen. Code signing is separate from visual branding.
 - Do not publish a formal versioned release until the real Windows classroom acceptance checklist is completed.
+
+## v0.9 candidate release status
+The Windows bundle metadata now uses the official company name as publisher and sets the category to Education. The NSIS installer icon points to the Tauri-generated `icons/icon.ico`. These metadata fields do not provide a code-signing certificate or a verified publisher signature.

@@ -57,3 +57,8 @@ No WAEC, NECO, NERDC, safety or curriculum certification is claimed.
 - [ ] Confirm the Help & About page opens while entirely offline, with school setup steps and clear local-storage limitations.
 - [ ] Confirm support email and telephone belong to the company and are not mistaken for an in-app internet requirement.
 - [ ] Verify the footer product version equals the installed version and that publisher details on NSIS are correct.
+
+## Windows publisher and trust checks
+- [ ] Check the installer properties report Scoolabs and Simeon's Laboratories and Co Technologies Ltd as publisher metadata. A separate signing certificate is required for verified signatures.
+- [ ] Confirm Windows Defender SmartScreen behaviour with an *unsigned* build. Do not misrepresent unsigned files as trusted signed software.
+- [ ] Confirm product version in the About page matches installed package version.
