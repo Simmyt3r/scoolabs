@@ -13,6 +13,7 @@ export interface LabRecord {
   conclusion: string;
   grade?: number | null;
   feedback?: string | null;
+  assignmentId?: string | null;
 }
 const KEY = 'scoolabs.records.v1';
 const PROFILE = 'scoolabs.profile.v1';

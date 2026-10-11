@@ -53,3 +53,5 @@
 .manual-grid li,.manual-grid p{font-size:11px;line-height:1.75;color:#647d89}
 .manual-grid ul,.manual-grid ol{margin:0 0 13px;padding-left:18px}
 @media(max-width:650px){.manual-grid{grid-template-columns:1fr}}
+
+.assignment-status{display:inline-block;margin-left:8px;color:#167d70;font-size:10px;font-weight:700}.record-note .assignment-status{white-space:nowrap}.dialog select{width:100%;padding:12px;margin-top:7px;border:1px solid #d7e3e8;border-radius:7px;background:#fff;color:#214052}

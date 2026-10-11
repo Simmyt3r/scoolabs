@@ -17,8 +17,8 @@ function cell(value:string|number|null|undefined) {
 }
 export function makeGradebookCsv(records:LabRecord[]):string {
   const rows=[
-    ['Record ID','Date','Student','Class','Subject','Experiment','Observations','Conclusion','Score out of 100','Teacher feedback'],
-    ...records.map(r=>[r.id,r.timestamp,r.student,r.classroom,r.subject,r.experimentTitle,r.observation,r.conclusion,r.grade??'',r.feedback??''])
+    ['Record ID','Date','Student','Class','Subject','Experiment','Assignment ID','Observations','Conclusion','Score out of 100','Teacher feedback'],
+    ...records.map(r=>[r.id,r.timestamp,r.student,r.classroom,r.subject,r.experimentTitle,r.assignmentId??'',r.observation,r.conclusion,r.grade??'',r.feedback??''])
   ];
   return '\uFEFF'+rows.map(row=>row.map(x=>cell(x)).join(',')).join('\r\n')+'\r\n';
 }
@@ -28,4 +28,13 @@ export function downloadGradebook(records:LabRecord[]){
   const link=document.createElement('a');
   link.href=url;link.download='scoolabs-teacher-gradebook.csv';document.body.appendChild(link);link.click();link.remove();
   window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+export function assignmentProgress(assignments:ReadonlyArray<{id:string;classId:string}>,students:Student[],classes:Classroom[],records:LabRecord[]){
+  return assignments.map(assignment=>{
+    const roster=students.filter(student=>student.classId===assignment.classId);
+    const submitted=records.filter(record=>record.assignmentId===assignment.id);
+    const graded=submitted.filter(record=>record.grade!==null&&record.grade!==undefined&&Number.isInteger(record.grade)&&record.grade>=0&&record.grade<=100);
+    return {assignmentId:assignment.id,className:classes.find(room=>room.id===assignment.classId)?.name??'Unknown class',enrolled:roster.length,submitted:submitted.length,graded:graded.length,missing:Math.max(0,roster.length-submitted.length)};
+  });
 }
