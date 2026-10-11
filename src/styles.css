@@ -57,3 +57,10 @@
 .assignment-status{display:inline-block;margin-left:8px;color:#167d70;font-size:10px;font-weight:700}.record-note .assignment-status{white-space:nowrap}.dialog select{width:100%;padding:12px;margin-top:7px;border:1px solid #d7e3e8;border-radius:7px;background:#fff;color:#214052}
 
 .assignment-progress{display:block;padding:7px 10px;border-radius:7px;color:#286b74;background:#eef8f9;font-weight:750;font-size:11px}.report-filter{max-width:520px;display:flex;flex-direction:column;font-size:12px;color:#42657a;gap:7px;margin:10px 0}.report-filter select{border:1px solid #d8e5e8;padding:10px;border-radius:7px;background:white;color:#294d62}
+
+.student-assignments-list{display:flex;flex-direction:column;gap:13px;margin:22px 0}
+.student-assignment-card{display:flex;justify-content:space-between;gap:22px;align-items:start;padding:21px;border:1px solid #dce9ed;border-radius:12px;background:#fff}
+.assignment-detail{display:flex;flex-direction:column;gap:7px;min-width:0}.assignment-detail h3{margin:0;color:#245068;font-size:16px}.assignment-detail p{margin:0 0 8px;color:#6e8593;font-size:12px;line-height:1.65;overflow-wrap:anywhere}.assignment-detail small{font-size:11px;color:#5a8293}
+.assignment-actions{min-width:165px;display:flex;flex-direction:column;align-items:end;gap:12px}.assignment-actions .button-outline{white-space:nowrap}
+.assignment-state{font-size:11px;border-radius:7px;padding:6px 10px;font-weight:800}.assignment-state.submitted{color:#16846b;background:#e5f7ee}.assignment-state.pending{color:#98691c;background:#fff4da}
+@media(max-width:600px){.student-assignment-card{flex-direction:column}.assignment-actions{width:100%;flex-direction:row;justify-content:space-between;align-items:center;flex-wrap:wrap}}

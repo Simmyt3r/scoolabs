@@ -13,7 +13,7 @@ import TeacherPanel from './TeacherPanel';
 import { SeparationLab, LensLab, TranspirationLab, NutrientsLab } from './FinalLabs';
 import { guides } from './guides';
 
-type Page = Subject | 'notebook' | 'teacher';
+type Page = Subject | 'notebook' | 'assignments' | 'teacher';
 const SUBJECTS = {
   chemistry: { label: 'Chemistry', icon: FlaskConical, subtitle: 'Reactions, solutions and substances', short: 'Chemical reactions', theme: 'purple' },
   physics: { label: 'Physics', icon: Zap, subtitle: 'Motion, forces and electricity', short: 'Physical principles', theme: 'blue' },
@@ -206,6 +206,26 @@ function Records({records, assignments, onBack}: {records:LabRecord[];assignment
 }
 
 
+
+function MyAssignments({assignments,records,onOpen}:{assignments:Assignment[];records:LabRecord[];onOpen:(experimentId:string)=>void}){
+  const pending=assignments.filter(a=>!records.some(r=>r.assignmentId===a.id)).length;
+  return <section className="student-assignments-page">
+    <div className="page-title"><div><span className="eyebrow">MY LEARNING</span><h1>Class assignments</h1><p>Open an assigned practical, collect your measurements and submit one laboratory report.</p></div>
+      <div className="progress-badge"><ClipboardList size={18}/><div><strong>{pending} awaiting submission</strong><small>{assignments.length} assigned practicals</small></div></div>
+    </div>
+    {assignments.length===0?<div className="empty-state"><ClipboardList size={36}/><h3>No practical assignments yet</h3><p>Your teacher's class assignments will appear here when published to this computer.</p></div>:
+    <div className="student-assignments-list">{assignments.map(a=>{
+      const model=experiments.find(e=>e.id===a.experimentId);
+      const report=records.find(r=>r.assignmentId===a.id);
+      return <div className="student-assignment-card" key={a.id}>
+        <div className="assignment-detail"><span className="eyebrow">{model?SUBJECTS[model.subject].label.toUpperCase():'UNAVAILABLE PRACTICAL'}</span><h3>{a.title}</h3><p>{a.instructions||'Follow the practical guide and submit your observations.'}</p><small>Experiment: {model?.title??'Unknown experiment'}</small>
+          {report?.grade!==undefined&&report.grade!==null&&<small>Teacher mark: {report.grade}/100{report.feedback?' · '+report.feedback:''}</small>}</div>
+        <div className="assignment-actions"><span className={report?'assignment-state submitted':'assignment-state pending'}>{report?'Submitted':'Awaiting submission'}</span><button className="button-outline" disabled={!model?.ready} onClick={()=>onOpen(a.experimentId)}>{report?'Review practical':'Open practical'} <ArrowRight size={16}/></button></div>
+      </div>;
+    })}</div>}
+  </section>;
+}
+
 function StudentSignIn({onSignedIn}:{onSignedIn:(session:StudentSession)=>Promise<void>}) {
   const [accessCode,setAccessCode]=useState('');
   const [pin,setPin]=useState('');
@@ -266,7 +286,7 @@ function App() {
     getClassAssignments(profile.classroom,studentSession?.token).then(setAssignments).catch(e=>setStorageError(String(e)));
   },[profile.classroom,studentSession?.token,storageReady]);
   const selected=experiments.find(x=>x.id===activeId)!;
-  const subject=(page==='notebook'||page==='teacher') ? 'chemistry' : page;
+  const subject=(page==='notebook'||page==='assignments'||page==='teacher') ? 'chemistry' : page;
   const visible=useMemo(()=>experiments.filter(x=>x.subject===subject),[subject]);
   const completed=new Set(records.map(r=>r.experimentId)).size;
   async function onSignedIn(session:StudentSession){
@@ -284,7 +304,7 @@ function App() {
   }
   function navigate(next:Page) {
     setPage(next);setSidebar(false);setSaved(false);setDraft(null);
-    if(next!=='notebook'&&next!=='teacher'){const first=experiments.find(x=>x.subject===next&&x.ready);if(first)setActiveId(first.id);}
+    if(next!=='notebook'&&next!=='teacher'&&next!=='assignments'){const first=experiments.find(x=>x.subject===next&&x.ready);if(first)setActiveId(first.id);}
   }
   function startRecord(settings:string,observation:string) {
     const pending=assignments.find(a=>a.experimentId===selected.id && !records.some(r=>r.assignmentId===a.id));
@@ -320,6 +340,7 @@ function App() {
         {subjectKeys.map(s=>{const Icon=SUBJECTS[s].icon;return <button key={s} onClick={()=>navigate(s)} className={'nav-link '+(page===s?'selected':'')}><Icon size={19}/>{SUBJECTS[s].label}<span className="nav-count">{experiments.filter(e=>e.subject===s&&e.ready).length}</span></button>})}
         <div className="nav-rule"/>
         <button onClick={()=>navigate('notebook')} className={'nav-link '+(page==='notebook'?'selected':'')}><BookOpen size={19}/> My notebook <span className="nav-count">{records.length}</span></button>
+        <button onClick={()=>navigate('assignments')} className={'nav-link '+(page==='assignments'?'selected':'')}><ClipboardList size={19}/> My assignments <span className="nav-count">{assignments.filter(a=>!records.some(r=>r.assignmentId===a.id)).length}</span></button>
         <button onClick={()=>navigate('teacher')} className={'nav-link '+(page==='teacher'?'selected':'')}><Users size={19}/> Teacher workspace</button>
       </nav>
       <div className="side-spacer"/>
@@ -327,11 +348,11 @@ function App() {
       <div className="side-footer">Scoolabs v0.4.0 <span>·</span> Silabs Technologies</div>
     </aside>
     <main className="main-content">
-      <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={()=>setSidebar(true)} aria-label="Open menu"><Menu size={22}/></button><span className="breadcrumb">Workspace</span><span className="breadcrumb-sep">/</span><strong>{page==='notebook'?'My notebook':page==='teacher'?'Teacher workspace':SUBJECTS[page].label}</strong></div><div className="topbar-right"><span className="offline-indicator"><span/> Offline ready</span><button className="user-button" onClick={()=>{if(isTauri()){if(studentSession)void signOut();else navigate('chemistry');}else{setProfileDraft(profile);getClassCatalog().then(setClassCatalog).catch(()=>undefined);setShowProfile(true);}}}><GraduationCap size={16}/>{isTauri()?(studentSession?'Sign out: '+studentSession.studentName:'Student sign in'):(profile.name||'Student profile')}<ChevronDown size={14}/></button></div></header>
+      <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={()=>setSidebar(true)} aria-label="Open menu"><Menu size={22}/></button><span className="breadcrumb">Workspace</span><span className="breadcrumb-sep">/</span><strong>{page==='notebook'?'My notebook':page==='assignments'?'My assignments':page==='teacher'?'Teacher workspace':SUBJECTS[page].label}</strong></div><div className="topbar-right"><span className="offline-indicator"><span/> Offline ready</span><button className="user-button" onClick={()=>{if(isTauri()){if(studentSession)void signOut();else navigate('chemistry');}else{setProfileDraft(profile);getClassCatalog().then(setClassCatalog).catch(()=>undefined);setShowProfile(true);}}}><GraduationCap size={16}/>{isTauri()?(studentSession?'Sign out: '+studentSession.studentName:'Student sign in'):(profile.name||'Student profile')}<ChevronDown size={14}/></button></div></header>
       <div className="content-pad">
         {storageError&&<div role="alert" className="storage-warning">{storageError}</div>}
         {!storageReady&&<div className="record-note">Opening offline database...</div>}
-        {page==='teacher'?<TeacherPanel/>:isTauri()&&!studentSession?<StudentSignIn onSignedIn={onSignedIn}/>:page==='notebook'?<Records records={records} assignments={assignments} onBack={()=>navigate('chemistry')}/>:
+        {page==='teacher'?<TeacherPanel/>:isTauri()&&!studentSession?<StudentSignIn onSignedIn={onSignedIn}/>:page==='notebook'?<Records records={records} assignments={assignments} onBack={()=>navigate('chemistry')}/>:page==='assignments'?<MyAssignments assignments={assignments} records={records} onOpen={experimentId=>{const match=experiments.find(e=>e.id===experimentId);if(match){setActiveId(match.id);setPage(match.subject);setSidebar(false);setSaved(false);setDraft(null)}}}/>:
           <>
           <div className="page-title"><div><span className="eyebrow">DISCOVER · EXPERIMENT · LEARN</span><h1>Welcome to the {SUBJECTS[subject].label} Lab<span className="title-period">.</span></h1><p>{SUBJECTS[subject].subtitle}. Explore through practice, not just theory.</p></div><div className="progress-badge"><CheckCircle2 size={18}/><div><strong>{completed} activities recorded</strong><small>{records.length} saved observations</small></div></div></div>
           <div className="subject-grid">
