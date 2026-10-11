@@ -1,5 +1,5 @@
 //! Native-only student identity. No access to records through arbitrary name/class claims.
-use crate::database::{check_token, db_error, hash_pin, record_from_row, valid_record, DbState, LabRecord, Sessions, RECORD_COLUMNS};
+use crate::database::{check_token, db_error, hash_pin, record_from_row, valid_record, DbState, LabRecord, Sessions};
 use argon2::{password_hash::{PasswordHash, PasswordVerifier}, Argon2};
 use rusqlite::{params, OptionalExtension};
 use serde::Serialize;
@@ -153,10 +153,10 @@ pub fn student_records(
 )->Result<Vec<LabRecord>,String>{
     let id=guard_student(&sessions,&token)?;
     let conn=db.0.lock().map_err(db_error)?;
-    let query=format!("SELECT {RECORD_COLUMNS} FROM notebook_records r JOIN student_record_links l ON l.record_id=r.id WHERE l.student_id=?1 ORDER BY r.timestamp DESC LIMIT 2000");
-    // Prefix all columns to avoid ambiguous id columns from the join.
-    let query=query.replace("SELECT id,timestamp,student,classroom,experiment_id,experiment_title,subject,settings,observation,conclusion,grade,feedback",
-    "SELECT r.id,r.timestamp,r.student,r.classroom,r.experiment_id,r.experiment_title,r.subject,r.settings,r.observation,r.conclusion,r.grade,r.feedback");
+    let query="SELECT r.id,r.timestamp,r.student,r.classroom,r.experiment_id,
+       r.experiment_title,r.subject,r.settings,r.observation,r.conclusion,r.grade,r.feedback,r.assignment_id
+       FROM notebook_records r JOIN student_record_links l ON l.record_id=r.id
+       WHERE l.student_id=?1 ORDER BY r.timestamp DESC LIMIT 2000";
     let mut stmt=conn.prepare(&query).map_err(db_error)?;
     let rows=stmt.query_map(params![id],record_from_row).map_err(db_error)?;
     rows.collect::<rusqlite::Result<Vec<_>>>().map_err(db_error)
@@ -207,14 +207,28 @@ pub fn student_submit_record(
     record.feedback=None;
     valid_record(&record)?;
     let tx=conn.transaction().map_err(db_error)?;
+    if let Some(ref assignment_id)=record.assignment_id {
+        let eligible:i64=tx.query_row(
+            "SELECT COUNT(*) FROM assignments a JOIN students s ON a.class_id=s.class_id
+             WHERE a.id=?1 AND s.id=?2 AND a.experiment_id=?3",
+            params![assignment_id,id,record.experiment_id],|r|r.get(0)
+        ).map_err(db_error)?;
+        if eligible!=1 {return Err("This assignment is not assigned to your class or experiment.".into());}
+    }
     tx.execute("INSERT INTO notebook_records
-       (id,timestamp,student,classroom,experiment_id,experiment_title,subject,settings,observation,conclusion)
-       VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)",
+       (id,timestamp,student,classroom,experiment_id,experiment_title,subject,settings,observation,conclusion,assignment_id)
+       VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
        params![record.id,record.timestamp,record.student,record.classroom,
-         record.experiment_id,record.experiment_title,record.subject,record.settings,record.observation,record.conclusion]
+         record.experiment_id,record.experiment_title,record.subject,record.settings,record.observation,record.conclusion,record.assignment_id]
     ).map_err(db_error)?;
     tx.execute("INSERT INTO student_record_links(record_id,student_id) VALUES(?1,?2)",
         params![record.id,id]).map_err(db_error)?;
+    if let Some(ref assignment_id)=record.assignment_id {
+        tx.execute(
+            "INSERT INTO assignment_submissions(assignment_id,student_id,record_id) VALUES(?1,?2,?3)",
+            params![assignment_id,id,record.id],
+        ).map_err(|_|"This assignment already has a submission. Use Personal practice for additional observations.".to_owned())?;
+    }
     tx.commit().map_err(db_error)?;
     Ok(())
 }

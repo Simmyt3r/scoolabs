@@ -33,6 +33,8 @@ pub struct LabRecord {
     pub grade: Option<i64>,
     #[serde(default)]
     pub feedback: Option<String>,
+    #[serde(default)]
+    pub assignment_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -109,7 +111,8 @@ pub(crate) fn create_tables(conn: &Connection) -> rusqlite::Result<()> {
            experiment_id TEXT NOT NULL, experiment_title TEXT NOT NULL,
            subject TEXT NOT NULL, settings TEXT NOT NULL,
            observation TEXT NOT NULL, conclusion TEXT NOT NULL,
-           grade INTEGER CHECK(grade BETWEEN 0 AND 100), feedback TEXT
+           grade INTEGER CHECK(grade BETWEEN 0 AND 100), feedback TEXT,
+           assignment_id TEXT REFERENCES assignments(id)
          );
          CREATE INDEX IF NOT EXISTS records_by_student
            ON notebook_records(student, classroom, timestamp);
@@ -137,8 +140,25 @@ pub(crate) fn create_tables(conn: &Connection) -> rusqlite::Result<()> {
            record_id TEXT PRIMARY KEY REFERENCES notebook_records(id),
            student_id TEXT NOT NULL REFERENCES students(id)
          );
-         CREATE INDEX IF NOT EXISTS student_link_lookup ON student_record_links(student_id);"
-    )
+         CREATE INDEX IF NOT EXISTS student_link_lookup ON student_record_links(student_id);
+         CREATE TABLE IF NOT EXISTS assignment_submissions (
+           assignment_id TEXT NOT NULL REFERENCES assignments(id),
+           student_id TEXT NOT NULL REFERENCES students(id),
+           record_id TEXT NOT NULL UNIQUE REFERENCES notebook_records(id),
+           PRIMARY KEY (assignment_id, student_id)
+         );"
+    )?;
+    // Existing v0.4 school databases already contain notebook_records without this field.
+    let column_exists:bool={
+        let mut stmt=conn.prepare("PRAGMA table_info(notebook_records)")?;
+        let columns=stmt.query_map([],|r|r.get::<_,String>(1))?;
+        let names=columns.collect::<rusqlite::Result<Vec<String>>>()?;
+        names.iter().any(|column|column=="assignment_id")
+    };
+    if !column_exists {
+        conn.execute_batch("ALTER TABLE notebook_records ADD COLUMN assignment_id TEXT REFERENCES assignments(id);")?;
+    }
+    Ok(())
 }
 pub fn initialize(handle: &AppHandle) -> Result<DbState, Box<dyn std::error::Error>> {
     let dir = handle.path().app_data_dir()?;
@@ -156,9 +176,10 @@ pub(crate) fn record_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<LabRe
         experiment_title: row.get(5)?, subject: row.get(6)?,
         settings: row.get(7)?, observation: row.get(8)?,
         conclusion: row.get(9)?, grade: row.get(10)?, feedback: row.get(11)?,
+        assignment_id: row.get(12)?,
     })
 }
-pub(crate) const RECORD_COLUMNS: &str = "id,timestamp,student,classroom,experiment_id,experiment_title,subject,settings,observation,conclusion,grade,feedback";
+pub(crate) const RECORD_COLUMNS: &str = "id,timestamp,student,classroom,experiment_id,experiment_title,subject,settings,observation,conclusion,grade,feedback,assignment_id";
 pub(crate) fn valid_record(r: &LabRecord) -> Result<(), String> {
     ensure_field(&r.id, "Record ID", 100)?;
     ensure_field(&r.student, "Student name", 120)?;
@@ -168,6 +189,9 @@ pub(crate) fn valid_record(r: &LabRecord) -> Result<(), String> {
     ensure_field(&r.timestamp, "Date", 80)?;
     if !["chemistry", "physics", "biology", "agriculture"].contains(&r.subject.as_str()) {
         return Err("Unsupported subject".into());
+    }
+    if r.assignment_id.as_ref().is_some_and(|id|id.len()>100 || id.trim().is_empty()) {
+        return Err("Invalid assignment identifier".into());
     }
     if r.settings.len() > 8000 || r.observation.len() > 8000 || r.conclusion.len() > 8000 {
         return Err("Experiment note is too long".into());
@@ -473,6 +497,27 @@ mod tests {
         assert!(duplicate.is_err());
     }
     #[test]
+    fn assignment_submission_schema_is_unique_and_migrates_old_notes(){
+        let conn=Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE notebook_records(
+          id TEXT PRIMARY KEY,timestamp TEXT NOT NULL,student TEXT NOT NULL,classroom TEXT NOT NULL,
+          experiment_id TEXT NOT NULL,experiment_title TEXT NOT NULL,subject TEXT NOT NULL,
+          settings TEXT NOT NULL,observation TEXT NOT NULL,conclusion TEXT NOT NULL,
+          grade INTEGER, feedback TEXT);
+          INSERT INTO notebook_records VALUES('old','2026-10-11','Ada','SS2A','titration',
+          'Acid-base','chemistry','x','y','z',NULL,NULL);").unwrap();
+        create_tables(&conn).unwrap();
+        create_tables(&conn).unwrap();
+        let assignment:Option<String>=conn.query_row("SELECT assignment_id FROM notebook_records WHERE id='old'",[],|r|r.get(0)).unwrap();
+        assert_eq!(assignment,None);
+        conn.execute("INSERT INTO classes(id,name,level) VALUES('c','SS2A','SS2')",[]).unwrap();
+        conn.execute("INSERT INTO students(id,class_id,name) VALUES('s','c','Ada')",[]).unwrap();
+        conn.execute("INSERT INTO assignments(id,class_id,experiment_id,title,instructions,created_at)
+           VALUES('a','c','titration','Lab','Notes','2026-10-11')",[]).unwrap();
+        conn.execute("INSERT INTO assignment_submissions(assignment_id,student_id,record_id) VALUES('a','s','old')",[]).unwrap();
+        assert!(conn.execute("INSERT INTO assignment_submissions(assignment_id,student_id,record_id) VALUES('a','s','old')",[]).is_err());
+    }
+    #[test]
     fn pin_hashes_do_not_expose_pin() {
         let hash=hash_pin("938271").unwrap();
         assert!(!hash.contains("938271"));
@@ -512,7 +557,7 @@ mod tests {
         let r=LabRecord{id:"a".into(),timestamp:"2026-10-11T00:00:00Z".into(),
         student:"Amaka".into(),classroom:"SS2A".into(),experiment_id:"titration".into(),
         experiment_title:"Titration".into(),subject:"chemistry".into(),settings:"x".into(),
-        observation:"y".into(),conclusion:"z".into(),grade:Some(100),feedback:Some("fake".into())};
+        observation:"y".into(),conclusion:"z".into(),grade:Some(100),feedback:Some("fake".into()),assignment_id:None};
         assert_eq!(insert_record(&conn,&r).unwrap(),1);
         assert_eq!(insert_record(&conn,&r).unwrap(),0);
         let grade:Option<i64>=conn.query_row("SELECT grade FROM notebook_records",[],|r|r.get(0)).unwrap();
