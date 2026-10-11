@@ -13,6 +13,8 @@ import TeacherPanel from './TeacherPanel';
 import { SeparationLab, LensLab, TranspirationLab, NutrientsLab } from './FinalLabs';
 import { guides } from './guides';
 import ReportPreview from './ReportPreview';
+import MeasurementLog from './MeasurementLog';
+import { addMeasurement, readingSummary, type Measurement } from './measurements';
 import { parseRubricFeedback } from './assessment';
 
 type Page = Subject | 'notebook' | 'assignments' | 'teacher';
@@ -42,7 +44,10 @@ function LabIllustration({ subject }: { subject: Subject }) {
 function ChemistryLab({ onRecord }: { onRecord: (settings: string, observation: string) => void }) {
   const [base, setBase] = useState(0.1);
   const [added, setAdded] = useState(0);
+  const [readings,setReadings]=useState<Measurement[]>([]);
   const result = titrate(base, added);
+  const capture=()=>setReadings(points=>addMeasurement(points,added,result.ph,'titration'));
+  const changeBase=(next:number)=>{setBase(next);setAdded(0);setReadings([]);};
   const colour = result.indicator === 'colourless' ? '#c7eafa' : result.indicator === 'pale pink' ? '#fab0d0' : '#ec69a3';
   return <div className="lab-grid">
     <div className="lab-stage">
@@ -60,27 +65,31 @@ function ChemistryLab({ onRecord }: { onRecord: (settings: string, observation: 
       <div className="quick-actions">
         <button type="button" className="button-muted" onClick={() => setAdded(v => Math.min(60, Number((v + .1).toFixed(2))))}>+ 0.1 mL</button>
         <button type="button" className="button-muted" onClick={() => setAdded(v => Math.min(60, Number((v + 1).toFixed(2))))}>+ 1 mL</button>
-        <button type="button" className="button-muted" onClick={() => setAdded(0)}><RotateCcw size={14}/> Reset</button>
+        <button type="button" className="button-muted" onClick={() => {setAdded(0);setReadings([]);}}><RotateCcw size={14}/> Reset</button>
       </div>
     </div>
     <div className="lab-controls">
       <div className="panel-kicker"><SlidersHorizontal size={16}/> EXPERIMENT CONTROLS</div>
-      <NumberSlider label="Base concentration" value={base} unit="mol/L" min={0.05} max={0.2} step={0.01} onChange={setBase}/>
+      <NumberSlider label="Base concentration" value={base} unit="mol/L" min={0.05} max={0.2} step={0.01} onChange={changeBase}/>
       <NumberSlider label="Base added from burette" value={added} unit="mL" min={0} max={60} step={0.1} onChange={setAdded}/>
       <div className="results-grid">
         <div className="stat"><span>Solution pH</span><strong>{result.ph.toFixed(2)}</strong></div>
         <div className="stat"><span>Equivalence volume</span><strong>{result.equivalenceMl.toFixed(1)} <small>mL</small></strong></div>
       </div>
       <div className="observation"><span className="small-label">OBSERVATION</span><p>Indicator: <strong>{result.indicator}</strong>. The solution is {result.excess === 'neutral' ? 'at stoichiometric equivalence' : 'in excess of ' + result.excess}.</p></div>
-      <button className="button-primary" onClick={() => onRecord('Base: '+base+' mol/L; added: '+added+' mL; acid: 25 mL, 0.10 mol/L', 'pH '+result.ph.toFixed(2)+'; indicator '+result.indicator+'; equivalence '+result.equivalenceMl.toFixed(2)+' mL')}>Record these results <ArrowRight size={16}/></button>
+      <button className="button-primary" onClick={() => onRecord('Base: '+base+' mol/L; added: '+added+' mL; acid: 25 mL, 0.10 mol/L', 'pH '+result.ph.toFixed(2)+'; indicator '+result.indicator+'; equivalence '+result.equivalenceMl.toFixed(2)+' mL. '+readingSummary(readings,'titration'))}>Record these results <ArrowRight size={16}/></button>
       <p className="model-note">Model: strong acid/strong base at 25°C; ideal mixing. Phenolphthalein changes colour above pH ≈ 8.2, so the visible endpoint differs from exact equivalence.</p>
     </div>
+    <MeasurementLog kind="titration" readings={readings} onCapture={capture} onClear={()=>setReadings([])}/>
   </div>;
 }
 function PhysicsLab({ onRecord }: { onRecord: (settings: string, observation: string) => void }) {
   const [voltage, setVoltage] = useState(6);
   const [resistance, setResistance] = useState(10);
+  const [readings,setReadings]=useState<Measurement[]>([]);
   const result = circuit(voltage, resistance);
+  const capture=()=>setReadings(points=>addMeasurement(points,voltage,result.current,'ohms-law'));
+  const changeResistance=(next:number)=>{setResistance(next);setReadings([]);};
   return <div className="lab-grid">
     <div className="lab-stage">
       <div className="stage-head"><span><Activity size={15}/> LIVE EXPERIMENT</span><span>Ideal DC circuit</span></div>
@@ -104,15 +113,16 @@ function PhysicsLab({ onRecord }: { onRecord: (settings: string, observation: st
     <div className="lab-controls">
       <div className="panel-kicker"><SlidersHorizontal size={16}/> CIRCUIT CONTROLS</div>
       <NumberSlider label="Supply voltage" value={voltage} unit="V" min={0} max={24} step={0.5} onChange={setVoltage}/>
-      <NumberSlider label="Resistance" value={resistance} unit="Ω" min={1} max={100} step={1} onChange={setResistance}/>
+      <NumberSlider label="Resistance" value={resistance} unit="Ω" min={1} max={100} step={1} onChange={changeResistance}/>
       <div className="results-grid">
         <div className="stat"><span>Current (I)</span><strong>{result.current.toFixed(2)} <small>A</small></strong></div>
         <div className="stat"><span>Power (P)</span><strong>{result.power.toFixed(2)} <small>W</small></strong></div>
       </div>
       <div className="observation"><span className="small-label">OBSERVATION</span><p>With resistance held constant, current increases in proportion to voltage. The ammeter reads <strong>{result.current.toFixed(2)} A</strong>.</p></div>
-      <button className="button-primary" onClick={() => onRecord('Voltage: '+voltage+' V; resistance: '+resistance+' Ω', 'Current: '+result.current.toFixed(3)+' A; power: '+result.power.toFixed(3)+' W')}>Record these results <ArrowRight size={16}/></button>
+      <button className="button-primary" onClick={() => onRecord('Voltage: '+voltage+' V; resistance: '+resistance+' Ω', 'Current: '+result.current.toFixed(3)+' A; power: '+result.power.toFixed(3)+' W. '+readingSummary(readings,'ohms-law'))}>Record these results <ArrowRight size={16}/></button>
       <p className="model-note">Model: ideal ohmic resistor and perfect DC power source. Real instruments and components have tolerances.</p>
     </div>
+    <MeasurementLog kind="ohms-law" readings={readings} onCapture={capture} onClear={()=>setReadings([])}/>
   </div>;
 }
 function BiologyLab({ onRecord }: { onRecord: (settings: string, observation: string) => void }) {
