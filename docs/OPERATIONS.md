@@ -65,3 +65,6 @@ Branding, teacher-led scientific acceptance tests and Windows school-hardware in
 
 ## Collect a scientific observation series
 Open Chemistry → Titration or Physics → Ohm's law. Adjust the instruments and select **Capture reading** to write down each measurement. Repeat for different burette volumes or voltages; values appear on an offline chart and table. Up to twenty distinct setpoints are retained for the current lesson. When you are finished, choose **Record these results**. The report stores both the current settings and the manually captured observations. Changing the base concentration or resistor resets the plotted run so two distinct setups are not treated as one experimental series. This is a mathematical virtual laboratory, not a calibration-certified scientific instrument.
+
+## Per-student assignment checklist
+In Teacher workspace → Assignments, select **Show student roster** beside an assignment to display its enrolled students and their individual submission and marking status. The roster is read from SQLite using the authenticated teacher session and students' actual database IDs. Two pupils with the same full name remain distinct. **View submissions** opens the relevant grading list.
