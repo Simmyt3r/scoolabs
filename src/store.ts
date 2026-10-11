@@ -11,6 +11,8 @@ export interface LabRecord {
   settings: string;
   observation: string;
   conclusion: string;
+  grade?: number | null;
+  feedback?: string | null;
 }
 const KEY = 'scoolabs.records.v1';
 const PROFILE = 'scoolabs.profile.v1';

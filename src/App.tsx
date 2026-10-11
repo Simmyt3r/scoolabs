@@ -1,13 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Activity, ArrowLeft, ArrowRight, Beaker, BookOpen, CheckCircle2, ChevronDown,
-  ClipboardList, Download, FlaskConical, GraduationCap, Leaf, Menu, Microscope,
+  ClipboardList, Download, FlaskConical, GraduationCap, Leaf, Menu, Microscope, Users,
   RotateCcw, Save, Settings2, ShieldCheck, SlidersHorizontal, Sprout, WifiOff, X, Zap,
 } from 'lucide-react';
 import { circuit, experiments, germination, microscope, titrate, type Crop, type Experiment, type Subject } from './engine';
-import { exportRecords, getProfile, getRecords, saveProfile, saveRecord, type LabRecord, type LearnerProfile } from './store';
+import { exportRecords, type LabRecord, type LearnerProfile } from './store';
+import { initialiseStore, readRecords, writeRecord, saveStudentProfile, getClassCatalog, getClassAssignments, type Classroom, type Assignment } from './native-storage';
+import { IndicatorsLab, PendulumLab, OsmosisLab, SoilLab } from './AdvancedLabs';
+import TeacherPanel from './TeacherPanel';
 
-type Page = Subject | 'notebook';
+type Page = Subject | 'notebook' | 'teacher';
 const SUBJECTS = {
   chemistry: { label: 'Chemistry', icon: FlaskConical, subtitle: 'Reactions, solutions and substances', short: 'Chemical reactions', theme: 'purple' },
   physics: { label: 'Physics', icon: Zap, subtitle: 'Motion, forces and electricity', short: 'Physical principles', theme: 'blue' },
@@ -195,15 +198,15 @@ function Records({records, onBack}: {records:LabRecord[];onBack:()=>void}) {
     </div>
     <div className="record-note"><ShieldCheck size={18}/> Your notes stay on this device. Export a backup before uninstalling Scoolabs or clearing the app data.</div>
     {records.length===0 ? <div className="empty-state"><ClipboardList size={38}/><h3>No observations saved yet</h3><p>Complete an experiment and choose “Record these results” to begin.</p><button className="button-primary" onClick={onBack}>Explore experiments <ArrowRight size={16}/></button></div>:
-    <div className="records-table"><table><thead><tr><th>Experiment</th><th>Student</th><th>Class</th><th>Recorded</th><th>Observation</th></tr></thead><tbody>{records.map(r=><tr key={r.id}><td><strong>{r.experimentTitle}</strong><span>{SUBJECTS[r.subject].label}</span></td><td>{r.student}</td><td>{r.classroom}</td><td>{new Date(r.timestamp).toLocaleString()}</td><td><span>{r.observation}</span>{r.conclusion && <small>Conclusion: {r.conclusion}</small>}</td></tr>)}</tbody></table></div>}
+    <div className="records-table"><table><thead><tr><th>Experiment</th><th>Student</th><th>Class</th><th>Recorded</th><th>Observation</th></tr></thead><tbody>{records.map(r=><tr key={r.id}><td><strong>{r.experimentTitle}</strong><span>{SUBJECTS[r.subject].label}</span></td><td>{r.student}</td><td>{r.classroom}</td><td>{new Date(r.timestamp).toLocaleString()}</td><td><span>{r.observation}</span>{r.conclusion && <small>Conclusion: {r.conclusion}</small>}{r.grade!==null&&r.grade!==undefined&&<small><strong>Teacher score: {r.grade}/100</strong>{r.feedback?' · '+r.feedback:''}</small>}</td></tr>)}</tbody></table></div>}
   </section>;
 }
 
 function App() {
   const [page,setPage]=useState<Page>('chemistry');
   const [activeId,setActiveId]=useState('titration');
-  const [records,setRecords]=useState(getRecords);
-  const [profile,setProfile]=useState<LearnerProfile>(getProfile);
+  const [records,setRecords]=useState<LabRecord[]>([]);
+  const [profile,setProfile]=useState<LearnerProfile>({name:'',classroom:''});
   const [sidebar,setSidebar]=useState(false);
   const [draft,setDraft]=useState<{settings:string;observation:string}|null>(null);
   const [conclusion,setConclusion]=useState('');
@@ -211,23 +214,52 @@ function App() {
   const [showProfile,setShowProfile]=useState(false);
   const [profileDraft,setProfileDraft]=useState<LearnerProfile>(profile);
   const [error,setError]=useState('');
+  const [storageError,setStorageError]=useState('');
+  const [storageReady,setStorageReady]=useState(false);
+  const [classCatalog,setClassCatalog]=useState<Classroom[]>([]);
+  const [assignments,setAssignments]=useState<Assignment[]>([]);
+  useEffect(()=>{
+    let active=true;
+    initialiseStore().then(data=>{
+      if(!active)return;
+      setProfile(data.profile);setProfileDraft(data.profile);setRecords(data.records);setClassCatalog(data.classes);
+    }).catch(e=>{if(active)setStorageError('Unable to initialise native storage: '+String(e))}).finally(()=>{if(active)setStorageReady(true)});
+    return ()=>{active=false};
+  },[]);
+  useEffect(()=>{
+    if(!storageReady || !profile.classroom)return;
+    getClassAssignments(profile.classroom).then(setAssignments).catch(e=>setStorageError(String(e)));
+  },[profile.classroom,storageReady]);
   const selected=experiments.find(x=>x.id===activeId)!;
-  const subject=page==='notebook' ? 'chemistry' : page;
+  const subject=(page==='notebook'||page==='teacher') ? 'chemistry' : page;
   const visible=useMemo(()=>experiments.filter(x=>x.subject===subject),[subject]);
   const completed=new Set(records.map(r=>r.experimentId)).size;
   function navigate(next:Page) {
     setPage(next);setSidebar(false);setSaved(false);setDraft(null);
-    if(next!=='notebook'){const first=experiments.find(x=>x.subject===next&&x.ready);if(first)setActiveId(first.id);}
+    if(next!=='notebook'&&next!=='teacher'){const first=experiments.find(x=>x.subject===next&&x.ready);if(first)setActiveId(first.id);}
   }
   function startRecord(settings:string,observation:string) {
     setDraft({settings,observation});setConclusion('');setSaved(false);setError('');
   }
-  function persistRecord() {
+  async function persistRecord() {
     if(!draft)return;
+    if(!storageReady || storageError){setError('Storage is not ready. Resolve the storage error before saving.');return;}
     if(!profile.name.trim()||!profile.classroom.trim()){setError('Enter your name and class to save an observation.');return;}
     const record:LabRecord={id:crypto.randomUUID(),timestamp:new Date().toISOString(),student:profile.name.trim(),classroom:profile.classroom.trim(),experimentId:selected.id,experimentTitle:selected.title,subject:selected.subject,settings:draft.settings,observation:draft.observation,conclusion:conclusion.trim()};
-    try {setRecords(saveRecord(record));setDraft(null);setSaved(true);setError('');}
-    catch{setError('Could not save the notebook entry. Export any existing records and check the device storage.');}
+    try{
+      await saveStudentProfile(profile);
+      await writeRecord(record);
+      setRecords(await readRecords(profile));
+      setDraft(null);setSaved(true);setError('');
+    }catch(e){setError('Could not save this record to native storage: '+String(e));}
+  }
+  async function persistProfile(){
+    try{
+      await saveStudentProfile(profileDraft);
+      setProfile(profileDraft);
+      setRecords(await readRecords(profileDraft));
+      setShowProfile(false);setError('');
+    }catch(e){setError('Unable to save student profile: '+String(e));}
   }
   return <div className="app-shell">
     {sidebar && <div className="mobile-scrim" onClick={()=>setSidebar(false)}/>}
@@ -238,15 +270,18 @@ function App() {
         {subjectKeys.map(s=>{const Icon=SUBJECTS[s].icon;return <button key={s} onClick={()=>navigate(s)} className={'nav-link '+(page===s?'selected':'')}><Icon size={19}/>{SUBJECTS[s].label}<span className="nav-count">{experiments.filter(e=>e.subject===s&&e.ready).length}</span></button>})}
         <div className="nav-rule"/>
         <button onClick={()=>navigate('notebook')} className={'nav-link '+(page==='notebook'?'selected':'')}><BookOpen size={19}/> My notebook <span className="nav-count">{records.length}</span></button>
+        <button onClick={()=>navigate('teacher')} className={'nav-link '+(page==='teacher'?'selected':'')}><Users size={19}/> Teacher workspace</button>
       </nav>
       <div className="side-spacer"/>
       <div className="offline-card"><div><WifiOff size={17}/> 100% offline learning</div><p>All experiments and observations work without internet access.</p><span className="offline-dot"/> Ready to learn</div>
-      <div className="side-footer">Scoolabs v0.1.0 <span>·</span> Silabs Technologies</div>
+      <div className="side-footer">Scoolabs v0.2.0 <span>·</span> Silabs Technologies</div>
     </aside>
     <main className="main-content">
-      <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={()=>setSidebar(true)} aria-label="Open menu"><Menu size={22}/></button><span className="breadcrumb">Workspace</span><span className="breadcrumb-sep">/</span><strong>{page==='notebook'?'My notebook':SUBJECTS[page].label}</strong></div><div className="topbar-right"><span className="offline-indicator"><span/> Offline ready</span><button className="user-button" onClick={()=>{setProfileDraft(profile);setShowProfile(true)}}><GraduationCap size={16}/>{profile.name||'Student profile'}<ChevronDown size={14}/></button></div></header>
+      <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={()=>setSidebar(true)} aria-label="Open menu"><Menu size={22}/></button><span className="breadcrumb">Workspace</span><span className="breadcrumb-sep">/</span><strong>{page==='notebook'?'My notebook':page==='teacher'?'Teacher workspace':SUBJECTS[page].label}</strong></div><div className="topbar-right"><span className="offline-indicator"><span/> Offline ready</span><button className="user-button" onClick={()=>{setProfileDraft(profile);getClassCatalog().then(setClassCatalog).catch(()=>undefined);setShowProfile(true)}}><GraduationCap size={16}/>{profile.name||'Student profile'}<ChevronDown size={14}/></button></div></header>
       <div className="content-pad">
-        {page==='notebook'?<Records records={records} onBack={()=>navigate('chemistry')}/>:
+        {storageError&&<div role="alert" className="storage-warning">{storageError}</div>}
+        {!storageReady&&<div className="record-note">Opening offline database...</div>}
+        {page==='notebook'?<Records records={records} onBack={()=>navigate('chemistry')}/>:page==='teacher'?<TeacherPanel/>:
           <>
           <div className="page-title"><div><span className="eyebrow">DISCOVER · EXPERIMENT · LEARN</span><h1>Welcome to the {SUBJECTS[subject].label} Lab<span className="title-period">.</span></h1><p>{SUBJECTS[subject].subtitle}. Explore through practice, not just theory.</p></div><div className="progress-badge"><CheckCircle2 size={18}/><div><strong>{completed} activities recorded</strong><small>{records.length} saved observations</small></div></div></div>
           <div className="subject-grid">
@@ -255,7 +290,8 @@ function App() {
           <div className="section-heading"><div><span className="eyebrow">PRACTICAL LEARNING</span><h2>Choose an experiment</h2></div><span>{visible.filter(x=>x.ready).length} available · {visible.length} planned</span></div>
           <div className="experiment-tabs" role="group" aria-label="Select an experiment">{visible.map(exp=><button key={exp.id} className={'experiment-pill '+(activeId===exp.id?'active':'')} disabled={!exp.ready} title={exp.ready?exp.description:'Planned for a future version'} onClick={()=>{setActiveId(exp.id);setSaved(false);setDraft(null)}}>{exp.ready&&<span className="live-dot"/>}{exp.title}{!exp.ready&&<small>Coming soon</small>}</button>)}</div>
           <div className="experiment-intro"><div><div className="experiment-tag"><Beaker size={14}/> VIRTUAL PRACTICAL · {selected.level}</div><h2>{selected.title}</h2><p>{selected.description}</p></div><div className="duration">{selected.minutes} MIN <span>•</span> GUIDED MODE</div></div>
-          {selected.id==='titration'?<ChemistryLab onRecord={startRecord}/>:selected.id==='ohms-law'?<PhysicsLab onRecord={startRecord}/>:selected.id==='microscopy'?<BiologyLab onRecord={startRecord}/>:<AgricultureLab onRecord={startRecord}/>}
+          {assignments.filter(a=>a.experimentId===selected.id).map(a=><div className="record-note" key={a.id}><ClipboardList size={18}/><span><strong>Class assignment: {a.title}</strong> {a.instructions}</span></div>)}
+          {selected.id==='titration'?<ChemistryLab onRecord={startRecord}/>:selected.id==='ohms-law'?<PhysicsLab onRecord={startRecord}/>:selected.id==='microscopy'?<BiologyLab onRecord={startRecord}/>:selected.id==='germination'?<AgricultureLab onRecord={startRecord}/>:selected.id==='ph-indicators'?<IndicatorsLab onRecord={startRecord}/>:selected.id==='pendulum'?<PendulumLab onRecord={startRecord}/>:selected.id==='osmosis'?<OsmosisLab onRecord={startRecord}/>:<SoilLab onRecord={startRecord}/>}
           {saved&&<div className="success-alert"><CheckCircle2 size={18}/> Observation saved to your offline notebook. <button onClick={()=>navigate('notebook')}>Open notebook <ArrowRight size={14}/></button></div>}
           <div className="objectives"><div><ClipboardList size={20}/><strong>Learning objectives</strong></div><div className="objectives-list">{selected.objectives.map((objective,i)=><span key={objective}><CheckCircle2 size={16}/>{i+1}. {objective}</span>)}</div></div>
           </>
@@ -263,8 +299,8 @@ function App() {
         <footer className="content-footer"><span>Simeon's Laboratories and Co Technologies Ltd</span><span>Designed for Nigerian classrooms · Offline first</span></footer>
       </div>
     </main>
-    {draft&&<div className="modal-backdrop" role="presentation"><div className="dialog" role="dialog" aria-modal="true" aria-labelledby="record-title"><button className="dialog-close" onClick={()=>setDraft(null)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LABORATORY NOTEBOOK</span><h2 id="record-title">Save your experiment</h2><p>Record your observation and conclusion locally on this computer.</p><div className="dialog-data"><strong>Observation</strong><span>{draft.observation}</span><small>{draft.settings}</small></div><div className="form-two"><label>Student name<input value={profile.name} onChange={e=>setProfile(p=>({...p,name:e.target.value}))} placeholder="e.g. Ada Musa"/></label><label>Class<input value={profile.classroom} onChange={e=>setProfile(p=>({...p,classroom:e.target.value}))} placeholder="e.g. SS2A"/></label></div><label className="field">Conclusion (optional)<textarea rows={3} placeholder="What did you discover?" value={conclusion} onChange={e=>setConclusion(e.target.value)}/></label>{error&&<div role="alert" className="error-message">{error}</div>}<button className="button-primary full" onClick={()=>{saveProfile(profile);persistRecord()}}><Save size={17}/> Save to notebook</button></div></div>}
-    {showProfile&&<div className="modal-backdrop"><div className="dialog compact" role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="dialog-close" onClick={()=>setShowProfile(false)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LOCAL PROFILE</span><h2 id="profile-title">Student profile</h2><p>Set your identity for practical records on this computer.</p><label className="field">Full name<input value={profileDraft.name} onChange={e=>setProfileDraft({...profileDraft,name:e.target.value})} placeholder="Your name"/></label><label className="field">Class<input value={profileDraft.classroom} onChange={e=>setProfileDraft({...profileDraft,classroom:e.target.value})} placeholder="SS 2A"/></label><button className="button-primary full" onClick={()=>{setProfile(profileDraft);saveProfile(profileDraft);setShowProfile(false)}}><Settings2 size={16}/> Save profile</button></div></div>}
+    {draft&&<div className="modal-backdrop" role="presentation"><div className="dialog" role="dialog" aria-modal="true" aria-labelledby="record-title"><button className="dialog-close" onClick={()=>setDraft(null)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LABORATORY NOTEBOOK</span><h2 id="record-title">Save your experiment</h2><p>Record your observation and conclusion locally on this computer.</p><div className="dialog-data"><strong>Observation</strong><span>{draft.observation}</span><small>{draft.settings}</small></div><div className="form-two"><label>Student name<input value={profile.name} onChange={e=>setProfile(p=>({...p,name:e.target.value}))} placeholder="e.g. Ada Musa"/></label><label>Class<input value={profile.classroom} onChange={e=>setProfile(p=>({...p,classroom:e.target.value}))} placeholder="e.g. SS2A"/></label></div><label className="field">Conclusion (optional)<textarea rows={3} placeholder="What did you discover?" value={conclusion} onChange={e=>setConclusion(e.target.value)}/></label>{error&&<div role="alert" className="error-message">{error}</div>}<button className="button-primary full" onClick={persistRecord} disabled={!storageReady||!!storageError}><Save size={17}/> Save to notebook</button></div></div>}
+    {showProfile&&<div className="modal-backdrop"><div className="dialog compact" role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="dialog-close" onClick={()=>setShowProfile(false)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LOCAL PROFILE</span><h2 id="profile-title">Student profile</h2><p>Set your identity for practical records on this computer.</p><label className="field">Full name<input value={profileDraft.name} onChange={e=>setProfileDraft({...profileDraft,name:e.target.value})} placeholder="Your name"/></label><label className="field">Class<input list="known-classes" value={profileDraft.classroom} onChange={e=>setProfileDraft({...profileDraft,classroom:e.target.value})} placeholder="SS2A"/><datalist id="known-classes">{classCatalog.map(c=><option key={c.id} value={c.name}/>)}</datalist></label><button className="button-primary full" onClick={persistProfile} disabled={!storageReady||!!storageError}><Settings2 size={16}/> Save profile</button></div></div>}
   </div>;
 }
 
