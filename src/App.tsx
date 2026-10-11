@@ -18,6 +18,7 @@ import { addMeasurement, readingSummary, type Measurement } from './measurements
 import { parseRubricFeedback } from './assessment';
 import KnowledgeCheck from './KnowledgeCheck';
 import StudentDashboard from './StudentDashboard';
+import BrandLockup from './BrandLockup';
 import FocusScope from './FocusScope';
 import {reportGuidance,reflectionScaffold,hasUnfinishedScaffold} from './reportGuidance';
 import {studentKnowledgeResults,type KnowledgeResult} from './native-storage';
@@ -245,7 +246,7 @@ function MyAssignments({assignments,records,onOpen}:{assignments:Assignment[];re
   </section>;
 }
 
-function StudentSignIn({onSignedIn}:{onSignedIn:(session:StudentSession)=>Promise<void>}) {
+function StudentSignIn({onSignedIn,onTeacher}:{onSignedIn:(session:StudentSession)=>Promise<void>;onTeacher:()=>void}) {
   const [accessCode,setAccessCode]=useState('');
   const [pin,setPin]=useState('');
   const [busy,setBusy]=useState(false);
@@ -259,18 +260,36 @@ function StudentSignIn({onSignedIn}:{onSignedIn:(session:StudentSession)=>Promis
     }catch(e){setError(String(e));}
     finally{setBusy(false);}
   }
-  return <section className="student-signin">
-    <div className="student-signin-icon"><GraduationCap size={29}/></div>
-    <span className="eyebrow">OFFLINE STUDENT ACCESS</span>
-    <h1>Enter your science laboratory</h1>
-    <p>Ask your teacher for your personal access code and PIN. Your practical reports, assigned experiments and teacher feedback will stay linked to your account.</p>
-    <form onSubmit={e=>{e.preventDefault();void handleLogin();}}>
-      <label className="field">Student access code<input required maxLength={10} autoComplete="off" value={accessCode} onChange={e=>setAccessCode(e.target.value.toUpperCase())} placeholder="10-character code"/></label>
-      <label className="field">Personal PIN<input required type="password" inputMode="numeric" minLength={6} maxLength={12} value={pin} onChange={e=>setPin(e.target.value)} placeholder="6–12 digit PIN"/></label>
-      <button className="button-primary full" disabled={busy||accessCode.trim().length!==10||pin.length<6} type="submit">{busy?'Checking credentials...':'Sign in to laboratory'} <ArrowRight size={16}/></button>
-      {error&&<div role="alert" className="error-message">{error}</div>}
-    </form>
-    <p className="signin-note">Scoolabs works without internet. Student access is issued locally by a school teacher. Teacher setup is available from the left menu.</p>
+  return <section className="scoolabs-welcome" aria-label="Welcome to Scoolabs">
+    <div className="welcome-story">
+      <BrandLockup inverse size="lg"/>
+      <div className="welcome-story-content">
+        <span className="welcome-overline">DISCOVER THE SCIENCE AROUND YOU</span>
+        <h1>Curiosity belongs in every classroom<span>.</span></h1>
+        <p>Explore practical science, record your findings and learn from teacher feedback. All on your school computer, even without internet access.</p>
+        <div className="welcome-qualities">
+          <span><FlaskConical size={17}/> 12 interactive practicals</span>
+          <span><BookOpen size={17}/> 4 science subjects</span>
+          <span><WifiOff size={17}/> Offline-first learning</span>
+        </div>
+      </div>
+      <div className="welcome-story-footer">SCIENTIFIC DISCOVERY MADE ACCESSIBLE <span>·</span> BY SIMEON'S LABORATORIES AND CO TECHNOLOGIES LTD</div>
+    </div>
+    <div className="student-signin welcome-signin">
+      <div className="student-signin-icon"><GraduationCap size={27}/></div>
+      <span className="eyebrow">STUDENT ACCESS</span>
+      <h2>Continue learning</h2>
+      <p>Enter the access code and PIN your teacher provided to see your assignments, notebook and feedback.</p>
+      <form onSubmit={e=>{e.preventDefault();void handleLogin();}}>
+        <label className="field">Student access code<input required maxLength={10} autoComplete="off" value={accessCode} onChange={e=>setAccessCode(e.target.value.toUpperCase())} placeholder="10-character code"/></label>
+        <label className="field">Personal PIN<input required type="password" inputMode="numeric" minLength={6} maxLength={12} autoComplete="off" value={pin} onChange={e=>setPin(e.target.value)} placeholder="6–12 digit PIN"/></label>
+        <button className="button-primary full" disabled={busy||accessCode.trim().length!==10||pin.length<6} type="submit">{busy?'Checking credentials...':'Enter my laboratory'} <ArrowRight size={16}/></button>
+        {error&&<div role="alert" className="error-message">{error}</div>}
+      </form>
+      <div className="welcome-teacher-path"><strong>Setting up Scoolabs for a school?</strong><p>Teachers start by creating a local teacher account, then add classes and issue student access codes.</p>
+      <button className="button-outline" type="button" onClick={onTeacher}>Open teacher setup <ArrowRight size={15}/></button></div>
+      <p className="signin-note"><WifiOff size={14}/> No Wi-Fi required. Your school's data stays on this computer.</p>
+    </div>
   </section>;
 }
 
@@ -376,7 +395,7 @@ function App() {
     <a href="#scoolabs-main" className="skip-link">Skip to main content</a>
     {sidebar && <div className="mobile-scrim" onClick={()=>setSidebar(false)}/>}
     <aside className={'sidebar '+(sidebar?'open':'')}>
-      <div className="brand"><span className="brand-mark"><FlaskConical size={22}/></span><span><strong>Scoo<span>labs</span></strong><small>VIRTUAL SCIENCE LAB</small></span><button className="close-menu" onClick={()=>setSidebar(false)} aria-label="Close menu"><X size={19}/></button></div>
+      <div className="brand"><BrandLockup inverse size="sm"/><button className="close-menu" onClick={()=>setSidebar(false)} aria-label="Close menu"><X size={19}/></button></div>
       <div className="nav-heading">WORKSPACE</div>
       <nav aria-label="Main navigation" id="scoolabs-navigation">
         <button onClick={()=>navigate('progress')} aria-current={page==='progress'?'page':undefined} className={'nav-link '+(page==='progress'?'selected':'')}><LayoutDashboard size={19}/> My progress <span className="nav-count">{records.length}</span></button>
@@ -396,7 +415,7 @@ function App() {
       <div className="content-pad">
         {storageError&&<div role="alert" className="storage-warning">{storageError}</div>}
         {!storageReady&&<div className="record-note">Opening offline database...</div>}
-        {page==='teacher'?<TeacherPanel/>:isTauri()&&!studentSession?<StudentSignIn onSignedIn={onSignedIn}/>:page==='progress'?<StudentDashboard
+        {page==='teacher'?<TeacherPanel/>:isTauri()&&!studentSession?<StudentSignIn onSignedIn={onSignedIn} onTeacher={()=>navigate('teacher')}/>:page==='progress'?<StudentDashboard
           records={records} assignments={assignments} checks={knowledgeResults} studentName={profile.name}
           classroom={profile.classroom} isPreview={!isTauri()}
           onOpenExperiment={experimentId=>{const match=experiments.find(e=>e.id===experimentId);if(match){setActiveId(match.id);setPage(match.subject);setSidebar(false);setSaved(false);setDraft(null)}}}
@@ -426,7 +445,7 @@ function App() {
             onSaved={savedResult=>setKnowledgeResults(current=>[...current.filter(x=>x.experimentId!==savedResult.experimentId),savedResult])}/>
           </>
         }
-        <footer className="content-footer"><span>Simeon's Laboratories and Co Technologies Ltd</span><span>Designed for Nigerian classrooms · Offline first</span></footer>
+        <footer className="content-footer"><span>Simeon's Laboratories and Co Technologies Ltd</span><span>Discover · Experiment · Understand</span></footer>
       </div>
     </main>
     {draft&&<FocusScope className="modal-backdrop" onEscape={()=>setDraft(null)} role="presentation"><div className="dialog" role="dialog" aria-modal="true" aria-labelledby="record-title"><button className="dialog-close" onClick={()=>setDraft(null)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LABORATORY NOTEBOOK</span><h2 id="record-title">Save your experiment</h2><p>Record your observation and conclusion locally on this computer.</p><div className="dialog-data"><strong>Observation</strong><span>{draft.observation}</span><small>{draft.settings}</small></div>{isTauri()?<div className="record-note"><ShieldCheck size={17}/> Signed in as {profile.name} ({profile.classroom}). This record will be saved to your authenticated student account.</div>:<div className="form-two"><label>Student name<input value={profile.name} onChange={e=>setProfile(p=>({...p,name:e.target.value}))} placeholder="e.g. Ada Musa"/></label><label>Class<input value={profile.classroom} onChange={e=>setProfile(p=>({...p,classroom:e.target.value}))} placeholder="e.g. SS2A"/></label></div>}{isTauri()&&assignments.some(a=>a.experimentId===selected.id)&&<label className="field">Submit for assignment<select aria-label="Choose class assignment" value={selectedAssignmentId} onChange={e=>setSelectedAssignmentId(e.target.value)}><option value="">Personal practice (not submitted)</option>{assignments.filter(a=>a.experimentId===selected.id).map(a=><option key={a.id} disabled={records.some(r=>r.assignmentId===a.id)} value={a.id}>{a.title}{records.some(r=>r.assignmentId===a.id)?' (already submitted)':''}</option>)}</select></label>}<div className="report-helper"><div className="report-helper-heading"><strong>Write a better practical report</strong><button className="text-button" type="button" aria-expanded={showReportHelp} onClick={()=>setShowReportHelp(v=>!v)}>{showReportHelp?'Hide writing prompts':'Show writing prompts'}</button></div>

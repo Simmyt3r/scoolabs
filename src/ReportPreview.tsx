@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { BookOpen, Printer, X } from 'lucide-react';
+import { Printer, X } from 'lucide-react';
 import { guides } from './guides';
 import type { LabRecord } from './store';
 import { reportMetadata, RUBRIC } from './assessment';
@@ -11,7 +11,7 @@ export default function ReportPreview({record,assignmentTitle,onClose}:{record:L
   return createPortal(<FocusScope className="report-preview-screen" role="dialog" ariaLabel="Practical report preview" onEscape={onClose}>
     <div className="report-preview-toolbar"><strong>Practical report preview</strong><span>Designed for A4 paper or Print to PDF</span><button className="button-primary" onClick={()=>window.print()}><Printer size={16}/> Print report</button><button className="button-outline" onClick={onClose}><X size={16}/> Close</button></div>
     <article className="report-sheet" aria-label="Printable laboratory report">
-      <header className="report-sheet-header"><div className="report-sheet-mark"><BookOpen size={25}/></div><div><span className="report-sheet-product">SCOOLABS</span><strong>Virtual Science Laboratory</strong><small>STUDENT PRACTICAL REPORT</small></div></header>
+      <header className="report-sheet-header"><div className="report-sheet-mark"><img src="/brand/scoolabs-mark.svg" alt="" width="47" height="47"/></div><div><span className="report-sheet-product">SCOOLABS</span><strong>Virtual Science Laboratory</strong><small>STUDENT PRACTICAL REPORT</small></div></header>
       <h1>{report.title}</h1>
       <div className="report-sheet-meta">
         <div><span>Student</span><strong>{report.student}</strong></div><div><span>Class</span><strong>{report.classroom}</strong></div>

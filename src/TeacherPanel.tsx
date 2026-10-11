@@ -7,6 +7,7 @@ import type { LabRecord } from './store';
 import { gradebookSummary, assignmentProgress, downloadGradebook } from './gradebook';
 import { EMPTY_RUBRIC, RUBRIC, parseRubricFeedback, rubricFeedback, scoreRubric, type RubricInputs } from './assessment';
 import ReportPreview from './ReportPreview';
+import BrandLockup from './BrandLockup';
 
 function GradeEntry({record,token,refresh}:{record:LabRecord;token:string;refresh:()=>Promise<void>}) {
   const prior=parseRubricFeedback(record.feedback);
@@ -135,7 +136,14 @@ export default function TeacherPanel() {
   }
   if(loading)return <div className="teacher-page"><h1>Teacher workspace</h1><p>Loading local school data...</p></div>;
   if(!session)return <div className="teacher-page">
+    <div className="teacher-brand"><BrandLockup size="sm"/></div>
     <span className="eyebrow">OFFLINE CLASSROOM MANAGEMENT</span><h1>Teacher workspace</h1><p>Manage classes, students, laboratory assignments and marking without internet access.</p>
+    {!accounts.length&&<div className="teacher-setup-path" aria-label="Teacher first-run steps">
+      <div><span>1</span><strong>Create teacher account</strong><small>Protect your workspace with a PIN.</small></div>
+      <div><span>2</span><strong>Add classes</strong><small>Set up each classroom.</small></div>
+      <div><span>3</span><strong>Enrol students</strong><small>Issue individual codes and PINs.</small></div>
+      <div><span>4</span><strong>Assign practicals</strong><small>Review reports and give feedback.</small></div>
+    </div>}
     <div className="teacher-login-card"><div className="teacher-lock"><LockKeyhole size={25}/></div><h2>{accounts.length?'Sign in as a teacher':'Set up your first teacher account'}</h2>
       <p>{accounts.length?'Enter your private PIN to access teacher tools.':'The first teacher created on this computer becomes its local administrator. Choose a memorable 6–12 digit PIN.'}</p>
       {accounts.length?<label className="field">Teacher<select value={teacherId} onChange={e=>setTeacherId(e.target.value)}>{accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label>:<label className="field">Teacher name<input value={name} maxLength={120} onChange={e=>setName(e.target.value)} placeholder="Full name"/></label>}
