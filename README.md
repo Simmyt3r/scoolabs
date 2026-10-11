@@ -4,7 +4,7 @@
 
 Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 
-## Current prototype (v0.4)
+## Current prototype (v0.5)
 
 | Subject | Working simulation | Current controls |
 | --- | --- | --- |
@@ -60,3 +60,12 @@ The native student notebook APIs no longer expose arbitrary name/class record re
 Each of the twelve exercises includes local equipment lists, guided procedures, assessment questions, safety notes and model limitations. Teachers can compare class-level submissions and graded work and export a spreadsheet-safe CSV gradebook. No cloud services are required for any of these features.
 
 **Pre-branding status:** Version 0.4 is a development build. Final product icons, installer appearance, real-school low-spec Windows testing and independent subject-teacher sign-off are still pending.
+
+
+## Classroom assignments (v0.5 development build)
+
+Teachers create practical assignments for individual classes, using one of twelve registered Scoolabs experiments. Authenticated students see **My assignments**, launch the relevant laboratory, and submit their observations directly to a selected assignment. The app verifies student class, experiment identity and uniqueness in native SQLite and accepts only one submission per student per assignment. Personal practice can still be recorded without linking to an assignment.
+
+Teachers can see submitted, marked and outstanding counts for each activity; open reports filtered to one assignment; mark reports; and export the filtered gradebook CSV. Native migrations preserve existing v0.4 records and leave historical notes unassigned. The workflow is fully offline and relies on the physical security of the school device.
+
+This is a **pre-branding development build**. Classroom testing on a real Windows installation remains deferred until final product branding.

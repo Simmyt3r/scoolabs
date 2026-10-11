@@ -40,3 +40,18 @@ Safety snapshots named before-restore-*.sqlite3 are also listed in the Recovery 
 Five incorrect student PIN attempts produce a five-minute code lockout within the running process. Teacher code lists and reset actions require teacher authentication. Old roster entries without credentials can be activated by setting their first PIN. Do not display or distribute all credentials together.
 
 Existing pre-v0.4 SQLite records are preserved as teacher-visible historical entries. Their unverified name/class claims are not automatically attached to student IDs. Browser-preview localStorage remains only for development testing.
+
+
+## v0.5 assignment submission workflow
+
+1. A teacher signs in, selects Assignments, selects the target class, chooses an existing experiment, and enters instructions.
+2. A student signs in with their own personal code and PIN, then opens **My assignments** from the sidebar.
+3. An assignment card opens its specified simulation directly and shows the pending/completed status.
+4. After interacting with the instruments, select **Record these results**. The unsubmitted assignment is preselected; students can explicitly choose Personal practice instead.
+5. Confirm the resulting observation and add a conclusion. Saving creates a student-owned report linked to the selected assignment. One submission per student per assignment is enforced in SQLite.
+6. Teachers review the per-assignment progress counts and choose **View submissions** to filter and grade the linked records.
+7. Student reports show the linked assignment and teacher marks. Teachers may export a spreadsheet-safe CSV of visible records.
+
+Existing SQLite and legacy notes stay intact but are **not** automatically credited to new assignments. Teachers can create a fresh assignment for resubmission. Native checks prevent a student from submitting to another class's assignment, choosing an incompatible experiment or submitting twice. Class counts reflect known student rosters and records currently held by the local database.
+
+Branding, teacher-led scientific acceptance tests and Windows school-hardware installation testing remain later milestones.
