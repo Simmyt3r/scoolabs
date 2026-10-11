@@ -106,3 +106,5 @@
 .measurement-fit{margin:7px!important;color:#157e72;font-size:11px;line-height:1.5;font-weight:750;padding:8px 10px}
 .measurement-caveat{margin:12px 0 0;font-size:10px;color:#80949e;line-height:1.7}
 @media(max-width:750px){.measurement-data-grid{grid-template-columns:1fr}.measurement-log{padding:15px}.measurement-chart{min-height:0}}
+
+.assignment-template-button{margin:0 0 15px;font-size:11px;padding:10px 12px}.teacher-form-card textarea{min-height:110px;resize:vertical;line-height:1.6}
