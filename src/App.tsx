@@ -13,6 +13,7 @@ import TeacherPanel from './TeacherPanel';
 import { SeparationLab, LensLab, TranspirationLab, NutrientsLab } from './FinalLabs';
 import { guides } from './guides';
 import ReportPreview from './ReportPreview';
+import { parseRubricFeedback } from './assessment';
 
 type Page = Subject | 'notebook' | 'assignments' | 'teacher';
 const SUBJECTS = {
@@ -203,7 +204,7 @@ function Records({records, assignments, onBack}: {records:LabRecord[];assignment
     </div>
     <div className="record-note"><ShieldCheck size={18}/> Your notes stay on this device. Export a backup before uninstalling Scoolabs or clearing the app data.</div>
     {records.length===0 ? <div className="empty-state"><ClipboardList size={38}/><h3>No observations saved yet</h3><p>Complete an experiment and choose “Record these results” to begin.</p><button className="button-primary" onClick={onBack}>Explore experiments <ArrowRight size={16}/></button></div>:
-    <div className="records-table"><table><thead><tr><th>Experiment</th><th>Student</th><th>Class</th><th>Recorded</th><th>Observation</th></tr></thead><tbody>{records.map(r=><tr key={r.id}><td><strong>{r.experimentTitle}</strong><span>{SUBJECTS[r.subject].label}</span></td><td>{r.student}</td><td>{r.classroom}</td><td>{new Date(r.timestamp).toLocaleString()}</td><td><span>{r.observation}</span>{r.conclusion && <small>Conclusion: {r.conclusion}</small>}{r.assignmentId&&<small>Submitted for: {assignments.find(a=>a.id===r.assignmentId)?.title??'Class assignment'}</small>}{r.grade!==null&&r.grade!==undefined&&<small><strong>Teacher score: {r.grade}/100</strong>{r.feedback?' · '+r.feedback:''}</small>}<button className="text-button print-record-button" onClick={()=>setPreview(r)}>Preview / print report</button></td></tr>)}</tbody></table></div>}
+    <div className="records-table"><table><thead><tr><th>Experiment</th><th>Student</th><th>Class</th><th>Recorded</th><th>Observation</th></tr></thead><tbody>{records.map(r=><tr key={r.id}><td><strong>{r.experimentTitle}</strong><span>{SUBJECTS[r.subject].label}</span></td><td>{r.student}</td><td>{r.classroom}</td><td>{new Date(r.timestamp).toLocaleString()}</td><td><span>{r.observation}</span>{r.conclusion && <small>Conclusion: {r.conclusion}</small>}{r.assignmentId&&<small>Submitted for: {assignments.find(a=>a.id===r.assignmentId)?.title??'Class assignment'}</small>}{r.grade!==null&&r.grade!==undefined&&<small><strong>Teacher score: {r.grade}/100</strong>{r.feedback?' · '+(parseRubricFeedback(r.feedback)?.comment??r.feedback):''}</small>}<button className="text-button print-record-button" onClick={()=>setPreview(r)}>Preview / print report</button></td></tr>)}</tbody></table></div>}
     {preview&&<ReportPreview record={preview} assignmentTitle={assignments.find(a=>a.id===preview.assignmentId)?.title} onClose={()=>setPreview(null)}/>}
   </section>;
 }

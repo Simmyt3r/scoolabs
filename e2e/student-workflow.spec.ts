@@ -58,3 +58,32 @@ test('each virtual practical includes an offline learning manual', async ({page}
 });
 
 test('students can find the assignments workspace offline',async({page})=>{await page.goto('/');await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:/My assignments/}).click();await expect(page.getByRole('heading',{name:'Class assignments'})).toBeVisible();await expect(page.getByText('No practical assignments yet')).toBeVisible();});
+
+
+test('saved student practicals have a paper-ready report preview',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('scoolabs.profile.v1',JSON.stringify({name:'Test Learner',classroom:'SS2A'}));
+    localStorage.setItem('scoolabs.records.v1',JSON.stringify([{
+      id:'record-a',timestamp:'2026-10-11T12:00:00Z',student:'Test Learner',classroom:'SS2A',
+      experimentId:'ohms-law',experimentTitle:"Ohm's Law",subject:'physics',
+      settings:'Voltage 3 V; resistance 10 ohms',observation:'Current = 0.30 A',
+      conclusion:'Current is proportional to voltage',grade:0,feedback:'Revise the explanation'
+    }]));
+  });
+  await page.goto('/');
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:/My notebook/}).click();
+  await page.getByRole('button',{name:'Preview / print report'}).click();
+  const report=page.getByRole('dialog',{name:'Practical report preview'});
+  await expect(report).toBeVisible();
+  await expect(report).toContainText('Test Learner');
+  await expect(report).toContainText('Current = 0.30 A');
+  await expect(report).toContainText('0 / 100');
+  await expect(report.getByRole('button',{name:'Print report'})).toBeVisible();
+  await page.emulateMedia({media:'print'});
+  await expect(page.locator('.report-sheet')).toBeVisible();
+  await expect(page.locator('.report-preview-toolbar')).toBeHidden();
+  await expect(page.locator('#root')).toBeHidden();
+  await page.emulateMedia({media:'screen'});
+  await report.getByRole('button',{name:'Close'}).click();
+  await expect(report).toHaveCount(0);
+});

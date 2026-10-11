@@ -55,3 +55,10 @@ Existing pre-v0.4 SQLite records are preserved as teacher-visible historical ent
 Existing SQLite and legacy notes stay intact but are **not** automatically credited to new assignments. Teachers can create a fresh assignment for resubmission. Native checks prevent a student from submitting to another class's assignment, choosing an incompatible experiment or submitting twice. Class counts reflect known student rosters and records currently held by the local database.
 
 Branding, teacher-led scientific acceptance tests and Windows school-hardware installation testing remain later milestones.
+
+## Printable reports and teacher rubrics (pre-branding)
+- Students open My notebook → Preview / print report for a saved observation. Teachers can preview reports from Mark reports.
+- Preview includes student/class, experiment settings, observations, conclusion, scientific limitations, assignment title when available, and teacher feedback.
+- Print report uses the system print dialog and A4 CSS. Actual Windows printing still requires device validation after branding.
+- Teachers can enter a direct mark or use Method and settings (25), Observations (35), Scientific reasoning (30) and Report clarity (10). All criteria are required.
+- A zero grade is valid; ungraded work explicitly says it has not been marked.

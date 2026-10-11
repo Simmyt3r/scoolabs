@@ -43,3 +43,8 @@ SQLite persistence and import/restore, local classes and teacher marking, curric
 - Build native Windows executable and run Rust database tests in the Windows workflow.
 - Student enrolment/credential issuance, login lockout, student scoped records, teacher PIN reset and SQLite restoration need hands-on end-to-end testing on school PCs after the agreed branding milestone.
 - Native credential handling is unavailable in the plain browser preview, by design.
+
+## Print report and assessment checks
+- Rubric unit tests cover total=100, invalid points, round-trip details and valid zero scores.
+- Playwright tests report preview, sample content, print media visibility and closing the modal.
+- Native WebView2 printing remains a physical Windows acceptance test after branding.
