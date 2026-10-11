@@ -1,0 +1,67 @@
+/**
+ * Deterministic classroom models. These approximate idealised experimental conditions,
+ * NOT laboratory safety advice or clinically/agronomically validated predictions.
+ */
+export type Subject = 'chemistry' | 'physics' | 'biology' | 'agriculture';
+
+export interface Experiment {
+  id: string;
+  subject: Subject;
+  title: string;
+  description: string;
+  level: string;
+  minutes: number;
+  ready: boolean;
+  objectives: string[];
+}
+
+export const experiments: Experiment[] = [
+  { id: 'titration', subject: 'chemistry', title: 'Acid–Base Titration', description: 'Neutralise a strong acid and observe the indicator.', level: 'SS 2–3', minutes: 20, ready: true, objectives: ['Read a burette accurately', 'Identify the end point', 'Calculate an unknown concentration'] },
+  { id: 'separation', subject: 'chemistry', title: 'Separation of Mixtures', description: 'Explore filtration and evaporation.', level: 'SS 1', minutes: 15, ready: false, objectives: [] },
+  { id: 'ph-indicators', subject: 'chemistry', title: 'pH and Indicators', description: 'Classify solutions as acidic or alkaline.', level: 'SS 1–2', minutes: 15, ready: false, objectives: [] },
+  { id: 'ohms-law', subject: 'physics', title: "Ohm’s Law", description: 'Build a simple circuit and investigate V = IR.', level: 'SS 2', minutes: 20, ready: true, objectives: ['Measure potential difference and current', 'Calculate resistance', 'Plot voltage against current'] },
+  { id: 'pendulum', subject: 'physics', title: 'Simple Pendulum', description: 'Investigate the relationship between length and period.', level: 'SS 2', minutes: 20, ready: false, objectives: [] },
+  { id: 'convex-lens', subject: 'physics', title: 'Convex Lens', description: 'Investigate image formation by lenses.', level: 'SS 3', minutes: 20, ready: false, objectives: [] },
+  { id: 'microscopy', subject: 'biology', title: 'Using the Microscope', description: 'Explore prepared slides at different magnifications.', level: 'SS 1', minutes: 20, ready: true, objectives: ['Identify microscope parts', 'Select objective lenses', 'Describe observed cell structures'] },
+  { id: 'osmosis', subject: 'biology', title: 'Osmosis', description: 'Investigate water movement across a membrane.', level: 'SS 2', minutes: 20, ready: false, objectives: [] },
+  { id: 'transpiration', subject: 'biology', title: 'Transpiration', description: 'Study factors affecting water loss from leaves.', level: 'SS 2', minutes: 20, ready: false, objectives: [] },
+  { id: 'germination', subject: 'agriculture', title: 'Seed Germination', description: 'Observe modelled effects of moisture and temperature.', level: 'SS 1–2', minutes: 20, ready: true, objectives: ['Identify conditions required for germination', 'Compare conditions', 'Record and interpret results'] },
+  { id: 'soil', subject: 'agriculture', title: 'Soil Texture and pH', description: 'Classify soil and interpret pH.', level: 'SS 1', minutes: 15, ready: false, objectives: [] },
+  { id: 'nutrients', subject: 'agriculture', title: 'Plant Nutrients', description: 'Recognise nutrient deficiency symptoms.', level: 'SS 2', minutes: 15, ready: false, objectives: [] },
+];
+
+export type TitrationResult = { ph: number; equivalenceMl: number; indicator: 'colourless' | 'pale pink' | 'pink'; excess: 'acid' | 'base' | 'neutral' };
+export function titrate(baseConcentration: number, volumeMl: number, acidConcentration = 0.1, acidVolumeMl = 25): TitrationResult {
+  if (![baseConcentration, volumeMl, acidConcentration, acidVolumeMl].every(Number.isFinite) || baseConcentration <= 0 || volumeMl < 0 || acidConcentration <= 0 || acidVolumeMl <= 0) throw new RangeError('Invalid titration input');
+  const acidMoles = acidConcentration * acidVolumeMl / 1000;
+  const baseMoles = baseConcentration * volumeMl / 1000;
+  const net = baseMoles - acidMoles;
+  const totalL = (acidVolumeMl + volumeMl) / 1000;
+  // Idealised strong monoprotic acid / strong monobasic base at 25 °C.
+  const ph = Math.abs(net) < 1e-12 ? 7 : net < 0 ? -Math.log10(-net / totalL) : 14 + Math.log10(net / totalL);
+  const clamped = Math.min(14, Math.max(0, ph));
+  return { ph: clamped, equivalenceMl: acidMoles / baseConcentration * 1000, indicator: clamped < 8.2 ? 'colourless' : clamped < 10 ? 'pale pink' : 'pink', excess: Math.abs(net) < 1e-12 ? 'neutral' : net < 0 ? 'acid' : 'base' };
+}
+
+export function circuit(voltage: number, resistance: number) {
+  if (!Number.isFinite(voltage) || voltage < 0 || !Number.isFinite(resistance) || resistance <= 0) throw new RangeError('Invalid circuit values');
+  const current = voltage / resistance;
+  return { current, power: voltage * current, voltage, resistance };
+}
+
+export function microscope(objective: 4 | 10 | 40, eyepiece = 10) {
+  if (![4, 10, 40].includes(objective) || !Number.isFinite(eyepiece) || eyepiece <= 0) throw new RangeError('Invalid lens');
+  return { magnification: objective * eyepiece, fieldOfViewMm: 18 / objective };
+}
+
+export type Crop = 'maize' | 'cowpea' | 'rice';
+export function germination(crop: Crop, moisture: number, temperature: number, day: number) {
+  if (!['maize', 'cowpea', 'rice'].includes(crop) || ![moisture, temperature, day].every(Number.isFinite) || moisture < 0 || moisture > 100 || temperature < 0 || temperature > 55 || day < 0 || day > 21) throw new RangeError('Invalid germination input');
+  // Illustrative lesson model, not a field germination forecast.
+  const speed = crop === 'rice' ? 0.75 : crop === 'cowpea' ? 1.15 : 1;
+  const moistureFactor = Math.max(0, Math.min(1, (moisture - 10) / 30, (95 - moisture) / 25));
+  const temperatureFactor = Math.max(0, Math.min(1, (temperature - 8) / 14, (43 - temperature) / 11));
+  const viability = Math.max(0, Math.min(1, moistureFactor * temperatureFactor));
+  const germinated = Math.round(100 * viability * Math.max(0, 1 - Math.exp(-0.35 * speed * Math.max(0, day - 1))));
+  return { percentage: germinated, viable: Math.round(100 * viability), heightCm: Math.round(Math.max(0, day - 3) * speed * viability * 1.6 * 10) / 10 };
+}

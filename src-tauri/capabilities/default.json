@@ -1,0 +1,10 @@
+{
+  "identifier": "default",
+  "description": "Minimum permissions required by the Scoolabs desktop interface",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default"
+  ]
+}
