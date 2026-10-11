@@ -6,6 +6,9 @@ on:
     tags: ['v*']
   workflow_dispatch:
 
+concurrency:
+  group: scoolabs-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 permissions:
   contents: write
 
