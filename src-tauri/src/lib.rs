@@ -1,5 +1,6 @@
 mod database;
 mod student;
+mod knowledge;
 
 use std::{collections::HashMap, sync::Mutex};
 
@@ -37,6 +38,9 @@ pub fn run() {
             student::student_records,
             student::student_assignments,
             student::student_submit_record,
+            knowledge::submit_knowledge_check,
+            knowledge::student_knowledge_results,
+            knowledge::teacher_knowledge_results,
         ])
         .run(tauri::generate_context!())
         .expect("failed to start Scoolabs");

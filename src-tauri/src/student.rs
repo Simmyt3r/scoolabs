@@ -34,7 +34,7 @@ pub struct StudentAssignment {
     pub instructions: String,
     pub created_at: String,
 }
-fn guard_student(sessions: &State<'_, StudentSessions>, token: &str) -> Result<String,String> {
+pub(crate) fn guard_student(sessions: &State<'_, StudentSessions>, token: &str) -> Result<String,String> {
     let mut guard=sessions.0.lock().map_err(db_error)?;
     guard.retain(|_,(_,start)|start.elapsed() < Duration::from_secs(3*60*60));
     guard.get(token).map(|(id,_)|id.clone())

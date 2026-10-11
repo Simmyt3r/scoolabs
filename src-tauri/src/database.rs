@@ -146,7 +146,17 @@ pub(crate) fn create_tables(conn: &Connection) -> rusqlite::Result<()> {
            student_id TEXT NOT NULL REFERENCES students(id),
            record_id TEXT NOT NULL UNIQUE REFERENCES notebook_records(id),
            PRIMARY KEY (assignment_id, student_id)
-         );"
+         );
+         CREATE TABLE IF NOT EXISTS knowledge_checks (
+           student_id TEXT NOT NULL REFERENCES students(id),
+           experiment_id TEXT NOT NULL,
+           first_choice INTEGER NOT NULL CHECK(first_choice BETWEEN 0 AND 2),
+           second_choice INTEGER NOT NULL CHECK(second_choice BETWEEN 0 AND 2),
+           correct INTEGER NOT NULL CHECK(correct BETWEEN 0 AND 2),
+           updated_at TEXT NOT NULL,
+           PRIMARY KEY(student_id,experiment_id)
+         );
+         CREATE INDEX IF NOT EXISTS knowledge_checks_by_experiment ON knowledge_checks(experiment_id);"
     )?;
     // Existing v0.4 school databases already contain notebook_records without this field.
     let column_exists:bool={

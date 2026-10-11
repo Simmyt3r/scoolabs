@@ -2,6 +2,11 @@ import { invoke, isTauri } from '@tauri-apps/api/core';
 import { getProfile as legacyProfile, getRecords as legacyRecords, saveRecord as browserSaveRecord, saveProfile as browserSaveProfile } from './store';
 import type { LearnerProfile, LabRecord } from './store';
 
+export interface KnowledgeResult {experimentId:string;firstChoice:number;secondChoice:number;correct:number;updatedAt:string}
+export interface TeacherKnowledgeResult extends KnowledgeResult {studentId:string;studentName:string;classroom:string}
+export async function submitKnowledgeCheck(token:string,experimentId:string,answers:number[]):Promise<KnowledgeResult>{nativeOnly();return invoke('submit_knowledge_check',{token,experimentId,answers})}
+export async function studentKnowledgeResults(token:string):Promise<KnowledgeResult[]>{nativeOnly();return invoke('student_knowledge_results',{token})}
+export async function teacherKnowledgeResults(token:string):Promise<TeacherKnowledgeResult[]>{nativeOnly();return invoke('teacher_knowledge_results',{token})}
 export interface StudentSession { token:string; studentId:string; studentName:string; classroom:string }
 export interface StudentEnrolment { studentId:string; accessCode:string }
 export async function loginStudent(accessCode:string,pin:string):Promise<StudentSession>{nativeOnly();return invoke('student_login',{accessCode,pin})}
