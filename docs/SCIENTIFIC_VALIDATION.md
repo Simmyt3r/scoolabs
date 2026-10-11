@@ -23,3 +23,11 @@ This document records sources and algorithmic checks, **not approval by qualifie
 - Windows CI additionally executes Rust tests for database schema, PIN hashing and idempotent import.
 - Classroom acceptance requires subject-teacher review, comparison with independently worked examples and offline hardware pilot testing.
 - This virtual teaching aid complements, but does not replace, physically supervised lab practice.
+
+## Third lesson per subject (v0.3)
+- Chemistry, separation: NaCl/sand/water mass balance, assuming complete dissolution at approximately 20 C, ideal filtration and zero loss.
+- Physics, convex lens: signed ideal thin-lens formula 1/f = 1/u + 1/v; real/virtual image and magnification m=-v/u. Source: https://openstax.org/books/university-physics-volume-3/pages/2-4-thin-lenses
+- Biology, potometer: capillary bubble movement measures water uptake, not transpiration directly. Conversion: 1 cubic millimetre = 1 microlitre.
+- Agriculture, nutrient limitation: student-selectable N, P and K textbook symptoms, NOT diagnosis or fertilizer advice.
+
+Every newly added mathematical function has deterministic unit tests, explicit input validation, and documented simplifying assumptions. External teacher review is still required.

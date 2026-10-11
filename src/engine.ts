@@ -17,17 +17,17 @@ export interface Experiment {
 
 export const experiments: Experiment[] = [
   { id: 'titration', subject: 'chemistry', title: 'Acid–Base Titration', description: 'Neutralise a strong acid and observe the indicator.', level: 'SS 2–3', minutes: 20, ready: true, objectives: ['Read a burette accurately', 'Identify the end point', 'Calculate an unknown concentration'] },
-  { id: 'separation', subject: 'chemistry', title: 'Separation of Mixtures', description: 'Explore filtration and evaporation.', level: 'SS 1', minutes: 15, ready: true, objectives: [] },
+  { id: 'separation', subject: 'chemistry', title: 'Separation of Mixtures', description: 'Explore filtration and evaporation.', level: 'SS 1', minutes: 15, ready: true, objectives: ["Compare mixtures and solutions","Use mass balance in filtration and evaporation","Describe ideal separation assumptions"] },
   { id: 'ph-indicators', subject: 'chemistry', title: 'pH and Indicators', description: 'Classify solutions as acidic or alkaline.', level: 'SS 1–2', minutes: 15, ready: true, objectives: [] },
   { id: 'ohms-law', subject: 'physics', title: "Ohm’s Law", description: 'Build a simple circuit and investigate V = IR.', level: 'SS 2', minutes: 20, ready: true, objectives: ['Measure potential difference and current', 'Calculate resistance', 'Plot voltage against current'] },
   { id: 'pendulum', subject: 'physics', title: 'Simple Pendulum', description: 'Investigate the relationship between length and period.', level: 'SS 2', minutes: 20, ready: true, objectives: [] },
-  { id: 'convex-lens', subject: 'physics', title: 'Convex Lens', description: 'Investigate image formation by lenses.', level: 'SS 3', minutes: 20, ready: true, objectives: [] },
+  { id: 'convex-lens', subject: 'physics', title: 'Convex Lens', description: 'Investigate image formation by lenses.', level: 'SS 3', minutes: 20, ready: true, objectives: ["Use the thin lens equation","Identify real versus virtual images","Interpret signed magnification"] },
   { id: 'microscopy', subject: 'biology', title: 'Using the Microscope', description: 'Explore prepared slides at different magnifications.', level: 'SS 1', minutes: 20, ready: true, objectives: ['Identify microscope parts', 'Select objective lenses', 'Describe observed cell structures'] },
   { id: 'osmosis', subject: 'biology', title: 'Osmosis', description: 'Investigate water movement across a membrane.', level: 'SS 2', minutes: 20, ready: true, objectives: [] },
-  { id: 'transpiration', subject: 'biology', title: 'Transpiration', description: 'Study factors affecting water loss from leaves.', level: 'SS 2', minutes: 20, ready: true, objectives: [] },
+  { id: 'transpiration', subject: 'biology', title: 'Transpiration', description: 'Study factors affecting water loss from leaves.', level: 'SS 2', minutes: 20, ready: true, objectives: ["Identify potometer measurements","Calculate capillary uptake volume and rate","Distinguish uptake from transpiration"] },
   { id: 'germination', subject: 'agriculture', title: 'Seed Germination', description: 'Observe modelled effects of moisture and temperature.', level: 'SS 1–2', minutes: 20, ready: true, objectives: ['Identify conditions required for germination', 'Compare conditions', 'Record and interpret results'] },
   { id: 'soil', subject: 'agriculture', title: 'Soil Fractions and pH', description: 'Classify soil and interpret pH.', level: 'SS 1', minutes: 15, ready: true, objectives: [] },
-  { id: 'nutrients', subject: 'agriculture', title: 'Plant Nutrients', description: 'Recognise nutrient deficiency symptoms.', level: 'SS 2', minutes: 15, ready: true, objectives: [] },
+  { id: 'nutrients', subject: 'agriculture', title: 'Plant Nutrients', description: 'Recognise nutrient deficiency symptoms.', level: 'SS 2', minutes: 15, ready: true, objectives: ["Describe the roles of N, P and K","Recognise illustrative nutrient limitation symptoms","Explain why visual symptoms are not a diagnosis"] },
 ];
 
 export type TitrationResult = { ph: number; equivalenceMl: number; indicator: 'colourless' | 'pale pink' | 'pink'; excess: 'acid' | 'base' | 'neutral' };

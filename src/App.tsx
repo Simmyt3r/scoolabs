@@ -9,6 +9,7 @@ import { exportRecords, type LabRecord, type LearnerProfile } from './store';
 import { initialiseStore, readRecords, writeRecord, saveStudentProfile, getClassCatalog, getClassAssignments, type Classroom, type Assignment } from './native-storage';
 import { IndicatorsLab, PendulumLab, OsmosisLab, SoilLab } from './AdvancedLabs';
 import TeacherPanel from './TeacherPanel';
+import { SeparationLab, LensLab, TranspirationLab, NutrientsLab } from './FinalLabs';
 
 type Page = Subject | 'notebook' | 'teacher';
 const SUBJECTS = {
@@ -291,7 +292,7 @@ function App() {
           <div className="experiment-tabs" role="group" aria-label="Select an experiment">{visible.map(exp=><button key={exp.id} className={'experiment-pill '+(activeId===exp.id?'active':'')} disabled={!exp.ready} title={exp.ready?exp.description:'Planned for a future version'} onClick={()=>{setActiveId(exp.id);setSaved(false);setDraft(null)}}>{exp.ready&&<span className="live-dot"/>}{exp.title}{!exp.ready&&<small>Coming soon</small>}</button>)}</div>
           <div className="experiment-intro"><div><div className="experiment-tag"><Beaker size={14}/> VIRTUAL PRACTICAL · {selected.level}</div><h2>{selected.title}</h2><p>{selected.description}</p></div><div className="duration">{selected.minutes} MIN <span>•</span> GUIDED MODE</div></div>
           {assignments.filter(a=>a.experimentId===selected.id).map(a=><div className="record-note" key={a.id}><ClipboardList size={18}/><span><strong>Class assignment: {a.title}</strong> {a.instructions}</span></div>)}
-          {selected.id==='titration'?<ChemistryLab onRecord={startRecord}/>:selected.id==='ohms-law'?<PhysicsLab onRecord={startRecord}/>:selected.id==='microscopy'?<BiologyLab onRecord={startRecord}/>:selected.id==='germination'?<AgricultureLab onRecord={startRecord}/>:selected.id==='ph-indicators'?<IndicatorsLab onRecord={startRecord}/>:selected.id==='pendulum'?<PendulumLab onRecord={startRecord}/>:selected.id==='osmosis'?<OsmosisLab onRecord={startRecord}/>:<SoilLab onRecord={startRecord}/>}
+          {selected.id==='titration'?<ChemistryLab onRecord={startRecord}/>:selected.id==='ohms-law'?<PhysicsLab onRecord={startRecord}/>:selected.id==='microscopy'?<BiologyLab onRecord={startRecord}/>:selected.id==='germination'?<AgricultureLab onRecord={startRecord}/>:selected.id==='ph-indicators'?<IndicatorsLab onRecord={startRecord}/>:selected.id==='pendulum'?<PendulumLab onRecord={startRecord}/>:selected.id==='osmosis'?<OsmosisLab onRecord={startRecord}/> :selected.id==='soil'?<SoilLab onRecord={startRecord}/>:selected.id==='separation'?<SeparationLab onRecord={startRecord}/>:selected.id==='convex-lens'?<LensLab onRecord={startRecord}/>:selected.id==='transpiration'?<TranspirationLab onRecord={startRecord}/>:<NutrientsLab onRecord={startRecord}/>}
           {saved&&<div className="success-alert"><CheckCircle2 size={18}/> Observation saved to your offline notebook. <button onClick={()=>navigate('notebook')}>Open notebook <ArrowRight size={14}/></button></div>}
           <div className="objectives"><div><ClipboardList size={20}/><strong>Learning objectives</strong></div><div className="objectives-list">{selected.objectives.map((objective,i)=><span key={objective}><CheckCircle2 size={16}/>{i+1}. {objective}</span>)}</div></div>
           </>

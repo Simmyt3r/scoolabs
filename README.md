@@ -21,7 +21,7 @@ Students can set a local profile, save results and conclusions in an offline not
 
 **Limits:** Students do not yet have individual password-protected identities, and physical administrators may access SQLite. This is not yet a secure centrally managed school-wide gradebook. Models are teaching approximations; teachers must independently validate lessons and results before school rollout.
 
-**Now available:** Eight interactive lessons, two per subject, including indicators/pH, pendulum, osmosis and dry-soil particle analysis. Four planned lessons remain disabled.
+**Now available:** Twelve interactive lessons, three per subject. Newly added: filtration/evaporation, convex thin-lens images, potometer water uptake, and illustrative nutrient limitation symptoms.
 
 ## Developer commands
 - npm install

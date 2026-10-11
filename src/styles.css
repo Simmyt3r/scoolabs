@@ -23,3 +23,5 @@
 @media(max-width:850px){.teacher-panels{grid-template-columns:1fr}.teacher-stats{grid-template-columns:repeat(2,1fr)}.teacher-head{flex-wrap:wrap}.grade-fields{grid-template-columns:90px 1fr}.grade-fields button{grid-column:1/-1}.full-span{grid-column:auto}}
 
 .teacher-head-buttons{display:flex;gap:8px;flex-wrap:wrap}.teacher-page .record-note code{font-size:10px;word-break:break-all}
+
+.final-lab-scene{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:275px;gap:10px;text-align:center;color:#567386;font-size:12px;padding:12px}.final-lab-scene svg{width:100%;max-width:430px;height:auto}.final-lab-scene h3{font-size:13px;max-width:300px;line-height:1.6}.visual-lab-icon{font-family:serif;font-size:85px;line-height:1;color:#319c93}.experimental-steps{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.experimental-steps button{border:1px solid #dbe8ea;background:white;border-radius:7px;padding:10px;font-size:11px;color:#56808b}.experimental-steps button.selected{color:#fff;border-color:#1d988a;background:#1d988a}.final-lab-scene p{color:#7995a2;font-size:11px}
