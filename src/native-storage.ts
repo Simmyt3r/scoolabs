@@ -48,6 +48,7 @@ export async function setupTeacher(name:string,pin:string):Promise<void>{nativeO
 export async function loginTeacher(teacherId:string,pin:string):Promise<TeacherSession>{nativeOnly();return invoke('teacher_login',{teacherId,pin})}
 export async function logoutTeacher(token:string):Promise<void>{nativeOnly();await invoke('teacher_logout',{token})}
 export async function addTeacher(token:string,name:string,pin:string):Promise<void>{nativeOnly();await invoke('add_teacher',{token,name,pin})}
+export async function backupSchoolDatabase(token:string):Promise<string>{nativeOnly();return invoke('backup_school_database',{token})}
 export async function teacherSnapshot(token:string):Promise<TeacherSnapshot>{nativeOnly();return invoke('teacher_snapshot',{token})}
 export async function createClass(token:string,name:string,level:string):Promise<void>{nativeOnly();await invoke('create_class',{token,name,level})}
 export async function enrollStudent(token:string,classId:string,name:string):Promise<void>{nativeOnly();await invoke('enroll_student',{token,classId,name})}

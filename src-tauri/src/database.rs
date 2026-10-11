@@ -332,6 +332,17 @@ pub fn grade_record(db:State<'_,DbState>,sessions:State<'_,Sessions>,token:Strin
     Ok(())
 }
 #[tauri::command]
+pub fn backup_school_database(db:State<'_,DbState>,sessions:State<'_,Sessions>,app:AppHandle,token:String)->Result<String,String>{
+    check_token(&sessions,&token)?;
+    let dir=app.path().app_data_dir().map_err(db_error)?.join("backups");
+    fs::create_dir_all(&dir).map_err(db_error)?;
+    let time=std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(db_error)?.as_millis();
+    let target=dir.join(format!("scoolabs-school-{time}.sqlite3"));
+    let conn=connection(&db)?;
+    conn.execute("VACUUM INTO ?1",params![target.to_string_lossy().to_string()]).map_err(db_error)?;
+    Ok(target.to_string_lossy().to_string())
+}
+#[tauri::command]
 pub fn teacher_snapshot(db:State<'_,DbState>,sessions:State<'_,Sessions>,token:String)->Result<TeacherSnapshot,String>{
     check_token(&sessions,&token)?;
     let conn=connection(&db)?;

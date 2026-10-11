@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, BookOpen, CheckCircle2, ClipboardList, GraduationCap, LockKeyhole, LogOut, Plus, ShieldCheck, Users } from 'lucide-react';
 import { experiments } from './engine';
-import { addTeacher, createAssignment, createClass, enrollStudent, gradeRecord, loginTeacher, logoutTeacher, setupTeacher, teacherAccounts, teacherSnapshot, type TeacherAccount, type TeacherSession, type TeacherSnapshot } from './native-storage';
+import { backupSchoolDatabase, addTeacher, createAssignment, createClass, enrollStudent, gradeRecord, loginTeacher, logoutTeacher, setupTeacher, teacherAccounts, teacherSnapshot, type TeacherAccount, type TeacherSession, type TeacherSnapshot } from './native-storage';
 import type { LabRecord } from './store';
 
 function GradeEntry({record,token,refresh}:{record:LabRecord;token:string;refresh:()=>Promise<void>}) {
@@ -26,6 +26,7 @@ function GradeEntry({record,token,refresh}:{record:LabRecord;token:string;refres
 export default function TeacherPanel() {
   const [accounts,setAccounts]=useState<TeacherAccount[]>([]);
   const [loading,setLoading]=useState(true);
+  const [backupPath,setBackupPath]=useState('');
   const [session,setSession]=useState<TeacherSession|null>(null);
   const [snapshot,setSnapshot]=useState<TeacherSnapshot|null>(null);
   const [name,setName]=useState('');
@@ -84,7 +85,8 @@ export default function TeacherPanel() {
   </div>;
   const classes=snapshot?.classes??[], students=snapshot?.students??[], assignments=snapshot?.assignments??[], records=snapshot?.records??[];
   return <div className="teacher-page">
-    <div className="teacher-head"><div><span className="eyebrow">LOCAL TEACHER DASHBOARD</span><h1>Classroom administration</h1><p>Signed in as {session.teacherName}. Teacher changes are stored on this computer.</p></div><button className="button-outline" onClick={logout}><LogOut size={16}/> Sign out</button></div>
+    <div className="teacher-head"><div><span className="eyebrow">LOCAL TEACHER DASHBOARD</span><h1>Classroom administration</h1><p>Signed in as {session.teacherName}. Teacher changes are stored on this computer.</p></div><div className="teacher-head-buttons"><button className="button-outline" disabled={busy} onClick={()=>perform(async()=>{setBackupPath(await backupSchoolDatabase(session.token))},'Native SQLite backup created.',false)}>Back up database</button><button className="button-outline" onClick={logout}><LogOut size={16}/> Sign out</button></div></div>
+    {backupPath&&<div className="record-note"><ShieldCheck size={17}/><span>SQLite backup saved at: <code>{backupPath}</code>. Copy the file to secure removable storage. It contains student data and hashed teacher credentials.</span></div>
     <div className="teacher-stats"><div><Users/><strong>{classes.length}</strong><span>Classes</span></div><div><GraduationCap/><strong>{students.length}</strong><span>Enrolled students</span></div><div><BookOpen/><strong>{assignments.length}</strong><span>Assignments</span></div><div><ClipboardList/><strong>{records.length}</strong><span>Practical reports</span></div></div>
     <div className="teacher-sections">{([['classes','Classes & students'],['assignments','Assignments'],['reports','Mark reports'],['teachers','Teacher accounts']] as const).map(([id,label])=><button key={id} className={section===id?'active':''} onClick={()=>{setSection(id);setMessage('');setError('')}}>{label}</button>)}</div>
     {section==='classes'&&<div className="teacher-panels">
