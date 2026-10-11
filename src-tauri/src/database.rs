@@ -87,7 +87,7 @@ pub struct TeacherSnapshot {
 fn db_error(error: impl std::fmt::Display) -> String {
     format!("Local database error: {error}")
 }
-fn connection(state: &State<'_, DbState>) -> Result<std::sync::MutexGuard<'_, Connection>, String> {
+fn connection<'a>(state: &'a State<'_, DbState>) -> Result<std::sync::MutexGuard<'a, Connection>, String> {
     state.0.lock().map_err(|_| "Unable to access the local database".to_owned())
 }
 fn ensure_field(value: &str, label: &str, max_length: usize) -> Result<(), String> {
