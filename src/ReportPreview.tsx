@@ -3,11 +3,12 @@ import { BookOpen, Printer, X } from 'lucide-react';
 import { guides } from './guides';
 import type { LabRecord } from './store';
 import { reportMetadata, RUBRIC } from './assessment';
+import FocusScope from './FocusScope';
 
 export default function ReportPreview({record,assignmentTitle,onClose}:{record:LabRecord;assignmentTitle?:string;onClose:()=>void}){
   const report=reportMetadata(record,assignmentTitle);
   const guide=guides[record.experimentId];
-  return createPortal(<div className="report-preview-screen" role="dialog" aria-modal="true" aria-label="Practical report preview">
+  return createPortal(<FocusScope className="report-preview-screen" role="dialog" ariaLabel="Practical report preview" onEscape={onClose}>
     <div className="report-preview-toolbar"><strong>Practical report preview</strong><span>Designed for A4 paper or Print to PDF</span><button className="button-primary" onClick={()=>window.print()}><Printer size={16}/> Print report</button><button className="button-outline" onClick={onClose}><X size={16}/> Close</button></div>
     <article className="report-sheet" aria-label="Printable laboratory report">
       <header className="report-sheet-header"><div className="report-sheet-mark"><BookOpen size={25}/></div><div><span className="report-sheet-product">SCOOLABS</span><strong>Virtual Science Laboratory</strong><small>STUDENT PRACTICAL REPORT</small></div></header>
@@ -29,5 +30,5 @@ export default function ReportPreview({record,assignmentTitle,onClose}:{record:L
       </section>
       <footer><span>Scoolabs educational simulation report</span><span>Generated locally. Experimental models may simplify real laboratory conditions.</span></footer>
     </article>
-  </div>,document.body);
+  </FocusScope>,document.body);
 }
