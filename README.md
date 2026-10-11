@@ -40,3 +40,6 @@ Windows setup includes the WebView2 offline installation payload; no internet is
 See docs/DEVELOPMENT.md for developer setup, offline acceptance checks and model limitations.
 
 Scoolabs is a supplemental learning aid, not a complete replacement for supervised physical laboratory work.
+
+## Recovery (v0.3)
+From Teacher workspace, the Recovery tab lists local backups, creates transaction-consistent SQLite snapshots, and can restore a selected verified backup after explicit destructive-action confirmation. The app preserves a safety snapshot before replacement and clears teacher sessions after restoration. Safeguard these backups as they contain identifiable pupil records and teacher password hashes.
