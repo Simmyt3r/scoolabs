@@ -56,3 +56,5 @@ test('each virtual practical includes an offline learning manual', async ({page}
     }
   }
 });
+
+test('students can find the assignments workspace offline',async({page})=>{await page.goto('/');await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:/My assignments/}).click();await expect(page.getByRole('heading',{name:'Class assignments'})).toBeVisible();await expect(page.getByText('No practical assignments yet')).toBeVisible();});

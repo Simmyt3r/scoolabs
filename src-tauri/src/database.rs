@@ -340,6 +340,7 @@ pub fn enroll_student(db:State<'_,DbState>,sessions:State<'_,Sessions>,token:Str
 pub fn create_assignment(db:State<'_,DbState>,sessions:State<'_,Sessions>,token:String,class_id:String,experiment_id:String,title:String,instructions:String)->Result<(),String>{
     check_token(&sessions,&token)?;
     ensure_field(&experiment_id,"Experiment",80)?;
+    if crate::student::experiment_subject(&experiment_id).is_none(){return Err("Unknown experiment in assignment".into());}
     ensure_field(&title,"Assignment title",150)?;
     if instructions.len()>5000 {return Err("Instructions are too long".into());}
     let conn=connection(&db)?;

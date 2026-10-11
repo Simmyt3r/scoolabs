@@ -178,7 +178,7 @@ pub fn student_assignments(
     })).map_err(db_error)?;
     rows.collect::<rusqlite::Result<Vec<_>>>().map_err(db_error)
 }
-fn experiment_subject(id:&str)->Option<&'static str>{
+pub(crate) fn experiment_subject(id:&str)->Option<&'static str>{
     match id {
       "titration"|"ph-indicators"|"separation"=>Some("chemistry"),
       "ohms-law"|"pendulum"|"convex-lens"=>Some("physics"),
