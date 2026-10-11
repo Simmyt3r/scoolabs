@@ -108,7 +108,7 @@ test('physics reading log resets when the circuit resistance changes', async ({p
   const sheet=page.getByRole('region',{name:'Circuit observation sheet'});
   await sheet.getByRole('button',{name:'Capture reading'}).click();
   await expect(sheet.locator('tbody tr')).toHaveCount(1);
-  await page.getByText('Resistance',{exact:true}).locator('..').locator('input[type="range"]').fill('20');
+  await page.getByText('Resistance',{exact:true}).locator('../..').locator('input[type="range"]').fill('20');
   await expect(sheet.getByText('Waiting for a reading')).toBeVisible();
   await sheet.getByRole('button',{name:'Capture reading'}).click();
   await expect(sheet.locator('tbody tr')).toHaveCount(1);
