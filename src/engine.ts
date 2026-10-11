@@ -17,17 +17,17 @@ export interface Experiment {
 
 export const experiments: Experiment[] = [
   { id: 'titration', subject: 'chemistry', title: 'Acid–Base Titration', description: 'Neutralise a strong acid and observe the indicator.', level: 'SS 2–3', minutes: 20, ready: true, objectives: ['Read a burette accurately', 'Identify the end point', 'Calculate an unknown concentration'] },
-  { id: 'separation', subject: 'chemistry', title: 'Separation of Mixtures', description: 'Explore filtration and evaporation.', level: 'SS 1', minutes: 15, ready: false, objectives: [] },
+  { id: 'separation', subject: 'chemistry', title: 'Separation of Mixtures', description: 'Explore filtration and evaporation.', level: 'SS 1', minutes: 15, ready: true, objectives: [] },
   { id: 'ph-indicators', subject: 'chemistry', title: 'pH and Indicators', description: 'Classify solutions as acidic or alkaline.', level: 'SS 1–2', minutes: 15, ready: true, objectives: [] },
   { id: 'ohms-law', subject: 'physics', title: "Ohm’s Law", description: 'Build a simple circuit and investigate V = IR.', level: 'SS 2', minutes: 20, ready: true, objectives: ['Measure potential difference and current', 'Calculate resistance', 'Plot voltage against current'] },
   { id: 'pendulum', subject: 'physics', title: 'Simple Pendulum', description: 'Investigate the relationship between length and period.', level: 'SS 2', minutes: 20, ready: true, objectives: [] },
-  { id: 'convex-lens', subject: 'physics', title: 'Convex Lens', description: 'Investigate image formation by lenses.', level: 'SS 3', minutes: 20, ready: false, objectives: [] },
+  { id: 'convex-lens', subject: 'physics', title: 'Convex Lens', description: 'Investigate image formation by lenses.', level: 'SS 3', minutes: 20, ready: true, objectives: [] },
   { id: 'microscopy', subject: 'biology', title: 'Using the Microscope', description: 'Explore prepared slides at different magnifications.', level: 'SS 1', minutes: 20, ready: true, objectives: ['Identify microscope parts', 'Select objective lenses', 'Describe observed cell structures'] },
   { id: 'osmosis', subject: 'biology', title: 'Osmosis', description: 'Investigate water movement across a membrane.', level: 'SS 2', minutes: 20, ready: true, objectives: [] },
-  { id: 'transpiration', subject: 'biology', title: 'Transpiration', description: 'Study factors affecting water loss from leaves.', level: 'SS 2', minutes: 20, ready: false, objectives: [] },
+  { id: 'transpiration', subject: 'biology', title: 'Transpiration', description: 'Study factors affecting water loss from leaves.', level: 'SS 2', minutes: 20, ready: true, objectives: [] },
   { id: 'germination', subject: 'agriculture', title: 'Seed Germination', description: 'Observe modelled effects of moisture and temperature.', level: 'SS 1–2', minutes: 20, ready: true, objectives: ['Identify conditions required for germination', 'Compare conditions', 'Record and interpret results'] },
   { id: 'soil', subject: 'agriculture', title: 'Soil Fractions and pH', description: 'Classify soil and interpret pH.', level: 'SS 1', minutes: 15, ready: true, objectives: [] },
-  { id: 'nutrients', subject: 'agriculture', title: 'Plant Nutrients', description: 'Recognise nutrient deficiency symptoms.', level: 'SS 2', minutes: 15, ready: false, objectives: [] },
+  { id: 'nutrients', subject: 'agriculture', title: 'Plant Nutrients', description: 'Recognise nutrient deficiency symptoms.', level: 'SS 2', minutes: 15, ready: true, objectives: [] },
 ];
 
 export type TitrationResult = { ph: number; equivalenceMl: number; indicator: 'colourless' | 'pale pink' | 'pink'; excess: 'acid' | 'base' | 'neutral' };
@@ -107,4 +107,47 @@ export function soilSample(sandGrams: number, siltGrams: number, clayGrams: numb
   const fractions = {sand: 100*sandGrams/total, silt: 100*siltGrams/total, clay: 100*clayGrams/total};
   const dominant = (Object.keys(fractions) as Array<keyof typeof fractions>).reduce((a,b)=>fractions[b]>fractions[a]?b:a);
   return { fractions, totalGrams: total, dominant, acidity: ph < 7 ? 'acidic' : ph > 7 ? 'alkaline' : 'neutral' };
+}
+
+
+/** Classroom mass balance for a fully dissolved salt/sand mixture, with no losses. */
+export function separateMixture(sandG: number, saltG: number, waterG: number) {
+  if (![sandG,saltG,waterG].every(Number.isFinite) || sandG<0 || saltG<0 ||
+      waterG<=0 || sandG>1000 || saltG>1000 || waterG>10000) throw new RangeError("Invalid mixture mass");
+  // Restrict to below the approximate 20°C NaCl solubility, ~35.9 g per 100 g water.
+  if(saltG>waterG*0.359)throw new RangeError("Salt exceeds assumed room-temperature solubility");
+  const initialMassG=sandG+saltG+waterG;
+  return {initialMassG,filterResidueG:sandG,filtrateG:saltG+waterG,
+    recoveredSaltG:saltG,evaporatedWaterG:waterG,
+    finalRecoveredG:sandG+saltG+waterG};
+}
+/** Ideal positive-focal-length thin lens in air; signed Gaussian image distance. */
+export function convexLens(focalCm:number,objectCm:number){
+  if (![focalCm,objectCm].every(Number.isFinite)||focalCm<=0||objectCm<=0||focalCm>1000||objectCm>10000)
+    throw new RangeError("Invalid lens settings");
+  if(Math.abs(objectCm-focalCm)<1e-9) return {imageCm:null,magnification:null,kind:"image at infinity" as const,orientation:"not finite" as const};
+  const imageCm=focalCm*objectCm/(objectCm-focalCm);
+  const magnification=-imageCm/objectCm;
+  return {imageCm,magnification,kind:(imageCm>0?"real":"virtual") as "real"|"virtual",
+          orientation:(magnification<0?"inverted":"upright") as "inverted"|"upright"};
+}
+/** Potometer estimates water uptake from capillary bubble movement, not direct transpiration. */
+export function potometer(distanceMm:number,diameterMm:number,timeMinutes:number){
+  if(![distanceMm,diameterMm,timeMinutes].every(Number.isFinite)||
+     distanceMm<0||distanceMm>1000||diameterMm<=0||diameterMm>10||
+     timeMinutes<=0||timeMinutes>10000)throw new RangeError("Invalid potometer measurement");
+  const areaMm2=Math.PI*Math.pow(diameterMm/2,2);
+  const waterUptakeMicrolitres=distanceMm*areaMm2; // 1 mm^3 = 1 µL
+  return {areaMm2,waterUptakeMicrolitres,uptakeMicrolitresPerMinute:waterUptakeMicrolitres/timeMinutes};
+}
+export type LimitedNutrient="nitrogen"|"phosphorus"|"potassium";
+/** Educational symptom example, NOT a disease/soil diagnosis. */
+export function nutrientExample(nutrient:LimitedNutrient){
+  const models={
+    nitrogen:{affected:"older leaves first",appearance:"general pale-green or yellowing leaves",role:"leaf chlorophyll and vegetative growth",note:"Other stresses can produce similar yellowing."},
+    phosphorus:{affected:"older leaves may be affected",appearance:"stunted growth; some crops show purple colouring",role:"energy transfer and root development",note:"Purple leaves are not universal across all crops."},
+    potassium:{affected:"older leaves first",appearance:"yellowing and scorching along leaf margins",role:"water regulation and enzyme function",note:"Water stress can cause similar marginal damage."}
+  } as const;
+  if(!(nutrient in models))throw new RangeError("Unknown plant nutrient");
+  return models[nutrient];
 }

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { circuit, experiments, germination, microscope, titrate, solutionPH, pendulum, osmosis, soilSample } from './engine';
+import { circuit, experiments, germination, microscope, titrate, solutionPH, pendulum, osmosis, soilSample, separateMixture, convexLens, potometer, nutrientExample } from './engine';
 
 describe('science engine', () => {
-  it('has eight active exercises, two per subject', () => {
-    expect(experiments.filter(x => x.ready)).toHaveLength(8);
+  it('has twelve active exercises, three per subject', () => {
+    expect(experiments.filter(x => x.ready)).toHaveLength(12);
     expect(new Set(experiments.filter(x => x.ready).map(x => x.subject)).size).toBe(4);
-    for (const subject of ['chemistry','physics','biology','agriculture']) expect(experiments.filter(x=>x.subject===subject && x.ready)).toHaveLength(2);
+    for (const subject of ['chemistry','physics','biology','agriculture']) expect(experiments.filter(x=>x.subject===subject && x.ready)).toHaveLength(3);
   });
   it('calculates neutralisation of 25 mL 0.1 M acid using 0.1 M base', () => {
     const result = titrate(0.1, 25);
@@ -62,5 +62,35 @@ describe('scientifically referenced models', () => {
     expect(sample.fractions.silt + sample.fractions.clay + sample.fractions.sand).toBeCloseTo(100);
     expect(sample.acidity).toBe('acidic');
     expect(() => soilSample(0,0,0,7)).toThrow(RangeError);
+  });
+});
+
+describe("new practical simulations",()=>{
+  it("conserves mass through ideal filtration and evaporation",()=>{
+    const x=separateMixture(12,8,100);
+    expect(x.initialMassG).toBe(120);
+    expect(x.filterResidueG+x.filtrateG).toBe(x.initialMassG);
+    expect(x.recoveredSaltG+x.evaporatedWaterG+x.filterResidueG).toBe(x.initialMassG);
+    expect(()=>separateMixture(1,40,100)).toThrow(RangeError);
+    expect(()=>separateMixture(-1,1,100)).toThrow(RangeError);
+  });
+  it("computes real, virtual and infinity thin lens cases",()=>{
+    expect(convexLens(10,20)).toMatchObject({imageCm:20,magnification:-1,kind:"real",orientation:"inverted"});
+    expect(convexLens(10,5)).toMatchObject({imageCm:-10,magnification:2,kind:"virtual",orientation:"upright"});
+    expect(convexLens(10,10).kind).toBe("image at infinity");
+    expect(()=>convexLens(0,20)).toThrow(RangeError);
+  });
+  it("converts a potometer volume from mm cubed to microlitres",()=>{
+    const r=potometer(20,2,10);
+    expect(r.areaMm2).toBeCloseTo(Math.PI,8);
+    expect(r.waterUptakeMicrolitres).toBeCloseTo(20*Math.PI,8);
+    expect(r.uptakeMicrolitresPerMinute).toBeCloseTo(2*Math.PI,8);
+    expect(potometer(0,2,10).uptakeMicrolitresPerMinute).toBe(0);
+    expect(()=>potometer(20,0,10)).toThrow(RangeError);
+  });
+  it("restricts nutrient scenarios to example labels and avoids diagnosis",()=>{
+    expect(nutrientExample("nitrogen").affected).toBe("older leaves first");
+    expect(nutrientExample("potassium").appearance).toContain("margins");
+    expect(()=>nutrientExample("pesticide" as any)).toThrow(RangeError);
   });
 });
