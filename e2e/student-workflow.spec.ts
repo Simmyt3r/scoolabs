@@ -137,10 +137,10 @@ test('potometer captures modelled uptake and resets observations if capillary di
   await page.getByRole('button',{name:/Transpiration/}).click();
   const sheet=page.getByRole('region',{name:'Potometer observation sheet'});
   await sheet.getByRole('button',{name:'Capture reading'}).click();
-  await page.getByText('Elapsed time',{exact:true}).locator('../..').locator('input[type="range"]').fill('20');
+  await page.locator('.lab-controls label.control').filter({hasText:'Elapsed time'}).locator('input[type="range"]').fill('20');
   await sheet.getByRole('button',{name:'Capture reading'}).click();
   await expect(sheet.locator('tbody tr')).toHaveCount(2);
   await expect(sheet.getByText(/Model-derived uptake/)).toBeVisible();
-  await page.getByText('Capillary diameter',{exact:true}).locator('../..').locator('input[type="range"]').fill('2');
+  await page.locator('.lab-controls label.control').filter({hasText:'Capillary diameter'}).locator('input[type="range"]').fill('2');
   await expect(sheet.getByText('Waiting for a reading')).toBeVisible();
 });
