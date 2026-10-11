@@ -4,7 +4,7 @@
 
 Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 
-## Current prototype (v0.3)
+## Current prototype (v0.4)
 
 | Subject | Working simulation | Current controls |
 | --- | --- | --- |
@@ -43,3 +43,20 @@ Scoolabs is a supplemental learning aid, not a complete replacement for supervis
 
 ## Recovery (v0.3)
 From Teacher workspace, the Recovery tab lists local backups, creates transaction-consistent SQLite snapshots, and can restore a selected verified backup after explicit destructive-action confirmation. The app preserves a safety snapshot before replacement and clears teacher sessions after restoration. Safeguard these backups as they contain identifiable pupil records and teacher password hashes.
+
+
+## Students and teacher access (v0.4)
+
+**Installed desktop mode:** Students cannot access records by typing someone else's name and class. A teacher first creates a local teacher account and a class, then enrols each student with a 6-12 digit PIN. Scoolabs generates a distinct 10-character access code. Students enter their own code and PIN to open their offline laboratory; the application keeps their token in volatile memory and scopes notebook entries and class assignments by the enrolled student ID. Five failed student PIN attempts temporarily lock that access code for five minutes (within the current app process). Signing out revokes the current token.
+
+The native student notebook APIs no longer expose arbitrary name/class record reads and writes. Grading remains teacher-only and ignores student-supplied grade/feedback fields. Teacher staff can reset student PINs and invalidate active student sessions. A school administrator with full operating-system access still controls the files; this is **not** a fully audited identity system or online school management system.
+
+**Browser development preview:** Student name/class and localStorage are retained only as a non-production UI/testing fallback. It is **not** equivalent to authenticated desktop mode.
+
+**Legacy records:** Previously stored SQLite laboratory entries remain available in the teacher dashboard, but old name-based entries are not automatically assigned to new student identities. Old localStorage notebook entries require a teacher-reviewed migration, not automatic trust in their claimed student name.
+
+## Offline lesson manuals and reporting
+
+Each of the twelve exercises includes local equipment lists, guided procedures, assessment questions, safety notes and model limitations. Teachers can compare class-level submissions and graded work and export a spreadsheet-safe CSV gradebook. No cloud services are required for any of these features.
+
+**Pre-branding status:** Version 0.4 is a development build. Final product icons, installer appearance, real-school low-spec Windows testing and independent subject-teacher sign-off are still pending.

@@ -35,3 +35,11 @@ SQLite persistence and import/restore, local classes and teacher marking, curric
 - GitHub Actions Quality checks installs headless Chromium and runs npm run test:e2e.
 - These smoke tests click all twelve lab tabs, save a practical report to the notebook, reload the browser preview, and show the desktop-only warning on Teacher workspace.
 - Important: browser-preview persistence uses the localStorage fallback, not native SQLite. The Windows workflow runs native database tests separately. Offline native installation must still be physically verified on a school computer.
+
+
+## v0.4 quality gates
+- Check all twelve experiment manuals, scientific model assumptions, and practical questions have nonempty source data.
+- Run type checking, Vitest (scientific, guide coverage, gradebook escaping), and Chromium workflow smoke tests through GitHub Actions.
+- Build native Windows executable and run Rust database tests in the Windows workflow.
+- Student enrolment/credential issuance, login lockout, student scoped records, teacher PIN reset and SQLite restoration need hands-on end-to-end testing on school PCs after the agreed branding milestone.
+- Native credential handling is unavailable in the plain browser preview, by design.

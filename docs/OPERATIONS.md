@@ -24,3 +24,19 @@ GitHub workflows run tests and package .exe installers on pushes to main. Always
 Only application-created backups in the local backup folder are selectable. Direct import of arbitrary SQLite files is intentionally unsupported. Failure during the restore operation requires recovery from the saved safety snapshot; do not ignore a restore error.
 
 Safety snapshots named before-restore-*.sqlite3 are also listed in the Recovery tab, allowing the teacher to reverse a mistaken restoration. Reversing still requires authenticated access to an account in the currently active database and the full confirmation phrase. Every restoration creates a new safety snapshot.
+
+
+## v0.4 authenticated student workflow
+
+1. Teacher creates local classes from Teacher workspace and signs in.
+2. Enrol each student with their full name, class and a separate 6-12 digit PIN.
+3. Scoolabs issues a unique 10-character access code; privately give the student their own code and PIN.
+4. Students open their laboratory, enter code and PIN, and work through any of the twelve simulation exercises.
+5. Results are saved against their SQLite student ID, not a user-entered name or class.
+6. Assignments appear only for the student's enrolled class; notebook entries remain scoped to the authenticated student.
+7. To reset access, a teacher uses the class register's Set / reset PIN control; existing student sessions are revoked.
+8. On a shared computer, students must select Sign out when finished.
+
+Five incorrect student PIN attempts produce a five-minute code lockout within the running process. Teacher code lists and reset actions require teacher authentication. Old roster entries without credentials can be activated by setting their first PIN. Do not display or distribute all credentials together.
+
+Existing pre-v0.4 SQLite records are preserved as teacher-visible historical entries. Their unverified name/class claims are not automatically attached to student IDs. Browser-preview localStorage remains only for development testing.

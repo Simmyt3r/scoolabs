@@ -40,3 +40,19 @@ test('teacher panel gives clear desktop-only feedback in web preview', async ({ 
   await expect(page.getByRole('heading', { name: 'Teacher workspace' })).toBeVisible();
   await expect(page.getByText(/requires the installed Scoolabs desktop application/)).toBeVisible();
 });
+
+test('each virtual practical includes an offline learning manual', async ({page})=>{
+  await page.goto('/');
+  const subjects=['Chemistry','Physics','Biology','Agriculture'];
+  for(const subject of subjects){
+    await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:subject}).click();
+    for(const tab of await page.locator('.experiment-pill').all()){
+      await tab.click();
+      const guide=page.locator('.practical-manual');
+      await expect(guide).toBeVisible();
+      await guide.locator('summary').click();
+      await expect(guide.getByText('Step-by-step method')).toBeVisible();
+      await expect(guide.getByText('Safety guidance')).toBeVisible();
+    }
+  }
+});
