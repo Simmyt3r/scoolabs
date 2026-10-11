@@ -51,6 +51,8 @@ export async function backupSchoolDatabase(token:string):Promise<string>{nativeO
 export interface SchoolBackup {filename:string;bytes:number;modifiedUnix:number}
 export async function listSchoolBackups(token:string):Promise<SchoolBackup[]>{nativeOnly();return invoke('list_local_backups',{token})}
 export async function restoreSchoolBackup(token:string,filename:string,confirmation:string):Promise<string>{nativeOnly();return invoke('restore_local_backup',{token,filename,confirmation})}
+export interface AssignmentRosterRow {studentId:string;studentName:string;recordId:string|null;submittedAt:string|null;score:number|null}
+export async function teacherAssignmentRoster(token:string,assignmentId:string):Promise<AssignmentRosterRow[]>{nativeOnly();return invoke('teacher_assignment_roster',{token,assignmentId})}
 export async function teacherSnapshot(token:string):Promise<TeacherSnapshot>{nativeOnly();return invoke('teacher_snapshot',{token})}
 export async function createClass(token:string,name:string,level:string):Promise<void>{nativeOnly();await invoke('create_class',{token,name,level})}
 export async function enrollStudent(token:string,classId:string,name:string,pin:string):Promise<StudentEnrolment>{nativeOnly();return invoke('teacher_enrol_student',{token,classId,name,pin})}

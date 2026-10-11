@@ -459,6 +459,43 @@ pub fn restore_local_backup(
     Ok(rollback.to_string_lossy().to_string())
 }
 
+
+#[derive(Serialize)]
+#[serde(rename_all="camelCase")]
+pub struct AssignmentRosterRow {
+    student_id:String,
+    student_name:String,
+    record_id:Option<String>,
+    submitted_at:Option<String>,
+    score:Option<i64>,
+}
+fn assignment_roster_rows(conn:&Connection,assignment_id:&str)->Result<Vec<AssignmentRosterRow>,String>{
+    let exists:i64=conn.query_row("SELECT COUNT(*) FROM assignments WHERE id=?1",
+      params![assignment_id],|r|r.get(0)).map_err(db_error)?;
+    if exists!=1{return Err("Assignment not found".into());}
+    let mut stmt=conn.prepare(
+      "SELECT s.id,s.name,r.id,r.timestamp,r.grade
+       FROM assignments a
+       JOIN students s ON s.class_id=a.class_id
+       LEFT JOIN assignment_submissions sub ON sub.assignment_id=a.id AND sub.student_id=s.id
+       LEFT JOIN notebook_records r ON r.id=sub.record_id
+       WHERE a.id=?1 ORDER BY s.name COLLATE NOCASE, s.id"
+    ).map_err(db_error)?;
+    let rows=stmt.query_map(params![assignment_id],|r|Ok(AssignmentRosterRow{
+      student_id:r.get(0)?,student_name:r.get(1)?,record_id:r.get(2)?,
+      submitted_at:r.get(3)?,score:r.get(4)?
+    })).map_err(db_error)?;
+    rows.collect::<rusqlite::Result<Vec<_>>>().map_err(db_error)
+}
+#[tauri::command]
+pub fn teacher_assignment_roster(
+    db:State<'_,DbState>,sessions:State<'_,Sessions>,token:String,assignment_id:String
+)->Result<Vec<AssignmentRosterRow>,String>{
+    check_token(&sessions,&token)?;
+    let conn=connection(&db)?;
+    assignment_roster_rows(&conn,&assignment_id)
+}
+
 #[tauri::command]
 pub fn teacher_snapshot(db:State<'_,DbState>,sessions:State<'_,Sessions>,token:String)->Result<TeacherSnapshot,String>{
     check_token(&sessions,&token)?;
@@ -517,6 +554,31 @@ mod tests {
            VALUES('a','c','titration','Lab','Notes','2026-10-11')",[]).unwrap();
         conn.execute("INSERT INTO assignment_submissions(assignment_id,student_id,record_id) VALUES('a','s','old')",[]).unwrap();
         assert!(conn.execute("INSERT INTO assignment_submissions(assignment_id,student_id,record_id) VALUES('a','s','old')",[]).is_err());
+    }
+
+    #[test]
+    fn teacher_roster_links_submissions_by_ids_not_student_names(){
+        let conn=Connection::open_in_memory().unwrap();
+        create_tables(&conn).unwrap();
+        conn.execute("INSERT INTO classes(id,name,level) VALUES('a','SS2A','SS2')",[]).unwrap();
+        conn.execute("INSERT INTO classes(id,name,level) VALUES('b','SS2B','SS2')",[]).unwrap();
+        for (id,room) in [("s1","a"),("s2","a"),("s3","b")]{
+            conn.execute("INSERT INTO students(id,class_id,name) VALUES(?1,?2,'Amina')",params![id,room]).unwrap();
+        }
+        conn.execute("INSERT INTO assignments(id,class_id,experiment_id,title,instructions,created_at)
+          VALUES('task','a','titration','Science work','Work','2026-10-11')",[]).unwrap();
+        conn.execute("INSERT INTO notebook_records
+          (id,timestamp,student,classroom,experiment_id,experiment_title,subject,settings,observation,conclusion,grade,assignment_id)
+          VALUES('record','2026-10-11','Amina','SS2A','titration','Titration','chemistry','set','seen','done',0,'task')",[]).unwrap();
+        conn.execute("INSERT INTO assignment_submissions(assignment_id,student_id,record_id)
+          VALUES('task','s2','record')",[]).unwrap();
+        let roster=assignment_roster_rows(&conn,"task").unwrap();
+        assert_eq!(roster.len(),2);
+        assert_eq!(roster[0].student_id,"s1");
+        assert!(roster[0].record_id.is_none());
+        assert_eq!(roster[1].student_id,"s2");
+        assert_eq!(roster[1].score,Some(0));
+        assert!(assignment_roster_rows(&conn,"unknown").is_err());
     }
     #[test]
     fn pin_hashes_do_not_expose_pin() {

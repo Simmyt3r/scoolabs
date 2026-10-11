@@ -25,6 +25,7 @@ pub fn run() {
             database::create_assignment,
             database::grade_record,
             database::teacher_snapshot,
+            database::teacher_assignment_roster,
             database::backup_school_database,
             database::list_local_backups,
             database::restore_local_backup,
