@@ -12,6 +12,7 @@ import { IndicatorsLab, PendulumLab, OsmosisLab, SoilLab } from './AdvancedLabs'
 import TeacherPanel from './TeacherPanel';
 import { SeparationLab, LensLab, TranspirationLab, NutrientsLab } from './FinalLabs';
 import { guides } from './guides';
+import ReportPreview from './ReportPreview';
 
 type Page = Subject | 'notebook' | 'assignments' | 'teacher';
 const SUBJECTS = {
@@ -194,6 +195,7 @@ function AgricultureLab({ onRecord }: { onRecord: (settings: string, observation
 }
 
 function Records({records, assignments, onBack}: {records:LabRecord[];assignments:Assignment[];onBack:()=>void}) {
+  const [preview,setPreview]=useState<LabRecord|null>(null);
   return <section className="records-page">
     <button className="text-button" onClick={onBack}><ArrowLeft size={16}/> Back to laboratory</button>
     <div className="page-title"><div><span className="eyebrow">MY LEARNING</span><h1>Laboratory notebook</h1><p>Every observation is saved on this computer, including when you are offline.</p></div>
@@ -201,7 +203,8 @@ function Records({records, assignments, onBack}: {records:LabRecord[];assignment
     </div>
     <div className="record-note"><ShieldCheck size={18}/> Your notes stay on this device. Export a backup before uninstalling Scoolabs or clearing the app data.</div>
     {records.length===0 ? <div className="empty-state"><ClipboardList size={38}/><h3>No observations saved yet</h3><p>Complete an experiment and choose “Record these results” to begin.</p><button className="button-primary" onClick={onBack}>Explore experiments <ArrowRight size={16}/></button></div>:
-    <div className="records-table"><table><thead><tr><th>Experiment</th><th>Student</th><th>Class</th><th>Recorded</th><th>Observation</th></tr></thead><tbody>{records.map(r=><tr key={r.id}><td><strong>{r.experimentTitle}</strong><span>{SUBJECTS[r.subject].label}</span></td><td>{r.student}</td><td>{r.classroom}</td><td>{new Date(r.timestamp).toLocaleString()}</td><td><span>{r.observation}</span>{r.conclusion && <small>Conclusion: {r.conclusion}</small>}{r.assignmentId&&<small>Submitted for: {assignments.find(a=>a.id===r.assignmentId)?.title??'Class assignment'}</small>}{r.grade!==null&&r.grade!==undefined&&<small><strong>Teacher score: {r.grade}/100</strong>{r.feedback?' · '+r.feedback:''}</small>}</td></tr>)}</tbody></table></div>}
+    <div className="records-table"><table><thead><tr><th>Experiment</th><th>Student</th><th>Class</th><th>Recorded</th><th>Observation</th></tr></thead><tbody>{records.map(r=><tr key={r.id}><td><strong>{r.experimentTitle}</strong><span>{SUBJECTS[r.subject].label}</span></td><td>{r.student}</td><td>{r.classroom}</td><td>{new Date(r.timestamp).toLocaleString()}</td><td><span>{r.observation}</span>{r.conclusion && <small>Conclusion: {r.conclusion}</small>}{r.assignmentId&&<small>Submitted for: {assignments.find(a=>a.id===r.assignmentId)?.title??'Class assignment'}</small>}{r.grade!==null&&r.grade!==undefined&&<small><strong>Teacher score: {r.grade}/100</strong>{r.feedback?' · '+r.feedback:''}</small>}<button className="text-button print-record-button" onClick={()=>setPreview(r)}>Preview / print report</button></td></tr>)}</tbody></table></div>}
+    {preview&&<ReportPreview record={preview} assignmentTitle={assignments.find(a=>a.id===preview.assignmentId)?.title} onClose={()=>setPreview(null)}/>}
   </section>;
 }
 
