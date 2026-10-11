@@ -31,3 +31,9 @@ This document records sources and algorithmic checks, **not approval by qualifie
 - Agriculture, nutrient limitation: student-selectable N, P and K textbook symptoms, NOT diagnosis or fertilizer advice.
 
 Every newly added mathematical function has deterministic unit tests, explicit input validation, and documented simplifying assumptions. External teacher review is still required.
+
+## Observational graphs, extension
+- Pendulum graph plots **period squared (s²) versus length (m)** from student-captured ideal small-angle outputs. A line through the origin has slope 4π²/g, so the app displays a model-derived estimate of g. This does not represent independently measured acceleration.
+- Potometer graph plots **water uptake (µL) versus elapsed time (min)**, computed using cylindrical capillary cross-section and bubble movement. Its through-origin slope estimates water-uptake rate and must never be labelled direct transpiration.
+- Angle/oscillation-count changes reset the pendulum trial, while capillary diameter changes reset the potometer run, so differing controlled settings are not silently combined.
+- All charts are intentionally identified as simulated, not sensor-calibrated, and require classroom review before adoption.

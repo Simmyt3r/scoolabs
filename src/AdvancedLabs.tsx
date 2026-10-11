@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Activity, ArrowRight, SlidersHorizontal } from 'lucide-react';
 import { solutionPH, pendulum, osmosis, soilSample } from './engine';
+import MeasurementLog from './MeasurementLog';
+import {addMeasurement,readingSummary,type Measurement} from './measurements';
 type Recorder=(settings:string,observation:string)=>void;
 function Slider({label,value,min,max,step=1,unit,onChange}:{label:string;value:number;min:number;max:number;step?:number;unit:string;onChange:(v:number)=>void}){
   return <label className="control"><span className="control-head"><span>{label}</span><strong>{value} {unit}</strong></span><input type="range" min={min} max={max} step={step} value={value} onChange={e=>onChange(Number(e.target.value))}/><span className="range-hints"><span>{min} {unit}</span><span>{max} {unit}</span></span></label>;
@@ -18,10 +20,15 @@ export function IndicatorsLab({onRecord}:{onRecord:Recorder}){
 }
 export function PendulumLab({onRecord}:{onRecord:Recorder}){
  const [length,setLength]=useState(1),[cycles,setCycles]=useState(10),[angle,setAngle]=useState(8);
+ const [readings,setReadings]=useState<Measurement[]>([]);
  const data=pendulum(length,cycles,9.81,angle),rad=angle*Math.PI/180;
+ const capture=()=>setReadings(points=>addMeasurement(points,length,data.periodSeconds**2,'pendulum'));
+ const updateAngle=(value:number)=>{setAngle(value);setReadings([])};
+ const updateCycles=(value:number)=>{setCycles(value);setReadings([])};
  const x=210+160*Math.sin(rad),y=26+160*Math.cos(rad);
  return <div className="lab-grid"><Stage title="Small-angle oscillation"><div className="pendulum-scene"><svg viewBox="0 0 420 265" role="img" aria-label="Simple pendulum with string and bob"><rect x="118" y="16" width="185" height="12" rx="4" fill="#9bb5c9"/><circle cx="210" cy="26" r="6" fill="#4b7a95"/><line x1="210" y1="26" x2={x} y2={y} stroke="#355d78" strokeWidth="3"/><circle cx={x} cy={y} r="19" fill="#45aaa2"/><text x="210" y="244" textAnchor="middle" fill="#6d8492" fontSize="14">L = {length} m</text></svg></div><p className="scene-caption">Schematic pendulum position at {angle}°.</p><div className="formula-chip">T = 2π√(L/g)</div></Stage>
- <Controls><Slider label="Length" value={length} min={.1} max={3} step={.05} unit="m" onChange={setLength}/><Slider label="Angle" value={angle} min={1} max={14} unit="°" onChange={setAngle}/><Slider label="Oscillations" value={cycles} min={1} max={30} unit="cycles" onChange={setCycles}/><Results items={[[ 'Period',data.periodSeconds.toFixed(3)+' s'],['Elapsed time',data.totalSeconds.toFixed(2)+' s']]}/><RecordButton onClick={()=>onRecord('Length '+length+'m, angle '+angle+'°, '+cycles+' oscillations','Period '+data.periodSeconds.toFixed(3)+'s; total '+data.totalSeconds.toFixed(2)+'s')}/><p className="model-note">Small-angle approximation (angle under 15°); assumes no drag and local g = 9.81m/s².</p></Controls></div>
+ <Controls><Slider label="Length" value={length} min={.1} max={3} step={.05} unit="m" onChange={setLength}/><Slider label="Angle" value={angle} min={1} max={14} unit="°" onChange={updateAngle}/><Slider label="Oscillations" value={cycles} min={1} max={30} unit="cycles" onChange={updateCycles}/><Results items={[[ 'Period',data.periodSeconds.toFixed(3)+' s'],['Elapsed time',data.totalSeconds.toFixed(2)+' s']]}/><RecordButton onClick={()=>onRecord('Length '+length+'m, angle '+angle+'°, '+cycles+' oscillations','Period '+data.periodSeconds.toFixed(3)+'s; total '+data.totalSeconds.toFixed(2)+'s. '+readingSummary(readings,'pendulum'))}/><p className="model-note">Small-angle approximation (angle under 15°); assumes no drag and local g = 9.81m/s².</p></Controls>
+ <MeasurementLog kind="pendulum" readings={readings} onCapture={capture} onClear={()=>setReadings([])}/></div>
 }
 export function OsmosisLab({onRecord}:{onRecord:Recorder}){
  const [inside,setInside]=useState(300),[outside,setOutside]=useState(100);

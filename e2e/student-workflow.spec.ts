@@ -113,3 +113,34 @@ test('physics reading log resets when the circuit resistance changes', async ({p
   await sheet.getByRole('button',{name:'Capture reading'}).click();
   await expect(sheet.locator('tbody tr')).toHaveCount(1);
 });
+
+
+test('pendulum readings plot period squared while angle changes reset the experiment series',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Physics'}).click();
+  await page.getByRole('button',{name:/Simple Pendulum/}).click();
+  const sheet=page.getByRole('region',{name:'Pendulum observation sheet'});
+  await expect(sheet.getByText('Waiting for a reading')).toBeVisible();
+  await sheet.getByRole('button',{name:'Capture reading'}).click();
+  await expect(sheet.locator('tbody tr')).toHaveCount(1);
+  await page.getByText('Length',{exact:true}).locator('../..').locator('input[type="range"]').fill('2');
+  await sheet.getByRole('button',{name:'Capture reading'}).click();
+  await expect(sheet.locator('tbody tr')).toHaveCount(2);
+  await expect(sheet.getByText(/Model-derived g/)).toBeVisible();
+  await page.getByText('Angle',{exact:true}).locator('../..').locator('input[type="range"]').fill('10');
+  await expect(sheet.getByText('Waiting for a reading')).toBeVisible();
+});
+
+test('potometer captures modelled uptake and resets observations if capillary diameter changes',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Biology'}).click();
+  await page.getByRole('button',{name:/Transpiration/}).click();
+  const sheet=page.getByRole('region',{name:'Potometer observation sheet'});
+  await sheet.getByRole('button',{name:'Capture reading'}).click();
+  await page.getByText('Elapsed time',{exact:true}).locator('../..').locator('input[type="range"]').fill('20');
+  await sheet.getByRole('button',{name:'Capture reading'}).click();
+  await expect(sheet.locator('tbody tr')).toHaveCount(2);
+  await expect(sheet.getByText(/Model-derived uptake/)).toBeVisible();
+  await page.getByText('Capillary diameter',{exact:true}).locator('../..').locator('input[type="range"]').fill('2');
+  await expect(sheet.getByText('Waiting for a reading')).toBeVisible();
+});
