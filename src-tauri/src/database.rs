@@ -415,6 +415,7 @@ pub fn restore_local_backup(
         destination.execute("VACUUM INTO ?1",params![rollback.to_string_lossy().to_string()]).map_err(db_error)?;
         let operation=Backup::new(&source,&mut *destination).map_err(db_error)?;
         operation.run_to_completion(128,Duration::from_millis(20),None).map_err(db_error)?;
+        drop(operation); // finish SQLite backup before querying the destination connection
         destination.execute_batch("PRAGMA foreign_keys=ON;").map_err(db_error)?;
     }
     // Teacher accounts may have changed. Clear all authentication sessions.
