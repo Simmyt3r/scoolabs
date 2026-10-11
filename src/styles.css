@@ -64,3 +64,26 @@
 .assignment-actions{min-width:165px;display:flex;flex-direction:column;align-items:end;gap:12px}.assignment-actions .button-outline{white-space:nowrap}
 .assignment-state{font-size:11px;border-radius:7px;padding:6px 10px;font-weight:800}.assignment-state.submitted{color:#16846b;background:#e5f7ee}.assignment-state.pending{color:#98691c;background:#fff4da}
 @media(max-width:600px){.student-assignment-card{flex-direction:column}.assignment-actions{width:100%;flex-direction:row;justify-content:space-between;align-items:center;flex-wrap:wrap}}
+
+/* Printable assessment reports and teacher rubric. */
+.rubric-modes{display:flex;gap:5px;margin:12px 0}.rubric-modes button{border:1px solid #d8e5ea;border-radius:7px;padding:8px 13px;background:white;color:#597887;font-size:11px;font-weight:750}.rubric-modes button.selected{background:#e4f5f1;color:#157b6f;border-color:#77c8b6}
+.rubric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:13px;background:#f7fafc;border-radius:10px;border:1px solid #e3ecef}.rubric-grid label{display:flex;flex-direction:column;gap:5px;color:#3d6374;font-size:11px;font-weight:700}.rubric-grid label small{font-weight:400}.rubric-grid .rubric-hint{color:#859aa4;line-height:1.45}.rubric-grid input,.grade-single input{max-width:180px;width:100%;border:1px solid #d7e5e9;border-radius:7px;padding:9px;color:#284d61;background:white}.rubric-total{display:flex;align-items:center;gap:12px;color:#3d6876;font-size:12px}.rubric-total strong{color:#168879;font-size:16px}.grade-single{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#597888}.rubric-save{display:grid;grid-template-columns:minmax(180px,1fr) auto;align-items:end;margin-top:12px}.rubric-save label{min-width:0}.rubric-save button{white-space:nowrap}.print-record-button{margin-top:7px}
+.report-preview-screen{position:fixed;z-index:10000;inset:0;overflow-y:auto;background:#dde8ed;padding:84px 20px 35px;display:flex;align-items:center;flex-direction:column}
+.report-preview-toolbar{position:fixed;z-index:2;left:0;right:0;top:0;padding:12px 25px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#1c4055;color:white;box-shadow:0 4px 18px #1237}
+.report-preview-toolbar strong{font-size:14px;margin-right:auto}.report-preview-toolbar span{color:#c7dce4;font-size:11px}.report-preview-toolbar button{white-space:nowrap}
+.report-sheet{width:210mm;max-width:100%;min-height:275mm;background:white;padding:17mm 19mm;color:#243748;box-shadow:0 10px 40px #153b4f24;font-size:11pt;line-height:1.6;overflow-wrap:anywhere}
+.report-sheet-header{display:flex;align-items:center;gap:14px;padding:0 0 20px;border-bottom:2px solid #0d8d83;margin-bottom:25px}.report-sheet-mark{background:#e2f3f0;border-radius:12px;width:49px;height:49px;display:grid;place-items:center;color:#178b80}
+.report-sheet-header>div:last-child{display:flex;flex-direction:column;gap:0}.report-sheet-header strong{font-size:16pt}.report-sheet-product{font-size:9pt;font-weight:900;color:#008f83;letter-spacing:2px}.report-sheet-header small{font-size:9pt;letter-spacing:1px;color:#68808e}
+.report-sheet h1{font-size:22pt;margin:0 0 23px;line-height:1.2}.report-sheet h2{font-size:12pt;color:#197969;margin:0 0 8px}
+.report-sheet-meta{display:grid;grid-template-columns:1fr 1fr;gap:13px;background:#f1f8f9;border-radius:9px;padding:17px;margin-bottom:24px}.report-sheet-meta>div{display:flex;flex-direction:column;gap:2px;min-width:0}.report-sheet-meta span{font-size:9pt;color:#69818b}.report-sheet-meta strong{font-size:11pt}.report-sheet-wide{grid-column:1/-1}
+.report-sheet section{margin:18px 0}.report-sheet section p{white-space:pre-wrap;margin:0}.report-sheet-score{display:block;font-size:18pt;color:#127b6e;margin:4px 0 12px}.report-sheet-grade table{border-collapse:collapse;width:100%;max-width:390px;margin:10px 0 14px}.report-sheet-grade th,.report-sheet-grade td{border:1px solid #dbe8ea;padding:7px 12px;text-align:left}.report-sheet footer{margin-top:42px;border-top:1px solid #d4e4e8;padding-top:12px;display:flex;justify-content:space-between;gap:20px;color:#687e87;font-size:8pt}
+@media(max-width:700px){.rubric-grid{grid-template-columns:1fr}.rubric-save{grid-template-columns:1fr}.report-preview-toolbar{padding:9px}.report-preview-toolbar span{display:none}.report-sheet{padding:25px 18px;min-height:0}.report-sheet-meta{grid-template-columns:1fr}.report-sheet-wide{grid-column:auto}}
+@media print{
+  @page{size:A4;margin:12mm}
+  html,body{background:white!important;margin:0!important;padding:0!important}
+  body > #root{display:none!important}
+  .report-preview-screen{position:static!important;display:block!important;inset:auto!important;overflow:visible!important;background:white!important;padding:0!important;margin:0!important}
+  .report-preview-toolbar{display:none!important}
+  .report-sheet{width:auto!important;max-width:none!important;min-height:0!important;padding:0!important;box-shadow:none!important}
+  .report-sheet section,.report-sheet-meta,.report-sheet-header,.report-sheet footer{break-inside:avoid}
+}
