@@ -44,3 +44,12 @@
 .reset-pin{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.reset-pin input{flex:1;min-width:125px;border:1px solid #d3e3e8;border-radius:6px;padding:9px;font-size:11px}.reset-pin button{font-size:10px;padding:9px}
 
 .teacher-report-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.teacher-report-heading h3{margin:0}.class-progress-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:16px 0}.class-progress-card{border:1px solid #e0e9ec;border-radius:9px;padding:13px;display:flex;flex-direction:column;gap:7px;background:#f7fafb}.class-progress-card strong{color:#23495b}.class-progress-card span{font-size:11px;color:#6d8491}
+
+.practical-manual{background:#fff;border:1px solid #e2e9ed;border-radius:11px;margin-top:13px;padding:18px 22px}
+.practical-manual summary{cursor:pointer;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800;color:#286578;list-style:disclosure-closed}
+.practical-manual[open] summary{margin-bottom:18px}
+.manual-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 24px}
+.manual-grid h3{font-size:12px;margin:0 0 8px;color:#356b75}
+.manual-grid li,.manual-grid p{font-size:11px;line-height:1.75;color:#647d89}
+.manual-grid ul,.manual-grid ol{margin:0 0 13px;padding-left:18px}
+@media(max-width:650px){.manual-grid{grid-template-columns:1fr}}

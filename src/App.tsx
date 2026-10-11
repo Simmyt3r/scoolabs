@@ -11,6 +11,7 @@ import { initialiseStore, readRecords, writeRecord, saveStudentProfile, getClass
 import { IndicatorsLab, PendulumLab, OsmosisLab, SoilLab } from './AdvancedLabs';
 import TeacherPanel from './TeacherPanel';
 import { SeparationLab, LensLab, TranspirationLab, NutrientsLab } from './FinalLabs';
+import { guides } from './guides';
 
 type Page = Subject | 'notebook' | 'teacher';
 const SUBJECTS = {
@@ -340,6 +341,15 @@ function App() {
           {selected.id==='titration'?<ChemistryLab onRecord={startRecord}/>:selected.id==='ohms-law'?<PhysicsLab onRecord={startRecord}/>:selected.id==='microscopy'?<BiologyLab onRecord={startRecord}/>:selected.id==='germination'?<AgricultureLab onRecord={startRecord}/>:selected.id==='ph-indicators'?<IndicatorsLab onRecord={startRecord}/>:selected.id==='pendulum'?<PendulumLab onRecord={startRecord}/>:selected.id==='osmosis'?<OsmosisLab onRecord={startRecord}/> :selected.id==='soil'?<SoilLab onRecord={startRecord}/>:selected.id==='separation'?<SeparationLab onRecord={startRecord}/>:selected.id==='convex-lens'?<LensLab onRecord={startRecord}/>:selected.id==='transpiration'?<TranspirationLab onRecord={startRecord}/>:<NutrientsLab onRecord={startRecord}/>}
           {saved&&<div className="success-alert"><CheckCircle2 size={18}/> Observation saved to your offline notebook. <button onClick={()=>navigate('notebook')}>Open notebook <ArrowRight size={14}/></button></div>}
           <div className="objectives"><div><ClipboardList size={20}/><strong>Learning objectives</strong></div><div className="objectives-list">{selected.objectives.map((objective,i)=><span key={objective}><CheckCircle2 size={16}/>{i+1}. {objective}</span>)}</div></div>
+          <details className="practical-manual">
+            <summary><BookOpen size={18}/> Practical guide, questions and safety</summary>
+            <div className="manual-grid">
+              <section><h3>Equipment used</h3><ul>{guides[selected.id].equipment.map(item=><li key={item}>{item}</li>)}</ul></section>
+              <section><h3>Step-by-step method</h3><ol>{guides[selected.id].method.map(item=><li key={item}>{item}</li>)}</ol></section>
+              <section><h3>Questions to answer in your notebook</h3><ol>{guides[selected.id].questions.map(item=><li key={item}>{item}</li>)}</ol></section>
+              <section><h3>Scientific model boundary</h3><p>{guides[selected.id].modelLimit}</p><h3>Safety guidance</h3><p>{guides[selected.id].safety}</p></section>
+            </div>
+          </details>
           </>
         }
         <footer className="content-footer"><span>Simeon's Laboratories and Co Technologies Ltd</span><span>Designed for Nigerian classrooms · Offline first</span></footer>
