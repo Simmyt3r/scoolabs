@@ -42,3 +42,5 @@
 .teacher-student-list .student-register-entry{border:1px solid #e1eaef;border-radius:9px;background:#fff;padding:12px;display:flex;flex-direction:column;gap:9px;min-width:230px;flex:1}
 .teacher-student-list .student-register-entry strong{font-size:12px}.teacher-student-list .student-register-entry>span{background:none;padding:0;color:#587987;font-size:11px}
 .reset-pin{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.reset-pin input{flex:1;min-width:125px;border:1px solid #d3e3e8;border-radius:6px;padding:9px;font-size:11px}.reset-pin button{font-size:10px;padding:9px}
+
+.teacher-report-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.teacher-report-heading h3{margin:0}.class-progress-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:16px 0}.class-progress-card{border:1px solid #e0e9ec;border-radius:9px;padding:13px;display:flex;flex-direction:column;gap:7px;background:#f7fafb}.class-progress-card strong{color:#23495b}.class-progress-card span{font-size:11px;color:#6d8491}
