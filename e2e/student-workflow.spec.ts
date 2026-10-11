@@ -269,3 +269,33 @@ test('report preview restores notebook focus after Escape',async({page})=>{
  await expect(page.getByRole('dialog',{name:'Practical report preview'})).toHaveCount(0);
  await expect(open).toBeFocused();
 });
+
+
+test('mobile navigation opens, marks itself expanded, and closes with Escape',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/');
+ const menu=page.getByRole('button',{name:'Open menu'});
+ await expect(menu).toBeVisible();
+ await expect(menu).toHaveAttribute('aria-expanded','false');
+ await menu.click();
+ await expect(menu).toHaveAttribute('aria-expanded','true');
+ await expect(page.getByRole('button',{name:'Close menu'})).toBeVisible();
+ await page.keyboard.press('Escape');
+ await expect(menu).toHaveAttribute('aria-expanded','false');
+ await menu.click();
+ await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:/My progress/}).click();
+ await expect(page.getByRole('region',{name:'Student progress dashboard'})).toBeVisible();
+ await expect(menu).toHaveAttribute('aria-expanded','false');
+});
+test('small screens keep report-writing modal usable with the keyboard',async({page})=>{
+ await page.setViewportSize({width:360,height:640});
+ await page.goto('/');
+ await page.getByRole('button',{name:'Record these results'}).click();
+ const dialog=page.getByRole('dialog',{name:'Save your experiment'});
+ await expect(dialog).toBeVisible();
+ await dialog.getByRole('button',{name:'Show writing prompts'}).click();
+ await expect(dialog.getByText('Questions from this experiment')).toBeVisible();
+ await dialog.getByRole('button',{name:'Hide writing prompts'}).click();
+ await page.keyboard.press('Escape');
+ await expect(dialog).toHaveCount(0);
+});

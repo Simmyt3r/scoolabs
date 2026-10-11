@@ -73,3 +73,8 @@ SQLite persistence and import/restore, local classes and teacher marking, curric
 - Run Chromium tests for keyboard skip link, modal focus return, reverse/forward focus wrapping, Escape, report-writing prompts and print-preview focus restoration.
 - Confirm reduced-motion preferences remove nonessential transitions.
 - After branding, test screen-reader announcements and keyboard-only lab interactions on an actual Windows PC. Automated focus behaviour alone is not full accessibility certification.
+
+## v0.8 keyboard and viewport checks
+- Use Playwright to exercise the skip link, modal focus cycling, focus restoration, Escape, responsive mobile navigation, and structured conclusion prompts.
+- Confirm status messages are announced to assistive technologies and reduced-motion preferences bypass nonessential transitions.
+- Accessibility is not certified by this automation; perform screen-reader, keyboard-only, and Windows desktop acceptance tests after final branding.

@@ -37,3 +37,11 @@ Status: PRE-BRANDING DEVELOPMENT. These are future physical school pilot tests, 
 Record Windows build SHA, device model, school, date, independent subject-teacher reviewer, failed steps and remediation. Do not declare production readiness until all critical items pass.
 
 No WAEC, NECO, NERDC, safety or curriculum certification is claimed.
+
+
+## Additional keyboard and small-screen acceptance (v0.8)
+- [ ] Use only a keyboard to navigate all four subject areas, and verify visible focus and Skip to main content.
+- [ ] Use Tab/Shift+Tab in the notebook and profile dialogs, close with Escape, and confirm focus returns to the invoking button.
+- [ ] Open the mobile sidebar at 360px and 390px, close with Escape, and confirm active navigation remains usable.
+- [ ] Open a report-writing guide, insert the blank reflection outline, and verify it cannot be saved with unfilled bracketed placeholders.
+- [ ] Try Windows high-contrast settings, 200% text scaling and the platform screen reader. Automated browser checks cannot replace these physical-device tests.

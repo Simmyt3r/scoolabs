@@ -88,3 +88,6 @@ The dashboard uses existing native authenticated SQLite data and is shown after 
 Scoolabs now includes a skip-to-content link, Escape-to-close mobile drawer, active-page navigation hints, keyboard focus confinement and restoration in the student profile, notebook and print-preview dialogs, and respect for reduced-motion settings. The notebook-save dialog includes optional experiment-specific reflection prompts and a blank Observation / Evidence / Explanation / Limitation outline, with unfilled placeholders blocked from being submitted. These prompts never fabricate student data or constitute an automatic mark.
 
 Accessibility should still be tested using a screen reader and keyboard on the final branded Windows installer.
+
+## v0.8 pre-branding usability milestone
+Keyboard navigation and offline experiment report-writing were improved: skip-to-main link, modal focus trapping and restoration, Escape dismissal, active nav semantics, mobile dialog sizing, reduced-motion transitions and student feedback status announcements. Students may open existing scientific-guide questions and insert a blank reflection outline in a practical report. Bracketed placeholders must be replaced before a draft can be saved. No automatic conclusions, fabricated measurements or grades are generated. Full physical-device accessibility testing remains pending.

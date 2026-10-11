@@ -40,7 +40,7 @@ export default function KnowledgeCheck({experimentId,studentToken,previous,onSav
       {checked&&<p className="knowledge-explanation"><strong>{selected[i]===question.correctIndex?'Correct.':'Review this.'}</strong> {question.explanation}</p>}
     </fieldset>)}
     {error&&<p className="error-message" role="alert">{error}</p>}
-    {checked?<div className="knowledge-outcome"><strong>{result.correct}/2 correct</strong><span>{studentToken?'Saved to your local student account.':'Browser preview only: this score is not saved to a school account.'}</span><button className="button-outline" onClick={retry}><RotateCcw size={15}/> Try again</button></div>:
+    {checked?<div className="knowledge-outcome" role="status"><strong>{result.correct}/2 correct</strong><span>{studentToken?'Saved to your local student account.':'Browser preview only: this score is not saved to a school account.'}</span><button className="button-outline" onClick={retry}><RotateCcw size={15}/> Try again</button></div>:
       <div className="knowledge-actions"><button type="button" className="button-primary" onClick={()=>void evaluate()} disabled={busy||selected.some(x=>x===null)}>{busy?'Checking answers…':'Check answers'}</button><small>{studentToken?'Your latest formative result is stored offline.':'Browser preview: answers are temporary and are not school grades.'}</small></div>}
   </section>;
 }
