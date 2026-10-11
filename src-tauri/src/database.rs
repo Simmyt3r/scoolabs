@@ -84,7 +84,7 @@ pub struct TeacherSnapshot {
     pub records: Vec<LabRecord>,
 }
 
-fn db_error(error: impl std::fmt::Display) -> String {
+pub(crate) fn db_error(error: impl std::fmt::Display) -> String {
     format!("Local database error: {error}")
 }
 fn connection<'a>(state: &'a State<'_, DbState>) -> Result<std::sync::MutexGuard<'a, Connection>, String> {
@@ -97,7 +97,7 @@ fn ensure_field(value: &str, label: &str, max_length: usize) -> Result<(), Strin
         Ok(())
     }
 }
-fn create_tables(conn: &Connection) -> rusqlite::Result<()> {
+pub(crate) fn create_tables(conn: &Connection) -> rusqlite::Result<()> {
     conn.execute_batch(
         "PRAGMA foreign_keys = ON;
          CREATE TABLE IF NOT EXISTS app_settings (
@@ -128,7 +128,16 @@ fn create_tables(conn: &Connection) -> rusqlite::Result<()> {
            id TEXT PRIMARY KEY, class_id TEXT NOT NULL REFERENCES classes(id),
            experiment_id TEXT NOT NULL, title TEXT NOT NULL,
            instructions TEXT NOT NULL, created_at TEXT NOT NULL
-         );"
+         );
+         CREATE TABLE IF NOT EXISTS student_credentials (
+           student_id TEXT PRIMARY KEY REFERENCES students(id),
+           access_code TEXT NOT NULL UNIQUE, pin_hash TEXT NOT NULL
+         );
+         CREATE TABLE IF NOT EXISTS student_record_links (
+           record_id TEXT PRIMARY KEY REFERENCES notebook_records(id),
+           student_id TEXT NOT NULL REFERENCES students(id)
+         );
+         CREATE INDEX IF NOT EXISTS student_link_lookup ON student_record_links(student_id);"
     )
 }
 pub fn initialize(handle: &AppHandle) -> Result<DbState, Box<dyn std::error::Error>> {
@@ -140,7 +149,7 @@ pub fn initialize(handle: &AppHandle) -> Result<DbState, Box<dyn std::error::Err
     create_tables(&conn)?;
     Ok(DbState(Mutex::new(conn)))
 }
-fn record_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<LabRecord> {
+pub(crate) fn record_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<LabRecord> {
     Ok(LabRecord {
         id: row.get(0)?, timestamp: row.get(1)?, student: row.get(2)?,
         classroom: row.get(3)?, experiment_id: row.get(4)?,
@@ -149,8 +158,8 @@ fn record_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<LabRecord> {
         conclusion: row.get(9)?, grade: row.get(10)?, feedback: row.get(11)?,
     })
 }
-const RECORD_COLUMNS: &str = "id,timestamp,student,classroom,experiment_id,experiment_title,subject,settings,observation,conclusion,grade,feedback";
-fn valid_record(r: &LabRecord) -> Result<(), String> {
+pub(crate) const RECORD_COLUMNS: &str = "id,timestamp,student,classroom,experiment_id,experiment_title,subject,settings,observation,conclusion,grade,feedback";
+pub(crate) fn valid_record(r: &LabRecord) -> Result<(), String> {
     ensure_field(&r.id, "Record ID", 100)?;
     ensure_field(&r.student, "Student name", 120)?;
     ensure_field(&r.classroom, "Class", 100)?;
@@ -230,7 +239,7 @@ pub fn teacher_accounts(db: State<'_, DbState>) -> Result<Vec<TeacherAccount>,St
     let rows=stmt.query_map([],|r|Ok(TeacherAccount{id:r.get(0)?,name:r.get(1)?})).map_err(db_error)?;
     rows.collect::<rusqlite::Result<Vec<_>>>().map_err(db_error)
 }
-fn hash_pin(pin: &str) -> Result<String,String> {
+pub(crate) fn hash_pin(pin: &str) -> Result<String,String> {
     if pin.len() < 6 || pin.len() > 12 || !pin.chars().all(|c| c.is_ascii_digit()) {
         return Err("PIN must be 6–12 digits".into());
     }
@@ -260,7 +269,7 @@ pub fn teacher_login(db: State<'_, DbState>, sessions: State<'_, Sessions>, teac
     sessions.0.lock().map_err(db_error)?.insert(token.clone(),(teacher_id,Instant::now()));
     Ok(TeacherSession{token,teacher_name:name})
 }
-fn check_token(sessions:&State<'_, Sessions>,token:&str)->Result<String,String>{
+pub(crate) fn check_token(sessions:&State<'_, Sessions>,token:&str)->Result<String,String>{
     let mut guard=sessions.0.lock().map_err(db_error)?;
     guard.retain(|_, (_,time)|time.elapsed()<Duration::from_secs(8*60*60));
     guard.get(token).map(|(id,_)|id.clone()).ok_or_else(||"Teacher session expired. Sign in again.".into())
@@ -390,7 +399,8 @@ pub fn list_local_backups(
 }
 #[tauri::command]
 pub fn restore_local_backup(
-    db:State<'_,DbState>, sessions:State<'_,Sessions>,app:AppHandle,
+    db:State<'_,DbState>, sessions:State<'_,Sessions>,
+    student_sessions:State<'_,crate::student::StudentSessions>,app:AppHandle,
     token:String,filename:String,confirmation:String
 ) -> Result<String,String> {
     check_token(&sessions,&token)?;
@@ -415,10 +425,12 @@ pub fn restore_local_backup(
         let operation=Backup::new(&source,&mut *destination).map_err(db_error)?;
         operation.run_to_completion(128,Duration::from_millis(20),None).map_err(db_error)?;
         drop(operation); // finish SQLite backup before querying the destination connection
+        create_tables(&destination).map_err(db_error)?;
         destination.execute_batch("PRAGMA foreign_keys=ON;").map_err(db_error)?;
     }
     // Teacher accounts may have changed. Clear all authentication sessions.
     sessions.0.lock().map_err(db_error)?.clear();
+    student_sessions.0.lock().map_err(db_error)?.clear();
     Ok(rollback.to_string_lossy().to_string())
 }
 
