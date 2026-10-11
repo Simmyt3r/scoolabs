@@ -4,7 +4,7 @@
 
 Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 
-## Current prototype (v0.5)
+## Current prototype (v0.7)
 
 | Subject | Working simulation | Current controls |
 | --- | --- | --- |
@@ -15,11 +15,11 @@ Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 
 All twelve practicals are now accessible. Laboratory diagrams are generated locally by the app, and there are no runtime downloads of teaching assets.
 
-Students can set a local profile, save results and conclusions in an offline notebook, and export their notebook as JSON.
+Installed desktop students sign in using a teacher-issued access code and PIN, save individual lab reports in native SQLite, and view teacher marks, class assignments and formative learning progress. A limited name-and-class profile remains available only in browser development preview.
 
-**Native data storage:** The installed Windows application now uses local SQLite for student profiles, practical observations, teacher accounts, classes, enrolments, assignments, grades and backups. Previous notebook entries migrate once from localStorage into SQLite, with idempotent import. Native SQLite backup is available from the PIN-authenticated Teacher workspace. Browser-only developer preview still uses localStorage fallback.
+**Native data storage:** The Windows application uses bundled SQLite for teacher accounts, student identities, lab reports, classes, assignments, teacher grades, self-check results, backups and restore. Historical SQLite reports are retained but not automatically assigned to newly authenticated student IDs. Browser-only development preview uses localStorage; browser and native identities are not interchangeable.
 
-**Limits:** Students do not yet have individual password-protected identities, and physical administrators may access SQLite. This is not yet a secure centrally managed school-wide gradebook. Models are teaching approximations; teachers must independently validate lessons and results before school rollout.
+**Limits:** Students have PIN-protected local accounts, but device administrators can access database files and backups. There is no cloud identity provider or centrally managed school-wide gradebook. Models are teaching approximations; qualified teachers must independently validate lessons and results before school rollout.
 
 **Now available:** Twelve interactive lessons, three per subject. Newly added: filtration/evaporation, convex thin-lens images, potometer water uptake, and illustrative nutrient limitation symptoms.
 
