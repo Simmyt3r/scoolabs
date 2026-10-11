@@ -86,11 +86,19 @@ pub fn teacher_reset_student_pin(
     check_token(&teachers,&token)?;
     let hash=hash_pin(&new_pin)?;
     let conn=db.0.lock().map_err(db_error)?;
-    let access_code:String=conn.query_row("SELECT access_code FROM student_credentials WHERE student_id=?1",
-        params![student_id],|r|r.get(0)).optional().map_err(db_error)?
-        .ok_or_else(||"This student has no account yet; enrol them with a new account.".to_owned())?;
-    conn.execute("UPDATE student_credentials SET pin_hash=?1 WHERE student_id=?2",
-        params![hash,student_id]).map_err(db_error)?;
+    let student_exists:i64=conn.query_row("SELECT COUNT(*) FROM students WHERE id=?1",
+        params![student_id],|r|r.get(0)).map_err(db_error)?;
+    if student_exists==0 {return Err("Unknown student account".into());}
+    // Existing v0.3 roster entries did not have credentials. Issue one on first reset.
+    let known:Option<String>=conn.query_row(
+        "SELECT access_code FROM student_credentials WHERE student_id=?1",params![student_id],|r|r.get(0)
+    ).optional().map_err(db_error)?;
+    let access_code=known.unwrap_or_else(student_code);
+    conn.execute(
+        "INSERT INTO student_credentials(student_id,access_code,pin_hash) VALUES(?1,?2,?3)
+         ON CONFLICT(student_id) DO UPDATE SET pin_hash=excluded.pin_hash",
+        params![student_id,access_code,hash]
+    ).map_err(db_error)?;
     student_sessions.0.lock().map_err(db_error)?.retain(|_,(id,_)|id!=&student_id);
     Ok(Enrolment{student_id,access_code})
 }
