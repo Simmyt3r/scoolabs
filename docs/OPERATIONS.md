@@ -78,3 +78,11 @@ At the end of each practical, students select one answer for each of two short q
 After entering an access code and PIN in the Windows application, students open **My progress**. It shows how many distinct practicals they have saved, reports in their offline notebook, teacher marks, pending class assignments and short formative self-checks. Use **Open practical** for the next pending assignment or suggested untried lesson, **View class assignments** for assigned work, or **Open my notebook** to see observations and teacher comments.
 
 A practical is only marked *tried* when a notebook report exists. It does not indicate mastery or curriculum certification. Teacher marks and formative self-checks remain separate, and unmarked reports do not count toward a student's score average.
+
+
+## Keyboard access and practical-writing prompts
+- Press **Tab** once from the top of the page to reveal **Skip to main content**. Press Enter to jump to the learning area.
+- Navigate the sidebar and controls with Tab/Shift+Tab and Enter. On narrow screens, Escape closes the sidebar.
+- Student profile, notebook-save and print-preview dialogs move keyboard focus inside the open dialog. Tab stays inside, Escape closes, and focus returns to the original button.
+- In **Save your experiment**, expand **Show writing prompts** for experiment-specific questions and model limitations. Optionally insert a blank reflection structure containing Observation, Evidence, Explanation and Limitation sections. Write your own explanation in place of every bracketed placeholder before saving; blank placeholders are rejected.
+- These writing aids do **not** calculate or invent any student observations or award a grade. Teachers should still review report quality.

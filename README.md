@@ -82,3 +82,9 @@ Each of the twelve experiments now has two offline multiple-choice questions wit
 Scoolabs includes **My progress**, an account-scoped view of saved laboratory reports, distinct experiments tried, pending class assignments, formative checks, teacher marks and recent feedback. It recommends an outstanding assigned practical, or otherwise an untried lesson. Activity is *not* treated as mastery: scores are shown only when a teacher has marked a real report, a legitimate mark of zero is preserved, and an empty student account begins with no fabricated results.
 
 The dashboard uses existing native authenticated SQLite data and is shown after successful account loading. Browser-only preview uses the local demo profile and notebook, explicitly distinguishing it from a secure desktop student identity. Installation and physical classroom testing remain deferred until product branding is complete.
+
+
+## Keyboard-first usability and report writing
+Scoolabs now includes a skip-to-content link, Escape-to-close mobile drawer, active-page navigation hints, keyboard focus confinement and restoration in the student profile, notebook and print-preview dialogs, and respect for reduced-motion settings. The notebook-save dialog includes optional experiment-specific reflection prompts and a blank Observation / Evidence / Explanation / Limitation outline, with unfilled placeholders blocked from being submitted. These prompts never fabricate student data or constitute an automatic mark.
+
+Accessibility should still be tested using a screen reader and keyboard on the final branded Windows installer.

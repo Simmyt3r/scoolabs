@@ -211,3 +211,61 @@ test('student dashboard reads saved reports and respects a zero teacher grade',a
  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:/My progress/}).click();
  await expect(page.getByRole('region',{name:'Student progress dashboard'}).getByText('Review the endpoint')).toBeVisible();
 });
+
+
+test('keyboard skip navigation reaches main content',async({page})=>{
+ await page.goto('/');
+ await page.keyboard.press('Tab');
+ await expect(page.getByRole('link',{name:'Skip to main content'})).toBeFocused();
+ await page.keyboard.press('Enter');
+ await expect(page.locator('#scoolabs-main')).toBeFocused();
+});
+test('student profile dialog traps Tab, closes on Escape and restores trigger focus',async({page})=>{
+ await page.goto('/');
+ const button=page.getByRole('button',{name:'Student profile'});
+ await button.focus();
+ await button.press('Enter');
+ const dialog=page.getByRole('dialog',{name:'Student profile'});
+ await expect(dialog).toBeVisible();
+ await expect(dialog.getByRole('button',{name:'Close'})).toBeFocused();
+ await page.keyboard.press('Shift+Tab');
+ await expect(dialog.getByRole('button',{name:'Save profile'})).toBeFocused();
+ await page.keyboard.press('Tab');
+ await expect(dialog.getByRole('button',{name:'Close'})).toBeFocused();
+ await page.keyboard.press('Escape');
+ await expect(dialog).toHaveCount(0);
+ await expect(button).toBeFocused();
+});
+test('student report prompts never save the blank scaffold as a conclusion',async({page})=>{
+ await page.goto('/');
+ await page.getByRole('button',{name:'Record these results'}).click();
+ const dialog=page.getByRole('dialog',{name:'Save your experiment'});
+ await dialog.getByRole('button',{name:'Show writing prompts'}).click();
+ await expect(dialog.getByText('Questions from this experiment')).toBeVisible();
+ await dialog.getByRole('button',{name:'Insert a blank reflection structure'}).click();
+ await expect(dialog.getByPlaceholder('What did you discover?')).toContainText('[write what changed]');
+ await dialog.getByRole('button',{name:'Save to notebook'}).click();
+ await expect(dialog.getByRole('alert')).toContainText('Finish or delete every');
+ await page.keyboard.press('Escape');
+ await expect(dialog).toHaveCount(0);
+});
+test('report preview restores notebook focus after Escape',async({page})=>{
+ await page.addInitScript(()=>{
+  localStorage.setItem('scoolabs.profile.v1',JSON.stringify({name:'Test Student',classroom:'SS2A'}));
+  localStorage.setItem('scoolabs.records.v1',JSON.stringify([{
+   id:'k1',timestamp:'2026-10-11T13:00:00Z',student:'Test Student',classroom:'SS2A',
+   experimentId:'titration',experimentTitle:'Acid–Base Titration',subject:'chemistry',
+   settings:'25mL',observation:'pH changed',conclusion:'Equivalence close to indicator change',
+   grade:0,feedback:'Review the data'
+  }]));
+ });
+ await page.goto('/');
+ await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:/My notebook/}).click();
+ const open=page.getByRole('button',{name:'Preview / print report'});
+ await open.focus();
+ await open.press('Enter');
+ await expect(page.getByRole('dialog',{name:'Practical report preview'})).toBeVisible();
+ await page.keyboard.press('Escape');
+ await expect(page.getByRole('dialog',{name:'Practical report preview'})).toHaveCount(0);
+ await expect(open).toBeFocused();
+});

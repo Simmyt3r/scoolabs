@@ -67,3 +67,9 @@ SQLite persistence and import/restore, local classes and teacher marking, curric
 - Browser tests verify navigation, a meaningful empty state, a suggested lesson shortcut and saved notebook feedback surviving refresh.
 - Native sign-in loads authenticated records, class assignments and formative results before showing the student dashboard. A partial loading failure revokes the login token.
 - The dashboard is not a mastery or official curriculum-completion tracker. Real Windows 10 classroom acceptance remains scheduled for after branding.
+
+
+## Keyboard accessibility regression
+- Run Chromium tests for keyboard skip link, modal focus return, reverse/forward focus wrapping, Escape, report-writing prompts and print-preview focus restoration.
+- Confirm reduced-motion preferences remove nonessential transitions.
+- After branding, test screen-reader announcements and keyboard-only lab interactions on an actual Windows PC. Automated focus behaviour alone is not full accessibility certification.
