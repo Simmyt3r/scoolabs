@@ -35,6 +35,8 @@ jobs:
         run: npm run build
       - name: Build Tauri Windows installer
         run: npm run tauri build
+      - name: Run native SQLite and teacher authentication tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Publish installer as Actions artifact
         uses: actions/upload-artifact@v4
         with:

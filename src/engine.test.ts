@@ -5,6 +5,7 @@ describe('science engine', () => {
   it('has eight active exercises, two per subject', () => {
     expect(experiments.filter(x => x.ready)).toHaveLength(8);
     expect(new Set(experiments.filter(x => x.ready).map(x => x.subject)).size).toBe(4);
+    for (const subject of ['chemistry','physics','biology','agriculture']) expect(experiments.filter(x=>x.subject===subject && x.ready)).toHaveLength(2);
   });
   it('calculates neutralisation of 25 mL 0.1 M acid using 0.1 M base', () => {
     const result = titrate(0.1, 25);

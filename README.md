@@ -4,7 +4,7 @@
 
 Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 
-## Current prototype (v0.1)
+## Current prototype (v0.2)
 
 | Subject | Working simulation | Current controls |
 | --- | --- | --- |
@@ -13,11 +13,15 @@ Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 | Biology | Microscope | Specimen, objective, focus, magnification |
 | Agriculture | Seed germination | Crop, moisture, temperature, days |
 
-Eight additional practicals are visible as Coming soon. All laboratory illustrations are generated in the user interface itself; no remote asset downloads are needed.
+Four additional practicals remain marked Coming soon. All laboratory illustrations are generated in the user interface itself; no remote asset downloads are needed.
 
 Students can set a local profile, save results and conclusions in an offline notebook, and export their notebook as JSON.
 
-**Prototype limitations:** Notes currently use device-local WebView storage, not yet SQLite; they should be backed up before uninstalling or clearing data. This is not a secure schoolwide gradebook. Calculations and diagrams are teaching models and require teacher validation before curricular adoption.
+**Native data storage:** The installed Windows application now uses local SQLite for student profiles, practical observations, teacher accounts, classes, enrolments, assignments, grades and backups. Previous notebook entries migrate once from localStorage into SQLite, with idempotent import. Native SQLite backup is available from the PIN-authenticated Teacher workspace. Browser-only developer preview still uses localStorage fallback.
+
+**Limits:** Students do not yet have individual password-protected identities, and physical administrators may access SQLite. This is not yet a secure centrally managed school-wide gradebook. Models are teaching approximations; teachers must independently validate lessons and results before school rollout.
+
+**Now available:** Eight interactive lessons, two per subject, including indicators/pH, pendulum, osmosis and dry-soil particle analysis. Four planned lessons remain disabled.
 
 ## Developer commands
 - npm install

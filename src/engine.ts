@@ -26,7 +26,7 @@ export const experiments: Experiment[] = [
   { id: 'osmosis', subject: 'biology', title: 'Osmosis', description: 'Investigate water movement across a membrane.', level: 'SS 2', minutes: 20, ready: true, objectives: [] },
   { id: 'transpiration', subject: 'biology', title: 'Transpiration', description: 'Study factors affecting water loss from leaves.', level: 'SS 2', minutes: 20, ready: false, objectives: [] },
   { id: 'germination', subject: 'agriculture', title: 'Seed Germination', description: 'Observe modelled effects of moisture and temperature.', level: 'SS 1–2', minutes: 20, ready: true, objectives: ['Identify conditions required for germination', 'Compare conditions', 'Record and interpret results'] },
-  { id: 'soil', subject: 'agriculture', title: 'Soil Texture and pH', description: 'Classify soil and interpret pH.', level: 'SS 1', minutes: 15, ready: true, objectives: [] },
+  { id: 'soil', subject: 'agriculture', title: 'Soil Fractions and pH', description: 'Classify soil and interpret pH.', level: 'SS 1', minutes: 15, ready: true, objectives: [] },
   { id: 'nutrients', subject: 'agriculture', title: 'Plant Nutrients', description: 'Recognise nutrient deficiency symptoms.', level: 'SS 2', minutes: 15, ready: false, objectives: [] },
 ];
 
