@@ -69,3 +69,6 @@ Teachers create practical assignments for individual classes, using one of twelv
 Teachers can see submitted, marked and outstanding counts for each activity; open reports filtered to one assignment; mark reports; and export the filtered gradebook CSV. Native migrations preserve existing v0.4 records and leave historical notes unassigned. The workflow is fully offline and relies on the physical security of the school device.
 
 This is a **pre-branding development build**. Classroom testing on a real Windows installation remains deferred until final product branding.
+
+## Captured instrument observations (pre-branding)
+The titration and Ohm's law laboratories now have manual **Capture reading** controls. A student may record up to 20 distinct setpoints, view results as a table and 2D graph, and include the observation series in their saved lab report. Changing base concentration or resistor value clears the previous run, so incompatible settings are not silently mixed. The Ohm's-law sheet estimates resistance from the captured V/I observations. These are *ideal simulation calculations* and not independent readings from physical apparatus. TypeScript and browser tests validate input bounds, duplicate setpoints, measurement reset and graph/worksheet navigation.

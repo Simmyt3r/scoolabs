@@ -48,3 +48,8 @@ SQLite persistence and import/restore, local classes and teacher marking, curric
 - Rubric unit tests cover total=100, invalid points, round-trip details and valid zero scores.
 - Playwright tests report preview, sample content, print media visibility and closing the modal.
 - Native WebView2 printing remains a physical Windows acceptance test after branding.
+
+## Observation series verification
+- `src/measurements.test.ts` checks manual-only capture, bounded and sorted data, duplicate-setpoint replacement, and ideal Ohm resistance fitting.
+- Chromium tests capture titration/circuit readings, clear observations, and verify changing resistance resets the circuit run.
+- Graphs use bundled SVG and no internet-dependent plotting library. A school pilot must compare visual axes, tables and printed notebook series against independent calculations.

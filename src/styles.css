@@ -87,3 +87,22 @@
   .report-sheet{width:auto!important;max-width:none!important;min-height:0!important;padding:0!important;box-shadow:none!important}
   .report-sheet section,.report-sheet-meta,.report-sheet-header,.report-sheet footer{break-inside:avoid}
 }
+
+/* Manual virtual instrument measurements with 2D plotted readings. */
+.measurement-log{grid-column:1/-1;background:#fff;border-top:1px solid #e2ecef;padding:21px 25px 17px;min-width:0}
+.measurement-log-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;margin-bottom:17px}
+.measurement-log-head strong{font-size:14px;color:#224b5d;display:block}
+.measurement-log-head small{color:#7d97a1;font-size:10px;display:block;margin-top:5px;line-height:1.5}
+.measurement-log-actions{display:flex;gap:8px;flex-wrap:wrap}
+.measurement-log-actions button{padding:10px 12px;font-size:11px}
+.measurement-data-grid{display:grid;grid-template-columns:minmax(220px,1fr) minmax(155px,.52fr);gap:18px;align-items:start}
+.measurement-chart{position:relative;background:#f7fafb;border:1px solid #e5eef0;border-radius:10px;min-height:215px;padding:7px}
+.measurement-chart svg{display:block;width:100%;height:auto}
+.measurement-chart p{position:absolute;top:38%;left:15%;right:15%;margin:0;font-size:11px;text-align:center;line-height:1.6;color:#77949f}
+.measurement-table-wrap{max-height:250px;overflow-y:auto;border:1px solid #e3ecef;border-radius:9px}
+.measurement-table-wrap table{border-collapse:collapse;width:100%;font-size:10px}
+.measurement-table-wrap th{position:sticky;top:0;background:#eaf5f5;text-align:left;color:#467381;font-weight:800;padding:10px}
+.measurement-table-wrap td{border-top:1px solid #eaf0f2;padding:9px 10px;color:#557885}
+.measurement-fit{margin:7px!important;color:#157e72;font-size:11px;line-height:1.5;font-weight:750;padding:8px 10px}
+.measurement-caveat{margin:12px 0 0;font-size:10px;color:#80949e;line-height:1.7}
+@media(max-width:750px){.measurement-data-grid{grid-template-columns:1fr}.measurement-log{padding:15px}.measurement-chart{min-height:0}}

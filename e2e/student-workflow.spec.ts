@@ -87,3 +87,29 @@ test('saved student practicals have a paper-ready report preview',async({page})=
   await report.getByRole('button',{name:'Close'}).click();
   await expect(report).toHaveCount(0);
 });
+
+
+test('chemistry lab stores only explicitly captured titration readings', async ({page})=>{
+  await page.goto('/');
+  const sheet=page.getByRole('region',{name:'Titration observation sheet'});
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByText('Waiting for a reading')).toBeVisible();
+  await sheet.getByRole('button',{name:'Capture reading'}).click();
+  await expect(sheet.locator('tbody tr')).toHaveCount(1);
+  await page.getByRole('button',{name:'+ 1 mL'}).click();
+  await sheet.getByRole('button',{name:'Capture reading'}).click();
+  await expect(sheet.locator('tbody tr')).toHaveCount(2);
+  await sheet.getByRole('button',{name:'Clear'}).click();
+  await expect(sheet.getByText('Waiting for a reading')).toBeVisible();
+});
+test('physics reading log resets when the circuit resistance changes', async ({page})=>{
+  await page.goto('/');
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Physics'}).click();
+  const sheet=page.getByRole('region',{name:'Circuit observation sheet'});
+  await sheet.getByRole('button',{name:'Capture reading'}).click();
+  await expect(sheet.locator('tbody tr')).toHaveCount(1);
+  await page.getByText('Resistance',{exact:true}).locator('..').locator('input[type="range"]').fill('20');
+  await expect(sheet.getByText('Waiting for a reading')).toBeVisible();
+  await sheet.getByRole('button',{name:'Capture reading'}).click();
+  await expect(sheet.locator('tbody tr')).toHaveCount(1);
+});

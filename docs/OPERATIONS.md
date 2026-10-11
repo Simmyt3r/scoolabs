@@ -62,3 +62,6 @@ Branding, teacher-led scientific acceptance tests and Windows school-hardware in
 - Print report uses the system print dialog and A4 CSS. Actual Windows printing still requires device validation after branding.
 - Teachers can enter a direct mark or use Method and settings (25), Observations (35), Scientific reasoning (30) and Report clarity (10). All criteria are required.
 - A zero grade is valid; ungraded work explicitly says it has not been marked.
+
+## Collect a scientific observation series
+Open Chemistry → Titration or Physics → Ohm's law. Adjust the instruments and select **Capture reading** to write down each measurement. Repeat for different burette volumes or voltages; values appear on an offline chart and table. Up to twenty distinct setpoints are retained for the current lesson. When you are finished, choose **Record these results**. The report stores both the current settings and the manually captured observations. Changing the base concentration or resistor resets the plotted run so two distinct setups are not treated as one experimental series. This is a mathematical virtual laboratory, not a calibration-certified scientific instrument.
