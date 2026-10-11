@@ -4,24 +4,47 @@ import { experiments } from './engine';
 import { backupSchoolDatabase, listSchoolBackups, restoreSchoolBackup, teacherAccessCodes, resetStudentPin, type StudentEnrolment, type SchoolBackup, addTeacher, createAssignment, createClass, enrollStudent, gradeRecord, loginTeacher, logoutTeacher, setupTeacher, teacherAccounts, teacherSnapshot, type TeacherAccount, type TeacherSession, type TeacherSnapshot } from './native-storage';
 import type { LabRecord } from './store';
 import { gradebookSummary, assignmentProgress, downloadGradebook } from './gradebook';
+import { EMPTY_RUBRIC, RUBRIC, parseRubricFeedback, rubricFeedback, scoreRubric, type RubricInputs } from './assessment';
+import ReportPreview from './ReportPreview';
 
 function GradeEntry({record,token,refresh}:{record:LabRecord;token:string;refresh:()=>Promise<void>}) {
+  const prior=parseRubricFeedback(record.feedback);
+  const [mode,setMode]=useState<'manual'|'rubric'>(prior?'rubric':'manual');
   const [score,setScore]=useState(String(record.grade??''));
-  const [feedback,setFeedback]=useState(record.feedback??'');
+  const [rubric,setRubric]=useState<RubricInputs>(prior?.inputs??{...EMPTY_RUBRIC});
+  const [feedback,setFeedback]=useState(prior?.comment??record.feedback??'');
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
+  const [preview,setPreview]=useState(false);
+  const rating=scoreRubric(rubric);
   async function grade(){
-    const parsed=Number(score);
-    if(score.trim()==='' || !Number.isInteger(parsed)||parsed<0||parsed>100){setError('Use a whole score from 0 to 100.');return;}
+    const parsed=mode==='rubric'?rating?.total:Number(score);
+    if(parsed===undefined || (mode==='manual'&&score.trim()==='') || !Number.isInteger(parsed)||parsed<0||parsed>100){
+      setError(mode==='rubric'?'Complete all four rubric scores within the displayed maximums.':'Use a whole score from 0 to 100.');return;
+    }
+    const assessment=mode==='rubric'&&rating?rubricFeedback(rating.scores,feedback):feedback;
+    if(assessment.length>2000){setError('Teacher feedback exceeds the 2,000-character limit.');return;}
     setBusy(true);setError('');
-    try{await gradeRecord(token,record.id,parsed,feedback);await refresh();}
+    try{await gradeRecord(token,record.id,parsed,assessment);setScore(String(parsed));await refresh();}
     catch(e){setError(String(e))}
     finally{setBusy(false)}
   }
-  return <div className="teacher-record" key={record.id}>
-    <div className="teacher-record-main"><strong>{record.student}</strong><small>{record.classroom} · {record.experimentTitle} · {new Date(record.timestamp).toLocaleString()}</small><span>{record.observation}</span>{record.conclusion&&<span>Conclusion: {record.conclusion}</span>}</div>
-    <div className="grade-fields"><label>Score / 100<input aria-label={'Score for '+record.student} type="number" value={score} min="0" max="100" onChange={e=>setScore(e.target.value)}/></label><label>Feedback<input aria-label={'Feedback for '+record.student} type="text" maxLength={2000} placeholder="Comment on report" value={feedback} onChange={e=>setFeedback(e.target.value)}/></label><button disabled={busy} className="button-outline" onClick={grade}>{busy?'Saving':'Mark'}</button></div>
+  return <div className="teacher-record">
+    <div className="teacher-record-main"><strong>{record.student}</strong><small>{record.classroom} · {record.experimentTitle} · {new Date(record.timestamp).toLocaleString()}</small>
+      <span>{record.observation}</span>{record.conclusion&&<span>Conclusion: {record.conclusion}</span>}
+      <button className="text-button" onClick={()=>setPreview(true)}>Preview / print report</button>
+    </div>
+    <div className="rubric-modes"><button className={mode==='manual'?'selected':''} onClick={()=>{setMode('manual');setError('')}}>Direct mark</button>
+      <button className={mode==='rubric'?'selected':''} onClick={()=>{setMode('rubric');setError('')}}>Four-criterion rubric</button></div>
+    {mode==='rubric'?<div className="rubric-grid">
+      {RUBRIC.map(c=><label key={c.id}><span>{c.label} <small>/{c.maximum}</small></span><small className="rubric-hint">{c.hint}</small>
+        <input type="number" step="1" min="0" max={c.maximum} aria-label={c.label+' score'} value={rubric[c.id]} onChange={e=>setRubric(v=>({...v,[c.id]:e.target.value}))}/></label>)}
+      <div className="rubric-total">Total: <strong>{rating?rating.total+'/100':'Complete all criteria'}</strong></div>
+    </div>:<label className="grade-single">Score / 100<input aria-label={'Score for '+record.student} type="number" value={score} min="0" max="100" step="1" onChange={e=>setScore(e.target.value)}/></label>}
+    <div className="grade-fields rubric-save"><label>Teacher feedback<input aria-label={'Feedback for '+record.student} type="text" maxLength={2000} placeholder="Comment on the practical" value={feedback} onChange={e=>setFeedback(e.target.value)}/></label>
+      <button disabled={busy} className="button-outline" onClick={grade}>{busy?'Saving':'Save assessment'}</button></div>
     {error&&<div role="alert" className="error-message">{error}</div>}
+    {preview&&<ReportPreview record={record} onClose={()=>setPreview(false)}/>}
   </div>;
 }
 export default function TeacherPanel() {
