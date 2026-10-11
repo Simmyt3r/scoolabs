@@ -187,17 +187,12 @@ fn experiment_subject(id:&str)->Option<&'static str>{
       _=>None,
     }
 }
-#[tauri::command]
-pub fn student_submit_record(
-    db:State<'_,DbState>,sessions:State<'_,StudentSessions>,token:String,mut record:LabRecord
-)->Result<(),String>{
-    let id=guard_student(&sessions,&token)?;
+fn persist_student_submission(conn: &mut rusqlite::Connection, student_id:&str, mut record:LabRecord)->Result<(),String>{
     let expected=experiment_subject(&record.experiment_id).ok_or("Unknown laboratory experiment")?;
     if record.subject!=expected{return Err("Experiment and subject do not match".into());}
-    let mut conn=db.0.lock().map_err(db_error)?;
     let (name,classroom)=conn.query_row(
        "SELECT s.name,c.name FROM students s JOIN classes c ON c.id=s.class_id WHERE s.id=?1",
-       params![id],|r|Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?)))
+       params![student_id],|r|Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?)))
        .map_err(db_error)?;
     record.id=Uuid::new_v4().to_string();
     record.timestamp=conn.query_row("SELECT strftime('%Y-%m-%dT%H:%M:%SZ','now')",[],|r|r.get(0)).map_err(db_error)?;
@@ -211,7 +206,7 @@ pub fn student_submit_record(
         let eligible:i64=tx.query_row(
             "SELECT COUNT(*) FROM assignments a JOIN students s ON a.class_id=s.class_id
              WHERE a.id=?1 AND s.id=?2 AND a.experiment_id=?3",
-            params![assignment_id,id,record.experiment_id],|r|r.get(0)
+            params![assignment_id,student_id,record.experiment_id],|r|r.get(0)
         ).map_err(db_error)?;
         if eligible!=1 {return Err("This assignment is not assigned to your class or experiment.".into());}
     }
@@ -222,19 +217,75 @@ pub fn student_submit_record(
          record.experiment_id,record.experiment_title,record.subject,record.settings,record.observation,record.conclusion,record.assignment_id]
     ).map_err(db_error)?;
     tx.execute("INSERT INTO student_record_links(record_id,student_id) VALUES(?1,?2)",
-        params![record.id,id]).map_err(db_error)?;
+        params![record.id,student_id]).map_err(db_error)?;
     if let Some(ref assignment_id)=record.assignment_id {
         tx.execute(
             "INSERT INTO assignment_submissions(assignment_id,student_id,record_id) VALUES(?1,?2,?3)",
-            params![assignment_id,id,record.id],
+            params![assignment_id,student_id,record.id],
         ).map_err(|_|"This assignment already has a submission. Use Personal practice for additional observations.".to_owned())?;
     }
     tx.commit().map_err(db_error)?;
     Ok(())
 }
+#[tauri::command]
+pub fn student_submit_record(
+    db:State<'_,DbState>,sessions:State<'_,StudentSessions>,token:String,record:LabRecord
+)->Result<(),String>{
+    let student_id=guard_student(&sessions,&token)?;
+    let mut conn=db.0.lock().map_err(db_error)?;
+    persist_student_submission(&mut conn,&student_id,record)
+}
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  fn fixture()->rusqlite::Connection {
+    let conn=rusqlite::Connection::open_in_memory().unwrap();
+    crate::database::create_tables(&conn).unwrap();
+    conn.execute("INSERT INTO classes(id,name,level) VALUES('c1','SS2A','SS2')",[]).unwrap();
+    conn.execute("INSERT INTO classes(id,name,level) VALUES('c2','SS2B','SS2')",[]).unwrap();
+    conn.execute("INSERT INTO students(id,class_id,name) VALUES('s1','c1','Ada')",[]).unwrap();
+    conn.execute("INSERT INTO students(id,class_id,name) VALUES('s2','c2','Bello')",[]).unwrap();
+    conn.execute("INSERT INTO assignments(id,class_id,experiment_id,title,instructions,created_at) VALUES('a1','c1','titration','Lab 1','Observe','2026-10-11')",[]).unwrap();
+    conn
+  }
+  fn sample_record(assignment: Option<&str>)->LabRecord{
+    LabRecord{id:"spoof-id".into(),timestamp:"2020-01-01".into(),student:"Fake identity".into(),
+      classroom:"WrongClass".into(),experiment_id:"titration".into(),
+      experiment_title:"Titration".into(),subject:"chemistry".into(),
+      settings:"volume=4mL".into(),observation:"pH changed".into(),conclusion:"End point".into(),
+      grade:Some(99),feedback:Some("fabricated teacher feedback".into()),
+      assignment_id:assignment.map(str::to_string)}
+  }
+  #[test]
+  fn linked_submission_rejects_impersonation_and_second_submission(){
+    let mut conn=fixture();
+    persist_student_submission(&mut conn,"s1",sample_record(Some("a1"))).unwrap();
+    let (name,room,grade,assigned):(String,String,Option<i64>,String)=conn.query_row(
+        "SELECT student,classroom,grade,assignment_id FROM notebook_records",[],
+        |r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).unwrap();
+    assert_eq!(name,"Ada");assert_eq!(room,"SS2A");assert_eq!(grade,None);assert_eq!(assigned,"a1");
+    assert!(persist_student_submission(&mut conn,"s1",sample_record(Some("a1"))).is_err());
+    let total:i64=conn.query_row("SELECT COUNT(*) FROM notebook_records",[],|r|r.get(0)).unwrap();
+    assert_eq!(total,1);
+    persist_student_submission(&mut conn,"s1",sample_record(None)).unwrap();
+    let total:i64=conn.query_row("SELECT COUNT(*) FROM notebook_records",[],|r|r.get(0)).unwrap();
+    assert_eq!(total,2);
+  }
+  #[test]
+  fn assignment_scope_and_experiment_subject_are_enforced(){
+    let mut conn=fixture();
+    assert!(persist_student_submission(&mut conn,"s2",sample_record(Some("a1"))).is_err());
+    let mut mismatch=sample_record(Some("a1"));
+    mismatch.experiment_id="ohms-law".into();mismatch.subject="physics".into();
+    assert!(persist_student_submission(&mut conn,"s1",mismatch).is_err());
+    let mut invalid_subject=sample_record(None);
+    invalid_subject.subject="physics".into();
+    assert!(persist_student_submission(&mut conn,"s1",invalid_subject).is_err());
+    let count:i64=conn.query_row("SELECT COUNT(*) FROM notebook_records",[],|r|r.get(0)).unwrap();
+    assert_eq!(count,0);
+  }
+
   #[test]
   fn codes_have_valid_format_and_subjects_are_locked(){
     let c=student_code();
