@@ -52,3 +52,8 @@ No WAEC, NECO, NERDC, safety or curriculum certification is claimed.
 - [ ] Complete first teacher setup and student enrolment using keyboard and mouse.
 - [ ] Confirm the printed A4 report and browser favicon use the identical approved Scoolabs mark.
 - [ ] Obtain product-owner approval of logo, wording and colour contrast before public release; official Silabs corporate logo remains a separate corporate asset.
+
+## Branded Help & About review
+- [ ] Confirm the Help & About page opens while entirely offline, with school setup steps and clear local-storage limitations.
+- [ ] Confirm support email and telephone belong to the company and are not mistaken for an in-app internet requirement.
+- [ ] Verify the footer product version equals the installed version and that publisher details on NSIS are correct.

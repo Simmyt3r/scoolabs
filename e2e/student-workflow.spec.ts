@@ -323,3 +323,18 @@ test('Scoolabs branded printable reports include the official in-app icon',async
  await expect(mark).toBeVisible();
  expect(await mark.evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
 });
+
+
+test('Scoolabs Help and About is usable offline and links to teacher setup',async({page})=>{
+ await page.goto('/');
+ await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Help & About'}).click();
+ const about=page.getByRole('region',{name:'About Scoolabs'});
+ await expect(about).toBeVisible();
+ await expect(about.getByRole('heading',{name:'Practical science for every classroom.'})).toBeVisible();
+ await expect(about).toContainText("Simeon's Laboratories and Co Technologies Ltd");
+ await expect(about.getByRole('link',{name:'silabtechnologies@gmail.com'})).toHaveAttribute('href','mailto:silabtechnologies@gmail.com');
+ await about.getByText('Where are student records saved?').click();
+ await expect(about).toContainText('not automatically encrypted');
+ await about.getByRole('button',{name:/Continue learning/}).click();
+ await expect(page.getByRole('region',{name:'Student progress dashboard'})).toBeVisible();
+});

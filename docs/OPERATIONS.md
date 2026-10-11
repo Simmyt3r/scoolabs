@@ -89,3 +89,6 @@ A practical is only marked *tried* when a notebook report exists. It does not in
 
 ## First launch after branding
 In the installed Windows application, the Scoolabs welcome area explains that the science lab works offline. A new school selects **Open teacher setup** to create a private teacher account, then adds classes and students. Each student receives their own access code and PIN, enters them in the **Continue learning** panel, and lands on My progress. Teachers can reach the teacher workspace from the sidebar at any time. The same Scoolabs emblem appears in the app, printed reports and generated Windows installer icon.
+
+## Help & About
+The left menu includes **Help & About**, which introduces the four school subjects, explains teacher setup and practical-report printing, states the limitations of educational simulations, and gives company support information. The page is available without internet. An email client or phone service may still be required to contact the company.
