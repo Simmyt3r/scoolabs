@@ -119,3 +119,24 @@
 .roster-row small{color:#728993;text-align:right}
 .roster-sent{color:#14806d}.roster-pending{color:#9c6a20}
 @media(max-width:670px){.roster-row{grid-template-columns:1fr 1fr}.roster-row small{grid-column:1/-1;text-align:left}}
+
+/* Private, formative knowledge checks. No connection to the teacher's gradebook. */
+.knowledge-check{border:1px solid #dce9ed;border-radius:13px;background:#fff;margin:18px 0;padding:23px;max-width:960px}
+.knowledge-check-head{display:flex;justify-content:space-between;gap:18px;align-items:start;flex-wrap:wrap}
+.knowledge-check-head h3{display:flex;align-items:center;gap:9px;color:#255b6c;margin:6px 0 8px;font-size:17px}
+.knowledge-check-head p{color:#728b99;font-size:12px;line-height:1.6;margin:0 0 12px}
+.knowledge-check-previous{font-size:11px;color:#197d6e;background:#eaf7f1;border-radius:7px;padding:8px;display:inline-flex;gap:6px;align-items:center}
+.knowledge-question{border:1px solid #e1eaee;border-radius:9px;padding:14px 15px;margin:15px 0 0;min-width:0}
+.knowledge-question legend{font-size:13px;font-weight:700;color:#2f5367;padding:0 8px}
+.knowledge-question legend span{color:#159185;font-size:10px;margin-right:8px;text-transform:uppercase;letter-spacing:.5px}
+.knowledge-option{display:flex;gap:10px;align-items:flex-start;border:1px solid #edf2f4;border-radius:8px;padding:11px;margin:7px 0;cursor:pointer;color:#49697c;font-size:12px;line-height:1.5}
+.knowledge-option input{accent-color:#0f9084;margin-top:3px;flex:none}
+.knowledge-option.chosen{background:#f0f9f8;border-color:#abd9d2}
+.knowledge-option.correct{border-color:#70bfaa;background:#eaf8f1;color:#176c5a}
+.knowledge-option.incorrect{border-color:#e7aaa5;background:#fff0ee;color:#aa5349}
+.knowledge-explanation{margin:12px 0 0;font-size:11px;line-height:1.75;color:#587682}
+.knowledge-explanation strong{color:#266d60}
+.knowledge-actions,.knowledge-outcome{display:flex;gap:13px;align-items:center;flex-wrap:wrap;margin-top:17px}
+.knowledge-actions small,.knowledge-outcome span{font-size:11px;color:#78909a}
+.knowledge-outcome strong{color:#188376;font-size:16px}
+@media(max-width:620px){.knowledge-check{padding:15px}.knowledge-question{padding:11px}}

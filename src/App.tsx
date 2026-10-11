@@ -16,6 +16,8 @@ import ReportPreview from './ReportPreview';
 import MeasurementLog from './MeasurementLog';
 import { addMeasurement, readingSummary, type Measurement } from './measurements';
 import { parseRubricFeedback } from './assessment';
+import KnowledgeCheck from './KnowledgeCheck';
+import {studentKnowledgeResults,type KnowledgeResult} from './native-storage';
 
 type Page = Subject | 'notebook' | 'assignments' | 'teacher';
 const SUBJECTS = {
@@ -275,6 +277,7 @@ function App() {
   const [records,setRecords]=useState<LabRecord[]>([]);
   const [profile,setProfile]=useState<LearnerProfile>({name:'',classroom:''});
   const [studentSession,setStudentSession]=useState<StudentSession|null>(null);
+  const [knowledgeResults,setKnowledgeResults]=useState<KnowledgeResult[]>([]);
   const [sidebar,setSidebar]=useState(false);
   const [draft,setDraft]=useState<{settings:string;observation:string}|null>(null);
   const [conclusion,setConclusion]=useState('');
@@ -308,11 +311,12 @@ function App() {
     setStudentSession(session);setProfile(identity);setProfileDraft(identity);
     setRecords(await readRecords(identity,session.token));
     setAssignments(await getClassAssignments(identity.classroom,session.token));
+    setKnowledgeResults(await studentKnowledgeResults(session.token));
     setError('');setStorageError('');
   }
   async function signOut(){
     if(studentSession) await logoutStudent(studentSession.token).catch(()=>undefined);
-    setStudentSession(null);setProfile({name:'',classroom:''});setRecords([]);setAssignments([]);
+    setStudentSession(null);setProfile({name:'',classroom:''});setRecords([]);setAssignments([]);setKnowledgeResults([]);
     setDraft(null);setSaved(false);setError('');
     setPage('chemistry');
   }
@@ -388,6 +392,8 @@ function App() {
               <section><h3>Scientific model boundary</h3><p>{guides[selected.id].modelLimit}</p><h3>Safety guidance</h3><p>{guides[selected.id].safety}</p></section>
             </div>
           </details>
+          <KnowledgeCheck key={selected.id} experimentId={selected.id} studentToken={studentSession?.token} previous={knowledgeResults.find(result=>result.experimentId===selected.id)}
+            onSaved={savedResult=>setKnowledgeResults(current=>[...current.filter(x=>x.experimentId!==savedResult.experimentId),savedResult])}/>
           </>
         }
         <footer className="content-footer"><span>Simeon's Laboratories and Co Technologies Ltd</span><span>Designed for Nigerian classrooms · Offline first</span></footer>
