@@ -86,3 +86,6 @@ A practical is only marked *tried* when a notebook report exists. It does not in
 - Student profile, notebook-save and print-preview dialogs move keyboard focus inside the open dialog. Tab stays inside, Escape closes, and focus returns to the original button.
 - In **Save your experiment**, expand **Show writing prompts** for experiment-specific questions and model limitations. Optionally insert a blank reflection structure containing Observation, Evidence, Explanation and Limitation sections. Write your own explanation in place of every bracketed placeholder before saving; blank placeholders are rejected.
 - These writing aids do **not** calculate or invent any student observations or award a grade. Teachers should still review report quality.
+
+## First launch after branding
+In the installed Windows application, the Scoolabs welcome area explains that the science lab works offline. A new school selects **Open teacher setup** to create a private teacher account, then adds classes and students. Each student receives their own access code and PIN, enters them in the **Continue learning** panel, and lands on My progress. Teachers can reach the teacher workspace from the sidebar at any time. The same Scoolabs emblem appears in the app, printed reports and generated Windows installer icon.

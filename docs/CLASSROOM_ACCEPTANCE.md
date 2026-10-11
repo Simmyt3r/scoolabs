@@ -45,3 +45,10 @@ No WAEC, NECO, NERDC, safety or curriculum certification is claimed.
 - [ ] Open the mobile sidebar at 360px and 390px, close with Escape, and confirm active navigation remains usable.
 - [ ] Open a report-writing guide, insert the blank reflection outline, and verify it cannot be saved with unfilled bracketed placeholders.
 - [ ] Try Windows high-contrast settings, 200% text scaling and the platform screen reader. Automated browser checks cannot replace these physical-device tests.
+
+## Final brand acceptance (Scoolabs identity candidate)
+- [ ] Verify the open-book/flask icon appears in the Windows NSIS installer, Start menu, taskbar and application title bar, all at readable sizes.
+- [ ] Confirm first launch presents a readable student sign-in and an obvious **Open teacher setup** path, even without network access.
+- [ ] Complete first teacher setup and student enrolment using keyboard and mouse.
+- [ ] Confirm the printed A4 report and browser favicon use the identical approved Scoolabs mark.
+- [ ] Obtain product-owner approval of logo, wording and colour contrast before public release; official Silabs corporate logo remains a separate corporate asset.

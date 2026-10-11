@@ -299,3 +299,27 @@ test('small screens keep report-writing modal usable with the keyboard',async({p
  await page.keyboard.press('Escape');
  await expect(dialog).toHaveCount(0);
 });
+
+
+test('Scoolabs visual identity loads from bundled local assets on the student workspace',async({page})=>{
+ await page.goto('/');
+ const logo=page.locator('.brand .scoolabs-lockup-icon');
+ await expect(logo).toBeVisible();
+ await expect(logo).toHaveAttribute('src','/brand/scoolabs-mark.svg');
+ expect(await logo.evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
+ await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href','/brand/scoolabs-mark.svg');
+ await expect(page).toHaveTitle(/Scoolabs.*Learn/);
+});
+
+test('Scoolabs branded printable reports include the official in-app icon',async({page})=>{
+ await page.addInitScript(()=>{
+   localStorage.setItem('scoolabs.profile.v1',JSON.stringify({name:'Learner',classroom:'SS2A'}));
+   localStorage.setItem('scoolabs.records.v1',JSON.stringify([{id:'branded',timestamp:'2026-10-11T09:00:00Z',student:'Learner',classroom:'SS2A',experimentId:'titration',experimentTitle:'Titration',subject:'chemistry',settings:'25mL',observation:'pH 7',conclusion:'Neutralisation',grade:null,feedback:null}]));
+ });
+ await page.goto('/');
+ await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:/My notebook/}).click();
+ await page.getByRole('button',{name:'Preview / print report'}).click();
+ const mark=page.getByRole('dialog',{name:'Practical report preview'}).locator('.report-sheet-mark img');
+ await expect(mark).toBeVisible();
+ expect(await mark.evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
+});
