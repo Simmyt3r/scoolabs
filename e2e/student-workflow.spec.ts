@@ -175,3 +175,39 @@ test('all twelve experiments display one guide and two formative questions',asyn
   }
  }
 });
+
+test('student dashboard starts empty and opens the suggested practical',async({page})=>{
+ await page.goto('/');
+ await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:/My progress/}).click();
+ const dashboard=page.getByRole('region',{name:'Student progress dashboard'});
+ await expect(dashboard).toBeVisible();
+ await expect(dashboard.getByText('Not marked')).toBeVisible();
+ await expect(dashboard.getByText('0/3 tried')).toHaveCount(4);
+ await expect(dashboard.getByText(/Browser preview mode/)).toBeVisible();
+ await dashboard.getByRole('button',{name:'Open practical'}).click();
+ await expect(page.getByText('Acid–Base Titration',{exact:true}).first()).toBeVisible();
+});
+test('student dashboard reads saved reports and respects a zero teacher grade',async({page})=>{
+ await page.addInitScript(()=>{
+   localStorage.setItem('scoolabs.profile.v1',JSON.stringify({name:'Ada Musa',classroom:'SS2A'}));
+   localStorage.setItem('scoolabs.records.v1',JSON.stringify([
+     {id:'r1',timestamp:'2026-10-11T12:00:00Z',student:'Ada Musa',classroom:'SS2A',experimentId:'titration',
+      experimentTitle:'Acid–Base Titration',subject:'chemistry',settings:'Acid 25mL',
+      observation:'pH 7',conclusion:'Neutral',grade:0,feedback:'Review the endpoint',assignmentId:null},
+     {id:'r2',timestamp:'2026-10-11T13:00:00Z',student:'Ada Musa',classroom:'SS2A',experimentId:'titration',
+      experimentTitle:'Acid–Base Titration',subject:'chemistry',settings:'Acid 25mL',
+      observation:'pH 8',conclusion:'Indicator changes',grade:null,feedback:null,assignmentId:null}
+   ]));
+ });
+ await page.goto('/');
+ await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:/My progress/}).click();
+ const dashboard=page.getByRole('region',{name:'Student progress dashboard'});
+ await expect(dashboard.getByRole('heading',{name:'Welcome, Ada'})).toBeVisible();
+ await expect(dashboard.locator('.learning-stats>div').nth(0)).toContainText('1');
+ await expect(dashboard.locator('.learning-stats>div').nth(1)).toContainText('2');
+ await expect(dashboard.getByText('0/100',{exact:true})).toBeVisible();
+ await expect(dashboard.getByText('Review the endpoint')).toBeVisible();
+ await page.reload();
+ await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:/My progress/}).click();
+ await expect(page.getByRole('region',{name:'Student progress dashboard'}).getByText('Review the endpoint')).toBeVisible();
+});

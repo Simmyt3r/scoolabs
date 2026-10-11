@@ -71,3 +71,10 @@ In Teacher workspace → Assignments, select **Show student roster** beside an a
 
 ## Two-question knowledge checks
 At the end of each practical, students select one answer for each of two short questions. The app shows explanations and offers Try again. Signed-in desktop results are saved to the student's offline account, while browser preview remains temporary. Teachers view latest formative scores under Knowledge checks and may filter by class. A formative score of 0–2 never alters the separately graded practical report.
+
+
+## Student learning dashboard
+
+After entering an access code and PIN in the Windows application, students open **My progress**. It shows how many distinct practicals they have saved, reports in their offline notebook, teacher marks, pending class assignments and short formative self-checks. Use **Open practical** for the next pending assignment or suggested untried lesson, **View class assignments** for assigned work, or **Open my notebook** to see observations and teacher comments.
+
+A practical is only marked *tried* when a notebook report exists. It does not indicate mastery or curriculum certification. Teacher marks and formative self-checks remain separate, and unmarked reports do not count toward a student's score average.

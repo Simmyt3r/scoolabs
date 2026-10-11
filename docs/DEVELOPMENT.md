@@ -59,3 +59,11 @@ SQLite persistence and import/restore, local classes and teacher marking, curric
 - Rust tests validate score keys, repeated attempts and isolation between students with identical names.
 - Chromium tests verify scoring feedback, retry and non-duplicated guides when changing experiments.
 - Physical classroom acceptance remains pending until after branding (see docs/CLASSROOM_ACCEPTANCE.md).
+
+
+## Student dashboard regression checks
+
+- Progress unit tests cover zero-data accounts, distinct experiments, assignment completion, pending work, teacher marks including zero, ungraded work, formative self-checks and recommended next lessons.
+- Browser tests verify navigation, a meaningful empty state, a suggested lesson shortcut and saved notebook feedback surviving refresh.
+- Native sign-in loads authenticated records, class assignments and formative results before showing the student dashboard. A partial loading failure revokes the login token.
+- The dashboard is not a mastery or official curriculum-completion tracker. Real Windows 10 classroom acceptance remains scheduled for after branding.

@@ -75,3 +75,10 @@ The titration and Ohm's law laboratories now have manual **Capture reading** con
 
 ## v0.6 formative self-checks (pre-branding)
 Each of the twelve experiments now has two offline multiple-choice questions with explanations and retry. Signed-in desktop students' latest result out of 2 is saved in native SQLite, scoped by student ID; native Rust checks answers independently of client-supplied scores. The teacher Knowledge checks tab shows only formative results, filterable by class. These do not enter the gradebook. Browser-preview scores are temporary. Classroom validation is still pending: see docs/CLASSROOM_ACCEPTANCE.md.
+
+
+## Student learning overview (pre-branding development)
+
+Scoolabs includes **My progress**, an account-scoped view of saved laboratory reports, distinct experiments tried, pending class assignments, formative checks, teacher marks and recent feedback. It recommends an outstanding assigned practical, or otherwise an untried lesson. Activity is *not* treated as mastery: scores are shown only when a teacher has marked a real report, a legitimate mark of zero is preserved, and an empty student account begins with no fabricated results.
+
+The dashboard uses existing native authenticated SQLite data and is shown after successful account loading. Browser-only preview uses the local demo profile and notebook, explicitly distinguishing it from a secure desktop student identity. Installation and physical classroom testing remain deferred until product branding is complete.
