@@ -91,3 +91,8 @@ Accessibility should still be tested using a screen reader and keyboard on the f
 
 ## v0.8 pre-branding usability milestone
 Keyboard navigation and offline experiment report-writing were improved: skip-to-main link, modal focus trapping and restoration, Escape dismissal, active nav semantics, mobile dialog sizing, reduced-motion transitions and student feedback status announcements. Students may open existing scientific-guide questions and insert a blank reflection outline in a practical report. Bracketed placeholders must be replaced before a draft can be saved. No automatic conclusions, fabricated measurements or grades are generated. Full physical-device accessibility testing remains pending.
+
+## Scoolabs visual identity (branding candidate)
+The source-of-truth emblem is a flask rising from an open book, supplied as `public/brand/scoolabs-mark.svg`. A shared `BrandLockup` component displays it in the interface. The favicon, welcome/loading screen and report heading use the same local asset. Every GitHub Windows build now runs `npm run brand:icons` before bundling and verifies its generated ICO/PNG files, so the executable/installer icon is not left as a generic placeholder. See `docs/BRAND_GUIDE.md`.
+
+For a local **branded** developer build use `npm run desktop:build`. The installer remains unsigned unless the owner supplies a legitimate code-signing certificate. Branding is a candidate until approved, and Windows device acceptance must still be completed before external release.

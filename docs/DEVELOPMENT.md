@@ -78,3 +78,6 @@ SQLite persistence and import/restore, local classes and teacher marking, curric
 - Use Playwright to exercise the skip link, modal focus cycling, focus restoration, Escape, responsive mobile navigation, and structured conclusion prompts.
 - Confirm status messages are announced to assistive technologies and reduced-motion preferences bypass nonessential transitions.
 - Accessibility is not certified by this automation; perform screen-reader, keyboard-only, and Windows desktop acceptance tests after final branding.
+
+## Branding generation in CI
+The original Scoolabs SVG is stored in `public/brand/scoolabs-mark.svg`. Both workflows now generate `src-tauri/icons/icon.ico` and `icon.png` using the pinned project's Tauri CLI, then validate the outputs using `node scripts/verify-brand.mjs`. The generated icons do not need to be manually copied from Windows. Run `npm run desktop:build` for a branded local installer. The pre-run HTML placeholder uses the same inline/offline Scoolabs mark. Physical installer and shortcut appearance remain post-branding device tests.

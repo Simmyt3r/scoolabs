@@ -13,12 +13,12 @@
     "windows": [
       {
         "label": "main",
-        "title": "Scoolabs | Offline Science Laboratory",
+        "title": "Scoolabs | Offline Virtual Science Laboratory",
         "width": 1280,
         "height": 820,
         "minWidth": 920,
         "minHeight": 640,
-        "backgroundColor": "#f5f8fa"
+        "backgroundColor": "#f5faf9"
       }
     ],
     "security": {

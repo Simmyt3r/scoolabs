@@ -12,7 +12,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "tauri": "tauri",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "brand:icons": "tauri icon public/brand/scoolabs-mark.svg --output src-tauri/icons",
+    "desktop:build": "npm run brand:icons && tauri build"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

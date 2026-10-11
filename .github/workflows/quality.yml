@@ -26,6 +26,10 @@ jobs:
           node-version: '22'
       - name: Install application dependencies
         run: npm install --no-audit --no-fund
+      - name: Generate Scoolabs branding assets
+        run: npm run brand:icons
+      - name: Verify branded icon assets
+        run: node scripts/verify-brand.mjs
       - name: Type-check source
         run: npm run typecheck
       - name: Test scientific simulation engines
