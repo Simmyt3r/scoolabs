@@ -30,3 +30,8 @@ Titration uses ideal strong acid/strong base at 25 C. Ohm's law uses ideal DC oh
 
 ## Future work
 SQLite persistence and import/restore, local classes and teacher marking, curriculum mapping, instrument manipulation, richer validated experiments, low-spec device optimisations, signing and update management.
+
+## Browser workflow integration tests
+- GitHub Actions Quality checks installs headless Chromium and runs npm run test:e2e.
+- These smoke tests click all twelve lab tabs, save a practical report to the notebook, reload the browser preview, and show the desktop-only warning on Teacher workspace.
+- Important: browser-preview persistence uses the localStorage fallback, not native SQLite. The Windows workflow runs native database tests separately. Offline native installation must still be physically verified on a school computer.

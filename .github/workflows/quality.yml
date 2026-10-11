@@ -29,6 +29,20 @@ jobs:
         run: npm test
       - name: Build offline frontend assets
         run: npm run build
+      - name: Install browser used for student smoke tests
+        run: npx playwright install --with-deps chromium
+      - name: Run student workflow browser tests
+        run: npm run test:e2e
+      - name: Upload browser diagnostics if tests fail
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scoolabs-playwright-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Upload frontend build
         uses: actions/upload-artifact@v4
         with:
