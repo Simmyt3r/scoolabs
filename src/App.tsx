@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { isTauri } from '@tauri-apps/api/core';
 import {
   Activity, ArrowLeft, ArrowRight, Beaker, BookOpen, CheckCircle2, ChevronDown,
   ClipboardList, Download, FlaskConical, GraduationCap, Leaf, Menu, Microscope, Users,
@@ -6,7 +7,7 @@ import {
 } from 'lucide-react';
 import { circuit, experiments, germination, microscope, titrate, type Crop, type Experiment, type Subject } from './engine';
 import { exportRecords, type LabRecord, type LearnerProfile } from './store';
-import { initialiseStore, readRecords, writeRecord, saveStudentProfile, getClassCatalog, getClassAssignments, type Classroom, type Assignment } from './native-storage';
+import { initialiseStore, readRecords, writeRecord, saveStudentProfile, getClassCatalog, getClassAssignments, loginStudent, logoutStudent, type StudentSession, type Classroom, type Assignment } from './native-storage';
 import { IndicatorsLab, PendulumLab, OsmosisLab, SoilLab } from './AdvancedLabs';
 import TeacherPanel from './TeacherPanel';
 import { SeparationLab, LensLab, TranspirationLab, NutrientsLab } from './FinalLabs';
@@ -203,11 +204,42 @@ function Records({records, onBack}: {records:LabRecord[];onBack:()=>void}) {
   </section>;
 }
 
+
+function StudentSignIn({onSignedIn}:{onSignedIn:(session:StudentSession)=>Promise<void>}) {
+  const [accessCode,setAccessCode]=useState('');
+  const [pin,setPin]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState('');
+  async function handleLogin(){
+    setBusy(true);setError('');
+    try{
+      const session=await loginStudent(accessCode,pin);
+      await onSignedIn(session);
+      setPin('');
+    }catch(e){setError(String(e));}
+    finally{setBusy(false);}
+  }
+  return <section className="student-signin">
+    <div className="student-signin-icon"><GraduationCap size={29}/></div>
+    <span className="eyebrow">OFFLINE STUDENT ACCESS</span>
+    <h1>Enter your science laboratory</h1>
+    <p>Ask your teacher for your personal access code and PIN. Your practical reports, assigned experiments and teacher feedback will stay linked to your account.</p>
+    <form onSubmit={e=>{e.preventDefault();void handleLogin();}}>
+      <label className="field">Student access code<input required maxLength={10} autoComplete="off" value={accessCode} onChange={e=>setAccessCode(e.target.value.toUpperCase())} placeholder="10-character code"/></label>
+      <label className="field">Personal PIN<input required type="password" inputMode="numeric" minLength={6} maxLength={12} value={pin} onChange={e=>setPin(e.target.value)} placeholder="6–12 digit PIN"/></label>
+      <button className="button-primary full" disabled={busy||accessCode.trim().length!==10||pin.length<6} type="submit">{busy?'Checking credentials...':'Sign in to laboratory'} <ArrowRight size={16}/></button>
+      {error&&<div role="alert" className="error-message">{error}</div>}
+    </form>
+    <p className="signin-note">Scoolabs works without internet. Student access is issued locally by a school teacher. Teacher setup is available from the left menu.</p>
+  </section>;
+}
+
 function App() {
   const [page,setPage]=useState<Page>('chemistry');
   const [activeId,setActiveId]=useState('titration');
   const [records,setRecords]=useState<LabRecord[]>([]);
   const [profile,setProfile]=useState<LearnerProfile>({name:'',classroom:''});
+  const [studentSession,setStudentSession]=useState<StudentSession|null>(null);
   const [sidebar,setSidebar]=useState(false);
   const [draft,setDraft]=useState<{settings:string;observation:string}|null>(null);
   const [conclusion,setConclusion]=useState('');
@@ -228,13 +260,26 @@ function App() {
     return ()=>{active=false};
   },[]);
   useEffect(()=>{
-    if(!storageReady || !profile.classroom)return;
-    getClassAssignments(profile.classroom).then(setAssignments).catch(e=>setStorageError(String(e)));
-  },[profile.classroom,storageReady]);
+    if(!storageReady || !profile.classroom || (isTauri() && !studentSession))return;
+    getClassAssignments(profile.classroom,studentSession?.token).then(setAssignments).catch(e=>setStorageError(String(e)));
+  },[profile.classroom,studentSession?.token,storageReady]);
   const selected=experiments.find(x=>x.id===activeId)!;
   const subject=(page==='notebook'||page==='teacher') ? 'chemistry' : page;
   const visible=useMemo(()=>experiments.filter(x=>x.subject===subject),[subject]);
   const completed=new Set(records.map(r=>r.experimentId)).size;
+  async function onSignedIn(session:StudentSession){
+    const identity={name:session.studentName,classroom:session.classroom};
+    setStudentSession(session);setProfile(identity);setProfileDraft(identity);
+    setRecords(await readRecords(identity,session.token));
+    setAssignments(await getClassAssignments(identity.classroom,session.token));
+    setError('');setStorageError('');
+  }
+  async function signOut(){
+    if(studentSession) await logoutStudent(studentSession.token).catch(()=>undefined);
+    setStudentSession(null);setProfile({name:'',classroom:''});setRecords([]);setAssignments([]);
+    setDraft(null);setSaved(false);setError('');
+    setPage('chemistry');
+  }
   function navigate(next:Page) {
     setPage(next);setSidebar(false);setSaved(false);setDraft(null);
     if(next!=='notebook'&&next!=='teacher'){const first=experiments.find(x=>x.subject===next&&x.ready);if(first)setActiveId(first.id);}
@@ -248,9 +293,9 @@ function App() {
     if(!profile.name.trim()||!profile.classroom.trim()){setError('Enter your name and class to save an observation.');return;}
     const record:LabRecord={id:crypto.randomUUID(),timestamp:new Date().toISOString(),student:profile.name.trim(),classroom:profile.classroom.trim(),experimentId:selected.id,experimentTitle:selected.title,subject:selected.subject,settings:draft.settings,observation:draft.observation,conclusion:conclusion.trim()};
     try{
-      await saveStudentProfile(profile);
-      await writeRecord(record);
-      setRecords(await readRecords(profile));
+      if(!isTauri())await saveStudentProfile(profile);
+      await writeRecord(record,studentSession?.token);
+      setRecords(await readRecords(profile,studentSession?.token));
       setDraft(null);setSaved(true);setError('');
     }catch(e){setError('Could not save this record to native storage: '+String(e));}
   }
@@ -258,7 +303,7 @@ function App() {
     try{
       await saveStudentProfile(profileDraft);
       setProfile(profileDraft);
-      setRecords(await readRecords(profileDraft));
+      setRecords(await readRecords(profileDraft,studentSession?.token));
       setShowProfile(false);setError('');
     }catch(e){setError('Unable to save student profile: '+String(e));}
   }
@@ -278,11 +323,11 @@ function App() {
       <div className="side-footer">Scoolabs v0.3.0 <span>·</span> Silabs Technologies</div>
     </aside>
     <main className="main-content">
-      <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={()=>setSidebar(true)} aria-label="Open menu"><Menu size={22}/></button><span className="breadcrumb">Workspace</span><span className="breadcrumb-sep">/</span><strong>{page==='notebook'?'My notebook':page==='teacher'?'Teacher workspace':SUBJECTS[page].label}</strong></div><div className="topbar-right"><span className="offline-indicator"><span/> Offline ready</span><button className="user-button" onClick={()=>{setProfileDraft(profile);getClassCatalog().then(setClassCatalog).catch(()=>undefined);setShowProfile(true)}}><GraduationCap size={16}/>{profile.name||'Student profile'}<ChevronDown size={14}/></button></div></header>
+      <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={()=>setSidebar(true)} aria-label="Open menu"><Menu size={22}/></button><span className="breadcrumb">Workspace</span><span className="breadcrumb-sep">/</span><strong>{page==='notebook'?'My notebook':page==='teacher'?'Teacher workspace':SUBJECTS[page].label}</strong></div><div className="topbar-right"><span className="offline-indicator"><span/> Offline ready</span><button className="user-button" onClick={()=>{if(isTauri()){if(studentSession)void signOut();else navigate('chemistry');}else{setProfileDraft(profile);getClassCatalog().then(setClassCatalog).catch(()=>undefined);setShowProfile(true);}}}><GraduationCap size={16}/>{isTauri()?(studentSession?'Sign out: '+studentSession.studentName:'Student sign in'):(profile.name||'Student profile')}<ChevronDown size={14}/></button></div></header>
       <div className="content-pad">
         {storageError&&<div role="alert" className="storage-warning">{storageError}</div>}
         {!storageReady&&<div className="record-note">Opening offline database...</div>}
-        {page==='notebook'?<Records records={records} onBack={()=>navigate('chemistry')}/>:page==='teacher'?<TeacherPanel/>:
+        {page==='teacher'?<TeacherPanel/>:isTauri()&&!studentSession?<StudentSignIn onSignedIn={onSignedIn}/>:page==='notebook'?<Records records={records} onBack={()=>navigate('chemistry')}/>:
           <>
           <div className="page-title"><div><span className="eyebrow">DISCOVER · EXPERIMENT · LEARN</span><h1>Welcome to the {SUBJECTS[subject].label} Lab<span className="title-period">.</span></h1><p>{SUBJECTS[subject].subtitle}. Explore through practice, not just theory.</p></div><div className="progress-badge"><CheckCircle2 size={18}/><div><strong>{completed} activities recorded</strong><small>{records.length} saved observations</small></div></div></div>
           <div className="subject-grid">
@@ -300,8 +345,8 @@ function App() {
         <footer className="content-footer"><span>Simeon's Laboratories and Co Technologies Ltd</span><span>Designed for Nigerian classrooms · Offline first</span></footer>
       </div>
     </main>
-    {draft&&<div className="modal-backdrop" role="presentation"><div className="dialog" role="dialog" aria-modal="true" aria-labelledby="record-title"><button className="dialog-close" onClick={()=>setDraft(null)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LABORATORY NOTEBOOK</span><h2 id="record-title">Save your experiment</h2><p>Record your observation and conclusion locally on this computer.</p><div className="dialog-data"><strong>Observation</strong><span>{draft.observation}</span><small>{draft.settings}</small></div><div className="form-two"><label>Student name<input value={profile.name} onChange={e=>setProfile(p=>({...p,name:e.target.value}))} placeholder="e.g. Ada Musa"/></label><label>Class<input value={profile.classroom} onChange={e=>setProfile(p=>({...p,classroom:e.target.value}))} placeholder="e.g. SS2A"/></label></div><label className="field">Conclusion (optional)<textarea rows={3} placeholder="What did you discover?" value={conclusion} onChange={e=>setConclusion(e.target.value)}/></label>{error&&<div role="alert" className="error-message">{error}</div>}<button className="button-primary full" onClick={persistRecord} disabled={!storageReady||!!storageError}><Save size={17}/> Save to notebook</button></div></div>}
-    {showProfile&&<div className="modal-backdrop"><div className="dialog compact" role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="dialog-close" onClick={()=>setShowProfile(false)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LOCAL PROFILE</span><h2 id="profile-title">Student profile</h2><p>Set your identity for practical records on this computer.</p><label className="field">Full name<input value={profileDraft.name} onChange={e=>setProfileDraft({...profileDraft,name:e.target.value})} placeholder="Your name"/></label><label className="field">Class<input list="known-classes" value={profileDraft.classroom} onChange={e=>setProfileDraft({...profileDraft,classroom:e.target.value})} placeholder="SS2A"/><datalist id="known-classes">{classCatalog.map(c=><option key={c.id} value={c.name}/>)}</datalist></label><button className="button-primary full" onClick={persistProfile} disabled={!storageReady||!!storageError}><Settings2 size={16}/> Save profile</button></div></div>}
+    {draft&&<div className="modal-backdrop" role="presentation"><div className="dialog" role="dialog" aria-modal="true" aria-labelledby="record-title"><button className="dialog-close" onClick={()=>setDraft(null)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LABORATORY NOTEBOOK</span><h2 id="record-title">Save your experiment</h2><p>Record your observation and conclusion locally on this computer.</p><div className="dialog-data"><strong>Observation</strong><span>{draft.observation}</span><small>{draft.settings}</small></div>{isTauri()?<div className="record-note"><ShieldCheck size={17}/> Signed in as {profile.name} ({profile.classroom}). This record will be saved to your authenticated student account.</div>:<div className="form-two"><label>Student name<input value={profile.name} onChange={e=>setProfile(p=>({...p,name:e.target.value}))} placeholder="e.g. Ada Musa"/></label><label>Class<input value={profile.classroom} onChange={e=>setProfile(p=>({...p,classroom:e.target.value}))} placeholder="e.g. SS2A"/></label></div>}<label className="field">Conclusion (optional)<textarea rows={3} placeholder="What did you discover?" value={conclusion} onChange={e=>setConclusion(e.target.value)}/></label>{error&&<div role="alert" className="error-message">{error}</div>}<button className="button-primary full" onClick={persistRecord} disabled={!storageReady||!!storageError}><Save size={17}/> Save to notebook</button></div></div>}
+    {showProfile&&!isTauri()&&<div className="modal-backdrop"><div className="dialog compact" role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="dialog-close" onClick={()=>setShowProfile(false)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LOCAL PROFILE</span><h2 id="profile-title">Student profile</h2><p>Set your identity for practical records on this computer.</p><label className="field">Full name<input value={profileDraft.name} onChange={e=>setProfileDraft({...profileDraft,name:e.target.value})} placeholder="Your name"/></label><label className="field">Class<input list="known-classes" value={profileDraft.classroom} onChange={e=>setProfileDraft({...profileDraft,classroom:e.target.value})} placeholder="SS2A"/><datalist id="known-classes">{classCatalog.map(c=><option key={c.id} value={c.name}/>)}</datalist></label><button className="button-primary full" onClick={persistProfile} disabled={!storageReady||!!storageError}><Settings2 size={16}/> Save profile</button></div></div>}
   </div>;
 }
 

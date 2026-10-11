@@ -27,3 +27,12 @@
 .final-lab-scene{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:275px;gap:10px;text-align:center;color:#567386;font-size:12px;padding:12px}.final-lab-scene svg{width:100%;max-width:430px;height:auto}.final-lab-scene h3{font-size:13px;max-width:300px;line-height:1.6}.visual-lab-icon{font-family:serif;font-size:85px;line-height:1;color:#319c93}.experimental-steps{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.experimental-steps button{border:1px solid #dbe8ea;background:white;border-radius:7px;padding:10px;font-size:11px;color:#56808b}.experimental-steps button.selected{color:#fff;border-color:#1d988a;background:#1d988a}.final-lab-scene p{color:#7995a2;font-size:11px}
 
 .recovery-note{font-size:12px;line-height:1.6;color:#69818e}.recovery-warning{font-size:12px;line-height:1.6;color:#96362f;background:#fff1ed;border-radius:8px;padding:13px}.recovery-path{font-size:11px;color:#247c70;overflow-wrap:anywhere}
+
+.student-signin{max-width:470px;margin:50px auto;padding:32px;border-radius:18px;background:#fff;border:1px solid #e1ecef;box-shadow:0 15px 35px #15384a0b}
+.student-signin h1{font-size:25px;letter-spacing:-.5px;margin-bottom:12px}
+.student-signin>p{font-size:12px;color:#708796;line-height:1.75}
+.student-signin-icon{width:54px;height:54px;border-radius:13px;background:#e0f7f1;color:#148e82;display:grid;place-items:center;margin-bottom:23px}
+.student-signin form{margin:25px 0 15px}
+.student-signin label{font-size:12px;color:#527080;display:block;margin-bottom:17px;font-weight:700}
+.student-signin label input{display:block;width:100%;margin-top:8px;border:1px solid #d4e3e8;border-radius:9px;padding:12px 14px;color:#234254}
+.student-signin .signin-note{font-size:11px;color:#92a5af;margin:17px 0 0}
