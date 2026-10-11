@@ -351,13 +351,12 @@ pub struct BackupInfo {
     modified_unix: u64,
 }
 fn valid_backup_filename(filename: &str) -> bool {
-    filename.starts_with("scoolabs-school-")
-        && filename.ends_with(".sqlite3")
-        && filename
-            .strip_prefix("scoolabs-school-")
+    ["scoolabs-school-", "before-restore-"].iter().any(|prefix| {
+        filename.strip_prefix(prefix)
             .and_then(|s| s.strip_suffix(".sqlite3"))
             .map(|s| !s.is_empty() && s.len()<=20 && s.chars().all(|c| c.is_ascii_digit()))
             .unwrap_or(false)
+    })
 }
 fn validate_restore_source(source: &Connection) -> Result<(),String> {
     let check:String=source.query_row("PRAGMA quick_check",[],|r|r.get(0)).map_err(db_error)?;
@@ -473,7 +472,8 @@ mod tests {
     #[test]
     fn unsafe_backup_names_are_rejected() {
         assert!(valid_backup_filename("scoolabs-school-1791739200000.sqlite3"));
-        for bad in ["../scoolabs-school-2.sqlite3","scoolabs-school-foo.sqlite3","scoolabs-school-1.db","scoolabs-school-1.sqlite3/../x","before-restore-2.sqlite3"] {
+        assert!(valid_backup_filename("before-restore-1791739200200.sqlite3"));
+        for bad in ["../scoolabs-school-2.sqlite3","scoolabs-school-foo.sqlite3","scoolabs-school-1.db","scoolabs-school-1.sqlite3/../x","random-backup-2.sqlite3"] {
             assert!(!valid_backup_filename(bad));
         }
     }

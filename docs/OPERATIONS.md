@@ -22,3 +22,5 @@ GitHub workflows run tests and package .exe installers on pushes to main. Always
 6. Verify the class register and reports. Store backup and safety snapshots on protected removable media.
 
 Only application-created backups in the local backup folder are selectable. Direct import of arbitrary SQLite files is intentionally unsupported. Failure during the restore operation requires recovery from the saved safety snapshot; do not ignore a restore error.
+
+Safety snapshots named before-restore-*.sqlite3 are also listed in the Recovery tab, allowing the teacher to reverse a mistaken restoration. Reversing still requires authenticated access to an account in the currently active database and the full confirmation phrase. Every restoration creates a new safety snapshot.
