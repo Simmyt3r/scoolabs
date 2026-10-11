@@ -3,7 +3,7 @@ import { isTauri } from '@tauri-apps/api/core';
 import {
   Activity, ArrowLeft, ArrowRight, Beaker, BookOpen, CheckCircle2, ChevronDown,
   ClipboardList, Download, FlaskConical, GraduationCap, Leaf, Menu, Microscope, Users,
-  RotateCcw, Save, Settings2, ShieldCheck, SlidersHorizontal, Sprout, WifiOff, X, Zap,
+  RotateCcw, Save, Settings2, ShieldCheck, SlidersHorizontal, Sprout, WifiOff, X, Zap, LayoutDashboard,
 } from 'lucide-react';
 import { circuit, experiments, germination, microscope, titrate, type Crop, type Experiment, type Subject } from './engine';
 import { exportRecords, type LabRecord, type LearnerProfile } from './store';
@@ -17,9 +17,10 @@ import MeasurementLog from './MeasurementLog';
 import { addMeasurement, readingSummary, type Measurement } from './measurements';
 import { parseRubricFeedback } from './assessment';
 import KnowledgeCheck from './KnowledgeCheck';
+import StudentDashboard from './StudentDashboard';
 import {studentKnowledgeResults,type KnowledgeResult} from './native-storage';
 
-type Page = Subject | 'notebook' | 'assignments' | 'teacher';
+type Page = Subject | 'progress' | 'notebook' | 'assignments' | 'teacher';
 const SUBJECTS = {
   chemistry: { label: 'Chemistry', icon: FlaskConical, subtitle: 'Reactions, solutions and substances', short: 'Chemical reactions', theme: 'purple' },
   physics: { label: 'Physics', icon: Zap, subtitle: 'Motion, forces and electricity', short: 'Physical principles', theme: 'blue' },
@@ -303,16 +304,27 @@ function App() {
     getClassAssignments(profile.classroom,studentSession?.token).then(setAssignments).catch(e=>setStorageError(String(e)));
   },[profile.classroom,studentSession?.token,storageReady]);
   const selected=experiments.find(x=>x.id===activeId)!;
-  const subject=(page==='notebook'||page==='assignments'||page==='teacher') ? 'chemistry' : page;
+  const subject=(page==='notebook'||page==='assignments'||page==='progress'||page==='teacher') ? 'chemistry' : page;
   const visible=useMemo(()=>experiments.filter(x=>x.subject===subject),[subject]);
   const completed=new Set(records.map(r=>r.experimentId)).size;
   async function onSignedIn(session:StudentSession){
     const identity={name:session.studentName,classroom:session.classroom};
-    setStudentSession(session);setProfile(identity);setProfileDraft(identity);
-    setRecords(await readRecords(identity,session.token));
-    setAssignments(await getClassAssignments(identity.classroom,session.token));
-    setKnowledgeResults(await studentKnowledgeResults(session.token));
-    setError('');setStorageError('');
+    // Commit student state only after all three authenticated lookups succeed.
+    // This prevents a previous student's data remaining visible after a partial sign-in.
+    try {
+      const [studentRecords,studentAssignments,studentChecks]=await Promise.all([
+        readRecords(identity,session.token),
+        getClassAssignments(identity.classroom,session.token),
+        studentKnowledgeResults(session.token)
+      ]);
+      setProfile(identity);setProfileDraft(identity);setStudentSession(session);
+      setRecords(studentRecords);setAssignments(studentAssignments);setKnowledgeResults(studentChecks);
+      setPage('progress');setDraft(null);setSaved(false);
+      setError('');setStorageError('');
+    } catch (e) {
+      await logoutStudent(session.token).catch(()=>undefined);
+      throw e;
+    }
   }
   async function signOut(){
     if(studentSession) await logoutStudent(studentSession.token).catch(()=>undefined);
@@ -322,7 +334,7 @@ function App() {
   }
   function navigate(next:Page) {
     setPage(next);setSidebar(false);setSaved(false);setDraft(null);
-    if(next!=='notebook'&&next!=='teacher'&&next!=='assignments'){const first=experiments.find(x=>x.subject===next&&x.ready);if(first)setActiveId(first.id);}
+    if(next!=='notebook'&&next!=='teacher'&&next!=='assignments'&&next!=='progress'){const first=experiments.find(x=>x.subject===next&&x.ready);if(first)setActiveId(first.id);}
   }
   function startRecord(settings:string,observation:string) {
     const pending=assignments.find(a=>a.experimentId===selected.id && !records.some(r=>r.assignmentId===a.id));
@@ -355,6 +367,8 @@ function App() {
       <div className="brand"><span className="brand-mark"><FlaskConical size={22}/></span><span><strong>Scoo<span>labs</span></strong><small>VIRTUAL SCIENCE LAB</small></span><button className="close-menu" onClick={()=>setSidebar(false)} aria-label="Close menu"><X size={19}/></button></div>
       <div className="nav-heading">WORKSPACE</div>
       <nav aria-label="Main navigation">
+        <button onClick={()=>navigate('progress')} className={'nav-link '+(page==='progress'?'selected':'')}><LayoutDashboard size={19}/> My progress <span className="nav-count">{records.length}</span></button>
+        <div className="nav-rule"/>
         {subjectKeys.map(s=>{const Icon=SUBJECTS[s].icon;return <button key={s} onClick={()=>navigate(s)} className={'nav-link '+(page===s?'selected':'')}><Icon size={19}/>{SUBJECTS[s].label}<span className="nav-count">{experiments.filter(e=>e.subject===s&&e.ready).length}</span></button>})}
         <div className="nav-rule"/>
         <button onClick={()=>navigate('notebook')} className={'nav-link '+(page==='notebook'?'selected':'')}><BookOpen size={19}/> My notebook <span className="nav-count">{records.length}</span></button>
@@ -366,11 +380,15 @@ function App() {
       <div className="side-footer">Scoolabs v0.6.0 <span>·</span> Silabs Technologies</div>
     </aside>
     <main className="main-content">
-      <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={()=>setSidebar(true)} aria-label="Open menu"><Menu size={22}/></button><span className="breadcrumb">Workspace</span><span className="breadcrumb-sep">/</span><strong>{page==='notebook'?'My notebook':page==='assignments'?'My assignments':page==='teacher'?'Teacher workspace':SUBJECTS[page].label}</strong></div><div className="topbar-right"><span className="offline-indicator"><span/> Offline ready</span><button className="user-button" onClick={()=>{if(isTauri()){if(studentSession)void signOut();else navigate('chemistry');}else{setProfileDraft(profile);getClassCatalog().then(setClassCatalog).catch(()=>undefined);setShowProfile(true);}}}><GraduationCap size={16}/>{isTauri()?(studentSession?'Sign out: '+studentSession.studentName:'Student sign in'):(profile.name||'Student profile')}<ChevronDown size={14}/></button></div></header>
+      <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={()=>setSidebar(true)} aria-label="Open menu"><Menu size={22}/></button><span className="breadcrumb">Workspace</span><span className="breadcrumb-sep">/</span><strong>{page==='notebook'?'My notebook':page==='assignments'?'My assignments':page==='progress'?'My progress':page==='teacher'?'Teacher workspace':SUBJECTS[page].label}</strong></div><div className="topbar-right"><span className="offline-indicator"><span/> Offline ready</span><button className="user-button" onClick={()=>{if(isTauri()){if(studentSession)void signOut();else navigate('chemistry');}else{setProfileDraft(profile);getClassCatalog().then(setClassCatalog).catch(()=>undefined);setShowProfile(true);}}}><GraduationCap size={16}/>{isTauri()?(studentSession?'Sign out: '+studentSession.studentName:'Student sign in'):(profile.name||'Student profile')}<ChevronDown size={14}/></button></div></header>
       <div className="content-pad">
         {storageError&&<div role="alert" className="storage-warning">{storageError}</div>}
         {!storageReady&&<div className="record-note">Opening offline database...</div>}
-        {page==='teacher'?<TeacherPanel/>:isTauri()&&!studentSession?<StudentSignIn onSignedIn={onSignedIn}/>:page==='notebook'?<Records records={records} assignments={assignments} onBack={()=>navigate('chemistry')}/>:page==='assignments'?<MyAssignments assignments={assignments} records={records} onOpen={experimentId=>{const match=experiments.find(e=>e.id===experimentId);if(match){setActiveId(match.id);setPage(match.subject);setSidebar(false);setSaved(false);setDraft(null)}}}/>:
+        {page==='teacher'?<TeacherPanel/>:isTauri()&&!studentSession?<StudentSignIn onSignedIn={onSignedIn}/>:page==='progress'?<StudentDashboard
+          records={records} assignments={assignments} checks={knowledgeResults} studentName={profile.name}
+          classroom={profile.classroom} isPreview={!isTauri()}
+          onOpenExperiment={experimentId=>{const match=experiments.find(e=>e.id===experimentId);if(match){setActiveId(match.id);setPage(match.subject);setSidebar(false);setSaved(false);setDraft(null)}}}
+          onAssignments={()=>navigate('assignments')} onNotebook={()=>navigate('notebook')}/>:page==='notebook'?<Records records={records} assignments={assignments} onBack={()=>navigate('chemistry')}/>:page==='assignments'?<MyAssignments assignments={assignments} records={records} onOpen={experimentId=>{const match=experiments.find(e=>e.id===experimentId);if(match){setActiveId(match.id);setPage(match.subject);setSidebar(false);setSaved(false);setDraft(null)}}}/>:
           <>
           <div className="page-title"><div><span className="eyebrow">DISCOVER · EXPERIMENT · LEARN</span><h1>Welcome to the {SUBJECTS[subject].label} Lab<span className="title-period">.</span></h1><p>{SUBJECTS[subject].subtitle}. Explore through practice, not just theory.</p></div><div className="progress-badge"><CheckCircle2 size={18}/><div><strong>{completed} activities recorded</strong><small>{records.length} saved observations</small></div></div></div>
           <div className="subject-grid">
