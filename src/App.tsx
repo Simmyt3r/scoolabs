@@ -18,6 +18,8 @@ import { addMeasurement, readingSummary, type Measurement } from './measurements
 import { parseRubricFeedback } from './assessment';
 import KnowledgeCheck from './KnowledgeCheck';
 import StudentDashboard from './StudentDashboard';
+import FocusScope from './FocusScope';
+import {reportGuidance,reflectionScaffold,hasUnfinishedScaffold} from './reportGuidance';
 import {studentKnowledgeResults,type KnowledgeResult} from './native-storage';
 
 type Page = Subject | 'progress' | 'notebook' | 'assignments' | 'teacher';
@@ -291,6 +293,13 @@ function App() {
   const [classCatalog,setClassCatalog]=useState<Classroom[]>([]);
   const [assignments,setAssignments]=useState<Assignment[]>([]);
   const [selectedAssignmentId,setSelectedAssignmentId]=useState('');
+  const [showReportHelp,setShowReportHelp]=useState(false);
+  useEffect(()=>{
+    if(!sidebar)return;
+    const onKey=(e:KeyboardEvent)=>{if(e.key==='Escape')setSidebar(false);};
+    document.addEventListener('keydown',onKey);
+    return ()=>document.removeEventListener('keydown',onKey);
+  },[sidebar]);
   useEffect(()=>{
     let active=true;
     initialiseStore().then(data=>{
@@ -339,10 +348,12 @@ function App() {
   function startRecord(settings:string,observation:string) {
     const pending=assignments.find(a=>a.experimentId===selected.id && !records.some(r=>r.assignmentId===a.id));
     setSelectedAssignmentId(pending?.id??'');
+    setShowReportHelp(false);
     setDraft({settings,observation});setConclusion('');setSaved(false);setError('');
   }
   async function persistRecord() {
     if(!draft)return;
+    if(hasUnfinishedScaffold(conclusion)){setError('Finish or delete every [bracketed] template prompt before saving your report.');return;}
     if(!storageReady || storageError){setError('Storage is not ready. Resolve the storage error before saving.');return;}
     if(!profile.name.trim()||!profile.classroom.trim()){setError('Enter your name and class to save an observation.');return;}
     const record:LabRecord={id:crypto.randomUUID(),timestamp:new Date().toISOString(),student:profile.name.trim(),classroom:profile.classroom.trim(),experimentId:selected.id,experimentTitle:selected.title,subject:selected.subject,settings:draft.settings,observation:draft.observation,conclusion:conclusion.trim(),assignmentId:selectedAssignmentId||null};
@@ -362,25 +373,26 @@ function App() {
     }catch(e){setError('Unable to save student profile: '+String(e));}
   }
   return <div className="app-shell">
+    <a href="#scoolabs-main" className="skip-link">Skip to main content</a>
     {sidebar && <div className="mobile-scrim" onClick={()=>setSidebar(false)}/>}
     <aside className={'sidebar '+(sidebar?'open':'')}>
       <div className="brand"><span className="brand-mark"><FlaskConical size={22}/></span><span><strong>Scoo<span>labs</span></strong><small>VIRTUAL SCIENCE LAB</small></span><button className="close-menu" onClick={()=>setSidebar(false)} aria-label="Close menu"><X size={19}/></button></div>
       <div className="nav-heading">WORKSPACE</div>
-      <nav aria-label="Main navigation">
-        <button onClick={()=>navigate('progress')} className={'nav-link '+(page==='progress'?'selected':'')}><LayoutDashboard size={19}/> My progress <span className="nav-count">{records.length}</span></button>
+      <nav aria-label="Main navigation" id="scoolabs-navigation">
+        <button onClick={()=>navigate('progress')} aria-current={page==='progress'?'page':undefined} className={'nav-link '+(page==='progress'?'selected':'')}><LayoutDashboard size={19}/> My progress <span className="nav-count">{records.length}</span></button>
         <div className="nav-rule"/>
-        {subjectKeys.map(s=>{const Icon=SUBJECTS[s].icon;return <button key={s} onClick={()=>navigate(s)} className={'nav-link '+(page===s?'selected':'')}><Icon size={19}/>{SUBJECTS[s].label}<span className="nav-count">{experiments.filter(e=>e.subject===s&&e.ready).length}</span></button>})}
+        {subjectKeys.map(s=>{const Icon=SUBJECTS[s].icon;return <button key={s} onClick={()=>navigate(s)} aria-current={page===s?'page':undefined} className={'nav-link '+(page===s?'selected':'')}><Icon size={19}/>{SUBJECTS[s].label}<span className="nav-count">{experiments.filter(e=>e.subject===s&&e.ready).length}</span></button>})}
         <div className="nav-rule"/>
-        <button onClick={()=>navigate('notebook')} className={'nav-link '+(page==='notebook'?'selected':'')}><BookOpen size={19}/> My notebook <span className="nav-count">{records.length}</span></button>
-        <button onClick={()=>navigate('assignments')} className={'nav-link '+(page==='assignments'?'selected':'')}><ClipboardList size={19}/> My assignments <span className="nav-count">{assignments.filter(a=>!records.some(r=>r.assignmentId===a.id)).length}</span></button>
-        <button onClick={()=>navigate('teacher')} className={'nav-link '+(page==='teacher'?'selected':'')}><Users size={19}/> Teacher workspace</button>
+        <button onClick={()=>navigate('notebook')} aria-current={page==='notebook'?'page':undefined} className={'nav-link '+(page==='notebook'?'selected':'')}><BookOpen size={19}/> My notebook <span className="nav-count">{records.length}</span></button>
+        <button onClick={()=>navigate('assignments')} aria-current={page==='assignments'?'page':undefined} className={'nav-link '+(page==='assignments'?'selected':'')}><ClipboardList size={19}/> My assignments <span className="nav-count">{assignments.filter(a=>!records.some(r=>r.assignmentId===a.id)).length}</span></button>
+        <button onClick={()=>navigate('teacher')} aria-current={page==='teacher'?'page':undefined} className={'nav-link '+(page==='teacher'?'selected':'')}><Users size={19}/> Teacher workspace</button>
       </nav>
       <div className="side-spacer"/>
       <div className="offline-card"><div><WifiOff size={17}/> 100% offline learning</div><p>All experiments and observations work without internet access.</p><span className="offline-dot"/> Ready to learn</div>
       <div className="side-footer">Scoolabs v0.7.0 <span>·</span> Silabs Technologies</div>
     </aside>
-    <main className="main-content">
-      <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={()=>setSidebar(true)} aria-label="Open menu"><Menu size={22}/></button><span className="breadcrumb">Workspace</span><span className="breadcrumb-sep">/</span><strong>{page==='notebook'?'My notebook':page==='assignments'?'My assignments':page==='progress'?'My progress':page==='teacher'?'Teacher workspace':SUBJECTS[page].label}</strong></div><div className="topbar-right"><span className="offline-indicator"><span/> Offline ready</span><button className="user-button" onClick={()=>{if(isTauri()){if(studentSession)void signOut();else navigate('chemistry');}else{setProfileDraft(profile);getClassCatalog().then(setClassCatalog).catch(()=>undefined);setShowProfile(true);}}}><GraduationCap size={16}/>{isTauri()?(studentSession?'Sign out: '+studentSession.studentName:'Student sign in'):(profile.name||'Student profile')}<ChevronDown size={14}/></button></div></header>
+    <main className="main-content" id="scoolabs-main" tabIndex={-1}>
+      <header className="topbar"><div className="topbar-left"><button className="menu-button" onClick={()=>setSidebar(true)} aria-label="Open menu" aria-expanded={sidebar} aria-controls="scoolabs-navigation"><Menu size={22}/></button><span className="breadcrumb">Workspace</span><span className="breadcrumb-sep">/</span><strong>{page==='notebook'?'My notebook':page==='assignments'?'My assignments':page==='progress'?'My progress':page==='teacher'?'Teacher workspace':SUBJECTS[page].label}</strong></div><div className="topbar-right"><span className="offline-indicator"><span/> Offline ready</span><button className="user-button" onClick={()=>{if(isTauri()){if(studentSession)void signOut();else navigate('chemistry');}else{setProfileDraft(profile);getClassCatalog().then(setClassCatalog).catch(()=>undefined);setShowProfile(true);}}}><GraduationCap size={16}/>{isTauri()?(studentSession?'Sign out: '+studentSession.studentName:'Student sign in'):(profile.name||'Student profile')}<ChevronDown size={14}/></button></div></header>
       <div className="content-pad">
         {storageError&&<div role="alert" className="storage-warning">{storageError}</div>}
         {!storageReady&&<div className="record-note">Opening offline database...</div>}
@@ -417,8 +429,10 @@ function App() {
         <footer className="content-footer"><span>Simeon's Laboratories and Co Technologies Ltd</span><span>Designed for Nigerian classrooms · Offline first</span></footer>
       </div>
     </main>
-    {draft&&<div className="modal-backdrop" role="presentation"><div className="dialog" role="dialog" aria-modal="true" aria-labelledby="record-title"><button className="dialog-close" onClick={()=>setDraft(null)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LABORATORY NOTEBOOK</span><h2 id="record-title">Save your experiment</h2><p>Record your observation and conclusion locally on this computer.</p><div className="dialog-data"><strong>Observation</strong><span>{draft.observation}</span><small>{draft.settings}</small></div>{isTauri()?<div className="record-note"><ShieldCheck size={17}/> Signed in as {profile.name} ({profile.classroom}). This record will be saved to your authenticated student account.</div>:<div className="form-two"><label>Student name<input value={profile.name} onChange={e=>setProfile(p=>({...p,name:e.target.value}))} placeholder="e.g. Ada Musa"/></label><label>Class<input value={profile.classroom} onChange={e=>setProfile(p=>({...p,classroom:e.target.value}))} placeholder="e.g. SS2A"/></label></div>}{isTauri()&&assignments.some(a=>a.experimentId===selected.id)&&<label className="field">Submit for assignment<select aria-label="Choose class assignment" value={selectedAssignmentId} onChange={e=>setSelectedAssignmentId(e.target.value)}><option value="">Personal practice (not submitted)</option>{assignments.filter(a=>a.experimentId===selected.id).map(a=><option key={a.id} disabled={records.some(r=>r.assignmentId===a.id)} value={a.id}>{a.title}{records.some(r=>r.assignmentId===a.id)?' (already submitted)':''}</option>)}</select></label>}<label className="field">Conclusion (optional)<textarea rows={3} placeholder="What did you discover?" value={conclusion} onChange={e=>setConclusion(e.target.value)}/></label>{error&&<div role="alert" className="error-message">{error}</div>}<button className="button-primary full" onClick={persistRecord} disabled={!storageReady||!!storageError}><Save size={17}/> Save to notebook</button></div></div>}
-    {showProfile&&!isTauri()&&<div className="modal-backdrop"><div className="dialog compact" role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="dialog-close" onClick={()=>setShowProfile(false)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LOCAL PROFILE</span><h2 id="profile-title">Student profile</h2><p>Set your identity for practical records on this computer.</p><label className="field">Full name<input value={profileDraft.name} onChange={e=>setProfileDraft({...profileDraft,name:e.target.value})} placeholder="Your name"/></label><label className="field">Class<input list="known-classes" value={profileDraft.classroom} onChange={e=>setProfileDraft({...profileDraft,classroom:e.target.value})} placeholder="SS2A"/><datalist id="known-classes">{classCatalog.map(c=><option key={c.id} value={c.name}/>)}</datalist></label><button className="button-primary full" onClick={persistProfile} disabled={!storageReady||!!storageError}><Settings2 size={16}/> Save profile</button></div></div>}
+    {draft&&<FocusScope className="modal-backdrop" onEscape={()=>setDraft(null)} role="presentation"><div className="dialog" role="dialog" aria-modal="true" aria-labelledby="record-title"><button className="dialog-close" onClick={()=>setDraft(null)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LABORATORY NOTEBOOK</span><h2 id="record-title">Save your experiment</h2><p>Record your observation and conclusion locally on this computer.</p><div className="dialog-data"><strong>Observation</strong><span>{draft.observation}</span><small>{draft.settings}</small></div>{isTauri()?<div className="record-note"><ShieldCheck size={17}/> Signed in as {profile.name} ({profile.classroom}). This record will be saved to your authenticated student account.</div>:<div className="form-two"><label>Student name<input value={profile.name} onChange={e=>setProfile(p=>({...p,name:e.target.value}))} placeholder="e.g. Ada Musa"/></label><label>Class<input value={profile.classroom} onChange={e=>setProfile(p=>({...p,classroom:e.target.value}))} placeholder="e.g. SS2A"/></label></div>}{isTauri()&&assignments.some(a=>a.experimentId===selected.id)&&<label className="field">Submit for assignment<select aria-label="Choose class assignment" value={selectedAssignmentId} onChange={e=>setSelectedAssignmentId(e.target.value)}><option value="">Personal practice (not submitted)</option>{assignments.filter(a=>a.experimentId===selected.id).map(a=><option key={a.id} disabled={records.some(r=>r.assignmentId===a.id)} value={a.id}>{a.title}{records.some(r=>r.assignmentId===a.id)?' (already submitted)':''}</option>)}</select></label>}<div className="report-helper"><div className="report-helper-heading"><strong>Write a better practical report</strong><button className="text-button" type="button" aria-expanded={showReportHelp} onClick={()=>setShowReportHelp(v=>!v)}>{showReportHelp?'Hide writing prompts':'Show writing prompts'}</button></div>
+      {showReportHelp&&<div className="report-helper-content"><p>{reportGuidance(selected.id).hint}</p><strong>Questions from this experiment</strong><ol>{reportGuidance(selected.id).questions.map(q=><li key={q}>{q}</li>)}</ol><small>Model boundary: {reportGuidance(selected.id).scientificLimit}</small>
+      <button className="button-outline" type="button" disabled={conclusion.trim().length>0} onClick={()=>setConclusion(reflectionScaffold())}>Insert a blank reflection structure</button><small>Write your own results in place of the bracketed prompts. An unfilled template cannot be submitted.</small></div>}</div><label className="field">Conclusion (optional)<textarea rows={3} placeholder="What did you discover?" value={conclusion} onChange={e=>setConclusion(e.target.value)}/></label>{error&&<div role="alert" className="error-message">{error}</div>}<button className="button-primary full" onClick={persistRecord} disabled={!storageReady||!!storageError}><Save size={17}/> Save to notebook</button></div></FocusScope>}
+    {showProfile&&!isTauri()&&<FocusScope className="modal-backdrop" onEscape={()=>setShowProfile(false)}><div className="dialog compact" role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="dialog-close" onClick={()=>setShowProfile(false)} aria-label="Close"><X size={20}/></button><span className="eyebrow">LOCAL PROFILE</span><h2 id="profile-title">Student profile</h2><p>Set your identity for practical records on this computer.</p><label className="field">Full name<input value={profileDraft.name} onChange={e=>setProfileDraft({...profileDraft,name:e.target.value})} placeholder="Your name"/></label><label className="field">Class<input list="known-classes" value={profileDraft.classroom} onChange={e=>setProfileDraft({...profileDraft,classroom:e.target.value})} placeholder="SS2A"/><datalist id="known-classes">{classCatalog.map(c=><option key={c.id} value={c.name}/>)}</datalist></label><button className="button-primary full" onClick={persistProfile} disabled={!storageReady||!!storageError}><Settings2 size={16}/> Save profile</button></div></FocusScope>}
   </div>;
 }
 
