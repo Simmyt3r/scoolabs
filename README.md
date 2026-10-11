@@ -4,7 +4,7 @@
 
 Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 
-## Current prototype (v0.2)
+## Current prototype (v0.3)
 
 | Subject | Working simulation | Current controls |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 | Biology | Microscope | Specimen, objective, focus, magnification |
 | Agriculture | Seed germination | Crop, moisture, temperature, days |
 
-Four additional practicals remain marked Coming soon. All laboratory illustrations are generated in the user interface itself; no remote asset downloads are needed.
+All twelve practicals are now accessible. Laboratory diagrams are generated locally by the app, and there are no runtime downloads of teaching assets.
 
 Students can set a local profile, save results and conclusions in an offline notebook, and export their notebook as JSON.
 
