@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {addMeasurement,fitOhmsLaw,readingSummary,MAX_READINGS} from './measurements';
+import {addMeasurement,fitOhmsLaw,fitPendulumGravity,fitPotometerUptake,readingSummary,MAX_READINGS} from './measurements';
 describe('physical-science observation log',()=>{
  it('collects manual readings in setpoint order and replaces duplicates',()=>{
   let rows=addMeasurement([],10,2,'titration');
@@ -23,4 +23,24 @@ describe('physical-science observation log',()=>{
   expect(fitOhmsLaw([{x:1,y:0}])).toBeNull();
   expect(fitOhmsLaw([{x:0,y:0},{x:1,y:0}])).toBeNull();
  });
+});
+
+describe('extended science measurement worksheets',()=>{
+  it('estimates gravity from small-angle pendulum T squared against length',()=>{
+    const gravity=9.81;
+    const observed=[0.5,1,2].map(length=>({x:length,y:4*Math.PI*Math.PI*length/gravity}));
+    expect(fitPendulumGravity(observed)).toBeCloseTo(gravity,8);
+    expect(fitPendulumGravity([{x:1,y:4}])).toBeNull();
+    expect(fitPendulumGravity([{x:1,y:0},{x:2,y:0}])).toBeNull();
+    expect(addMeasurement([],3,13,'pendulum')).toHaveLength(1);
+    expect(()=>addMeasurement([],4,13,'pendulum')).toThrow(RangeError);
+    expect(readingSummary(observed,'pendulum')).toContain('Period squared');
+  });
+  it('captures potometer water uptake versus time, not labelled transpiration',()=>{
+    const captured=addMeasurement(addMeasurement([],5,25,'potometer'),10,50,'potometer');
+    expect(fitPotometerUptake(captured)).toBeCloseTo(5,8);
+    expect(readingSummary(captured,'potometer')).toContain('Water uptake');
+    expect(()=>addMeasurement([],2,900,'potometer')).toThrow(RangeError);
+    expect(()=>addMeasurement([],31,15,'potometer')).toThrow(RangeError);
+  });
 });
