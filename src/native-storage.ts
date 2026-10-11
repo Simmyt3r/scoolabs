@@ -49,6 +49,9 @@ export async function loginTeacher(teacherId:string,pin:string):Promise<TeacherS
 export async function logoutTeacher(token:string):Promise<void>{nativeOnly();await invoke('teacher_logout',{token})}
 export async function addTeacher(token:string,name:string,pin:string):Promise<void>{nativeOnly();await invoke('add_teacher',{token,name,pin})}
 export async function backupSchoolDatabase(token:string):Promise<string>{nativeOnly();return invoke('backup_school_database',{token})}
+export interface SchoolBackup {filename:string;bytes:number;modifiedUnix:number}
+export async function listSchoolBackups(token:string):Promise<SchoolBackup[]>{nativeOnly();return invoke('list_local_backups',{token})}
+export async function restoreSchoolBackup(token:string,filename:string,confirmation:string):Promise<string>{nativeOnly();return invoke('restore_local_backup',{token,filename,confirmation})}
 export async function teacherSnapshot(token:string):Promise<TeacherSnapshot>{nativeOnly();return invoke('teacher_snapshot',{token})}
 export async function createClass(token:string,name:string,level:string):Promise<void>{nativeOnly();await invoke('create_class',{token,name,level})}
 export async function enrollStudent(token:string,classId:string,name:string):Promise<void>{nativeOnly();await invoke('enroll_student',{token,classId,name})}

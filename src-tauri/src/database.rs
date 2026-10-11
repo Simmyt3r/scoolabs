@@ -2,7 +2,7 @@ use argon2::{
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{backup::Backup, params, Connection, OpenFlags, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -342,6 +342,86 @@ pub fn backup_school_database(db:State<'_,DbState>,sessions:State<'_,Sessions>,a
     conn.execute("VACUUM INTO ?1",params![target.to_string_lossy().to_string()]).map_err(db_error)?;
     Ok(target.to_string_lossy().to_string())
 }
+
+#[derive(Serialize)]
+#[serde(rename_all="camelCase")]
+pub struct BackupInfo {
+    filename: String,
+    bytes: u64,
+    modified_unix: u64,
+}
+fn valid_backup_filename(filename: &str) -> bool {
+    filename.starts_with("scoolabs-school-")
+        && filename.ends_with(".sqlite3")
+        && filename
+            .strip_prefix("scoolabs-school-")
+            .and_then(|s| s.strip_suffix(".sqlite3"))
+            .map(|s| !s.is_empty() && s.len()<=20 && s.chars().all(|c| c.is_ascii_digit()))
+            .unwrap_or(false)
+}
+fn validate_restore_source(source: &Connection) -> Result<(),String> {
+    let check:String=source.query_row("PRAGMA quick_check",[],|r|r.get(0)).map_err(db_error)?;
+    if check!="ok" {return Err("Selected backup failed SQLite integrity checks".into());}
+    for table in ["teachers","classes","students","assignments","notebook_records","app_settings"] {
+        let found:i64=source.query_row("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?1",params![table],|r|r.get(0)).map_err(db_error)?;
+        if found != 1{return Err(format!("Selected backup is missing the {table} table"));}
+    }
+    Ok(())
+}
+#[tauri::command]
+pub fn list_local_backups(
+    sessions:State<'_,Sessions>,app:AppHandle,token:String
+) -> Result<Vec<BackupInfo>,String> {
+    check_token(&sessions,&token)?;
+    let dir=app.path().app_data_dir().map_err(db_error)?.join("backups");
+    if !dir.exists() {return Ok(Vec::new());}
+    let mut backups=Vec::new();
+    for entry in fs::read_dir(&dir).map_err(db_error)? {
+        let entry=entry.map_err(db_error)?;
+        let filename=entry.file_name().to_string_lossy().to_string();
+        if !valid_backup_filename(&filename) || !entry.file_type().map_err(db_error)?.is_file() {continue;}
+        let metadata=entry.metadata().map_err(db_error)?;
+        let modified_unix=metadata.modified().ok()
+          .and_then(|t|t.duration_since(std::time::UNIX_EPOCH).ok())
+          .map(|d|d.as_secs()).unwrap_or(0);
+        backups.push(BackupInfo{filename,bytes:metadata.len(),modified_unix});
+    }
+    backups.sort_by(|a,b|b.filename.cmp(&a.filename));
+    Ok(backups)
+}
+#[tauri::command]
+pub fn restore_local_backup(
+    db:State<'_,DbState>, sessions:State<'_,Sessions>,app:AppHandle,
+    token:String,filename:String,confirmation:String
+) -> Result<String,String> {
+    check_token(&sessions,&token)?;
+    if confirmation!="RESTORE SCHOOL DATA" {return Err("Type the full restoration confirmation".into());}
+    if !valid_backup_filename(&filename) {return Err("Unrecognized backup filename".into());}
+    let dir=app.path().app_data_dir().map_err(db_error)?.join("backups");
+    let source_path=dir.join(&filename);
+    let true_dir=fs::canonicalize(&dir).map_err(db_error)?;
+    let true_path=fs::canonicalize(&source_path).map_err(db_error)?;
+    if true_path.parent()!=Some(true_dir.as_path()) || !true_path.is_file(){
+        return Err("Backup must be a regular file from the local backup directory".into());
+    }
+    let source=Connection::open_with_flags(&true_path,OpenFlags::SQLITE_OPEN_READ_ONLY).map_err(db_error)?;
+    validate_restore_source(&source)?;
+    let stamp=std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH).map_err(db_error)?.as_millis();
+    let rollback=dir.join(format!("before-restore-{stamp}.sqlite3"));
+    {
+        let mut destination=connection(&db)?;
+        // Always preserve current data before attempting to overwrite it.
+        destination.execute("VACUUM INTO ?1",params![rollback.to_string_lossy().to_string()]).map_err(db_error)?;
+        let operation=Backup::new(&source,&mut *destination).map_err(db_error)?;
+        operation.run_to_completion(128,Duration::from_millis(20),None).map_err(db_error)?;
+        destination.execute_batch("PRAGMA foreign_keys=ON;").map_err(db_error)?;
+    }
+    // Teacher accounts may have changed. Clear all authentication sessions.
+    sessions.0.lock().map_err(db_error)?.clear();
+    Ok(rollback.to_string_lossy().to_string())
+}
+
 #[tauri::command]
 pub fn teacher_snapshot(db:State<'_,DbState>,sessions:State<'_,Sessions>,token:String)->Result<TeacherSnapshot,String>{
     check_token(&sessions,&token)?;
@@ -388,6 +468,29 @@ mod tests {
         assert!(Argon2::default().verify_password(b"938271",&parsed).is_ok());
         assert!(Argon2::default().verify_password(b"938272",&parsed).is_err());
         assert!(hash_pin("123").is_err());
+    }
+    #[test]
+    fn unsafe_backup_names_are_rejected() {
+        assert!(valid_backup_filename("scoolabs-school-1791739200000.sqlite3"));
+        for bad in ["../scoolabs-school-2.sqlite3","scoolabs-school-foo.sqlite3","scoolabs-school-1.db","scoolabs-school-1.sqlite3/../x","before-restore-2.sqlite3"] {
+            assert!(!valid_backup_filename(bad));
+        }
+    }
+    #[test]
+    fn validated_backup_restores_database_content(){
+        let source=Connection::open_in_memory().unwrap();
+        create_tables(&source).unwrap();
+        source.execute("INSERT INTO classes(id,name,level) VALUES('a','SS2A','SS2')",[]).unwrap();
+        validate_restore_source(&source).unwrap();
+        let mut target=Connection::open_in_memory().unwrap();
+        let copy=Backup::new(&source,&mut target).unwrap();
+        copy.run_to_completion(100,Duration::from_millis(1),None).unwrap();
+        drop(copy);
+        let count:i64=target.query_row("SELECT COUNT(*) FROM classes",[],|r|r.get(0)).unwrap();
+        assert_eq!(count,1);
+        validate_restore_source(&target).unwrap();
+        let empty=Connection::open_in_memory().unwrap();
+        assert!(validate_restore_source(&empty).is_err());
     }
     #[test]
     fn record_import_is_idempotent_and_grades_not_trusted() {

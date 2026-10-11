@@ -30,6 +30,8 @@ pub fn run() {
             database::grade_record,
             database::teacher_snapshot,
             database::backup_school_database,
+            database::list_local_backups,
+            database::restore_local_backup,
         ])
         .run(tauri::generate_context!())
         .expect("failed to start Scoolabs");
