@@ -36,3 +36,9 @@
 .student-signin label{font-size:12px;color:#527080;display:block;margin-bottom:17px;font-weight:700}
 .student-signin label input{display:block;width:100%;margin-top:8px;border:1px solid #d4e3e8;border-radius:9px;padding:12px 14px;color:#234254}
 .student-signin .signin-note{font-size:11px;color:#92a5af;margin:17px 0 0}
+
+.issued-credentials{display:flex;flex-direction:column;gap:7px;padding:16px;border:1px solid #b6e5d9;background:#edf9f4;border-radius:9px;color:#246c64;margin-top:14px;font-size:12px}
+.issued-credentials code{font-size:13px;font-weight:800;letter-spacing:1px}.issued-credentials small{font-size:10px;line-height:1.5}.issued-credentials button{align-self:start}
+.teacher-student-list .student-register-entry{border:1px solid #e1eaef;border-radius:9px;background:#fff;padding:12px;display:flex;flex-direction:column;gap:9px;min-width:230px;flex:1}
+.teacher-student-list .student-register-entry strong{font-size:12px}.teacher-student-list .student-register-entry>span{background:none;padding:0;color:#587987;font-size:11px}
+.reset-pin{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.reset-pin input{flex:1;min-width:125px;border:1px solid #d3e3e8;border-radius:6px;padding:9px;font-size:11px}.reset-pin button{font-size:10px;padding:9px}
