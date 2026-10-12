@@ -32,7 +32,7 @@ Scoolabs is an **offline-first interactive science learning environment** for Ni
 
 ## Priority releases still to build
 
-**Priority 1: genuinely visual apparatus.** Create labelled, scientifically accurate schematic diagrams for the main tools in all subjects. Add interactive parts and controls where meaningful. Replace the generic beaker icons on equipment detail cards. Validate each instrument with the intended subject teacher.
+**Priority 1: genuinely visual apparatus.** Representative interactive schematics (Beaker, Burette, Metre rule, Microscope, Hoe) are now integrated, with selectable labelled parts. Expand this approach to all 48 apparatus, commission scientifically accurate reference drawings with qualified teachers, and introduce meaningful manipulation/3D tools. Unsupported apparatus currently display clearly labelled generic reference symbols.
 
 **Priority 2: real conceptual depth.** Expand the initial ten concepts into class-level chapters, explain key laws, examples and worked exercises, add Nigerian-curriculum lesson sequencing, and show prerequisite relationships. Ensure each reference item has objectives, illustrations, references, formative practice and a teacher review status.
 

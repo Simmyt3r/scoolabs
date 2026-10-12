@@ -396,3 +396,18 @@
 @media(max-width:900px){.subject-hub-hero{flex-wrap:wrap}.subject-hub-facts{border:0;padding-left:0}.hub-overview-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.periodic-properties{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:680px){.subject-hub-hero{padding:16px}.subject-hub-hero h2{font-size:19px}.subject-hub-tabs{padding:0 8px}.subject-hub-body{padding:15px}.hub-overview-cards,.reference-list,.apparatus-browser{grid-template-columns:1fr}.apparatus-list{max-height:250px}.periodic-grid{grid-template-columns:repeat(18,54px);min-width:1100px}.periodic-properties{grid-template-columns:1fr 1fr}.periodic-detail{padding:12px}}
 @media(max-width:400px){.periodic-properties{grid-template-columns:1fr}.periodic-detail-head{align-items:flex-start}.periodic-detail-mark{width:86px;height:97px}.periodic-detail-mark strong{font-size:34px}}
+
+/* Interactive classroom schematics for representative instruments. */
+.apparatus-diagram{background:#f6fbfb;border:1px solid #dcebed;border-radius:12px;padding:12px;margin-bottom:19px}
+.apparatus-diagram-art{min-height:205px;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,#ebfaf5,#f2f7fa 70%);border-radius:9px}
+.apparatus-diagram-art svg{width:100%;height:auto;max-height:230px;display:block}
+.apparatus-diagram-art svg text{font-size:11px;font-weight:750;fill:#507c88}
+.apparatus-generic{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:13px;color:#249986}
+.apparatus-generic small{color:#70939e;font-size:10px;max-width:230px;text-align:center;line-height:1.5}
+.apparatus-part-inspector{padding:14px 4px 3px}.apparatus-part-inspector>strong{color:#1c5968;font-size:12px}
+.apparatus-part-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 9px}
+.apparatus-part-tabs button{background:white;border:1px solid #cce3e4;border-radius:7px;padding:7px 9px;color:#4b7680;font-size:10px;font-weight:800}
+.apparatus-part-tabs button.active{background:#d9f6ed;color:#087d70;border-color:#6ec4b1}
+.apparatus-part-inspector p{color:#4c7980;font-size:11px;line-height:1.65;margin:0}
+.apparatus-diagram-caption{color:#81979f;font-size:10px;line-height:1.6;margin:14px 4px 3px}
+@media(prefers-reduced-motion:reduce){.apparatus-part-tabs button{transition:none}}

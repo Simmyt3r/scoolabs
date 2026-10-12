@@ -4,6 +4,7 @@ import type {Subject} from './engine';
 import {experiments} from './engine';
 import {searchLibrary,subjectApparatus,subjectConcepts,type Apparatus,type KeyConcept} from './subject-library';
 import PeriodicTable from './PeriodicTable';
+import ApparatusDiagram from './ApparatusDiagram';
 
 type Section='overview'|'concepts'|'apparatus'|'periodic';
 const labels:Record<Subject,string>={chemistry:'Chemistry',physics:'Physics',biology:'Biology',agriculture:'Agricultural Science'};
@@ -45,13 +46,13 @@ function ApparatusLibrary({subject,onOpen}:{subject:Subject;onOpen:(id:string)=>
    <div className="library-results-count" role="status">{list.length} equipment guide{list.length===1?'':'s'}</div>
    {selected?<div className="apparatus-browser"><div className="apparatus-list">{list.map((item:Apparatus)=><button type="button" key={item.id} aria-pressed={selected.id===item.id} className={'apparatus-choice '+(selected.id===item.id?'active':'')} onClick={()=>setChosen(item.id)}><span className="apparatus-choice-symbol"><Beaker size={19}/></span><span><strong>{item.title}</strong><small>{item.category}</small></span><ArrowRight size={16}/></button>)}</div>
      <article className="apparatus-detail" aria-label={'Equipment guide: '+selected.title}>
-       <div className="apparatus-illustration" role="img" aria-label={'Reference icon for '+selected.title+'; not a technical diagram'}><Beaker size={60} strokeWidth={1.3}/><span>{selected.category}</span></div>
+       <ApparatusDiagram key={selected.id} title={selected.title} subject={subject}/>
        <span className="eyebrow">APPARATUS IDENTIFICATION</span><h3>{selected.title}</h3>
        <h4>What it is used for</h4><p>{selected.purpose}</p>
        <h4>How it is used</h4><p>{selected.howToUse}</p>
        <div className="apparatus-safety"><ShieldAlert size={18}/><div><strong>Safety and limitations</strong><p>{selected.safety}</p></div></div>
        <RelatedPractical id={selected.experimentId} onOpen={onOpen}/>
-       <small className="apparatus-caveat">Reference icon only. Instrument-specific labeled diagrams and manipulable 3D models remain a planned upgrade.</small>
+       <small className="apparatus-caveat">Some commonly used apparatus now have interactive labelled schematics; others retain category symbols. Accurate scaled diagrams and 3D instrument interaction remain future development work.</small>
      </article></div>:<p className="library-empty">No matching apparatus. Try a different instrument name.</p>}
   </section>;
 }

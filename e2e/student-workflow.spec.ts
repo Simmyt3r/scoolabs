@@ -394,3 +394,24 @@ test('all four subjects include searchable concepts and apparatus libraries',asy
    await expect(hub.locator('.apparatus-detail')).toBeVisible();
  }
 });
+
+
+test('representative apparatus expose labelled, interactive diagrams in all four subjects',async({page})=>{
+ await page.goto('/');
+ const cases=[
+  {subject:'Chemistry',name:'Beaker',part:'Graduation marks'},
+  {subject:'Physics',name:'Metre rule',part:'Zero mark'},
+  {subject:'Biology',name:'Compound light microscope',part:'Objective lenses'},
+  {subject:'Agriculture',name:'Hoe',part:'Metal head'}
+ ];
+ for(const item of cases){
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:item.subject}).click();
+  const hub=page.locator('.subject-explorer');
+  await hub.getByRole('tab',{name:'Apparatus'}).click();
+  const guide=hub.locator('.apparatus-detail');
+  await expect(guide.getByRole('img',{name:new RegExp('Simplified, labelled diagram of '+item.name)})).toBeVisible();
+  await expect(guide.getByRole('group',{name:item.name+' diagram parts'})).toBeVisible();
+  await guide.getByRole('button',{name:item.part}).click();
+  await expect(guide.getByRole('button',{name:item.part})).toHaveAttribute('aria-pressed','true');
+ }
+});
