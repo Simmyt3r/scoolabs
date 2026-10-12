@@ -1,0 +1,482 @@
+[
+  {
+    "id": "chemistry-apparatus-1",
+    "subject": "chemistry",
+    "category": "Glassware",
+    "title": "Beaker",
+    "purpose": "Holds, mixes or heats liquids approximately.",
+    "howToUse": "Use for mixing and transfers; never treat its graduations as high-precision volume readings.",
+    "safety": "Hot glass can look cold; use protection and avoid cracks.",
+    "experimentId": "titration"
+  },
+  {
+    "id": "chemistry-apparatus-2",
+    "subject": "chemistry",
+    "category": "Glassware",
+    "title": "Conical flask",
+    "purpose": "Allows swirling reaction mixtures with lower splash risk.",
+    "howToUse": "Set under the burette for titration while gently swirling.",
+    "safety": "Do not seal during gas-producing reactions.",
+    "experimentId": "titration"
+  },
+  {
+    "id": "chemistry-apparatus-3",
+    "subject": "chemistry",
+    "category": "Volumetric",
+    "title": "Burette",
+    "purpose": "Dispenses measured liquid volume through a stopcock.",
+    "howToUse": "Read the meniscus at eye level and calculate final minus initial reading.",
+    "safety": "Clamp vertically; keep liquid below eye level.",
+    "experimentId": "titration"
+  },
+  {
+    "id": "chemistry-apparatus-4",
+    "subject": "chemistry",
+    "category": "Volumetric",
+    "title": "Volumetric pipette",
+    "purpose": "Transfers one accurately specified liquid volume.",
+    "howToUse": "Use a pipette filler; keep pipette vertical during aspiration.",
+    "safety": "Never pipette by mouth.",
+    "experimentId": "titration"
+  },
+  {
+    "id": "chemistry-apparatus-5",
+    "subject": "chemistry",
+    "category": "Volumetric",
+    "title": "Measuring cylinder",
+    "purpose": "Measures an approximate liquid volume.",
+    "howToUse": "Choose a size close to target volume and read the bottom of the meniscus.",
+    "safety": "Place on a level stable bench.",
+    "experimentId": "separation"
+  },
+  {
+    "id": "chemistry-apparatus-6",
+    "subject": "chemistry",
+    "category": "Separation",
+    "title": "Filter funnel",
+    "purpose": "Supports filter paper to separate suspended insoluble solids.",
+    "howToUse": "Fold suitable filter paper; pour along a glass rod into the funnel.",
+    "safety": "Filtration does not remove dissolved substances.",
+    "experimentId": "separation"
+  },
+  {
+    "id": "chemistry-apparatus-7",
+    "subject": "chemistry",
+    "category": "Heating",
+    "title": "Evaporating dish",
+    "purpose": "Provides a wide surface for controlled evaporation.",
+    "howToUse": "Heat suitable solutions gently under teacher supervision.",
+    "safety": "Treat residue and dish as hot until cooled.",
+    "experimentId": "separation"
+  },
+  {
+    "id": "chemistry-apparatus-8",
+    "subject": "chemistry",
+    "category": "Support",
+    "title": "Retort stand and clamp",
+    "purpose": "Holds burettes and other equipment vertically and securely.",
+    "howToUse": "Secure clamps and inspect balance before adding glassware.",
+    "safety": "An unstable stand can topple or break glass.",
+    "experimentId": "titration"
+  },
+  {
+    "id": "chemistry-apparatus-9",
+    "subject": "chemistry",
+    "category": "Measuring",
+    "title": "Electronic balance",
+    "purpose": "Measures the mass of samples.",
+    "howToUse": "Tare the container and record values with appropriate precision.",
+    "safety": "Do not put corrosive material directly on the pan.",
+    "experimentId": "separation"
+  },
+  {
+    "id": "chemistry-apparatus-10",
+    "subject": "chemistry",
+    "category": "Measuring",
+    "title": "pH meter",
+    "purpose": "Estimates solution pH using calibrated electrodes.",
+    "howToUse": "Rinse probe between samples and follow calibration guidance.",
+    "safety": "Probe glass is fragile and readings depend on calibration.",
+    "experimentId": "ph-indicators"
+  },
+  {
+    "id": "chemistry-apparatus-11",
+    "subject": "chemistry",
+    "category": "Measuring",
+    "title": "Thermometer",
+    "purpose": "Measures the temperature of an experiment.",
+    "howToUse": "Ensure the sensor contacts the medium and use a suitable range.",
+    "safety": "Do not exceed instrument rating or expose mercury devices.",
+    "experimentId": "ph-indicators"
+  },
+  {
+    "id": "chemistry-apparatus-12",
+    "subject": "chemistry",
+    "category": "Protection",
+    "title": "Safety goggles",
+    "purpose": "Protects eyes from splashes and flying fragments.",
+    "howToUse": "Wear fitted goggles when working with chemicals or glassware.",
+    "safety": "Protection is not a substitute for safe technique.",
+    "experimentId": "titration"
+  },
+  {
+    "id": "physics-apparatus-1",
+    "subject": "physics",
+    "category": "Length",
+    "title": "Metre rule",
+    "purpose": "Measures length and displacement on a straight scale.",
+    "howToUse": "Align zero mark and read with eye perpendicular to marks.",
+    "safety": "Check zero error and avoid parallax.",
+    "experimentId": "pendulum"
+  },
+  {
+    "id": "physics-apparatus-2",
+    "subject": "physics",
+    "category": "Time",
+    "title": "Stopwatch",
+    "purpose": "Measures elapsed time for repeated events.",
+    "howToUse": "Time several complete oscillations and average the period.",
+    "safety": "Human reaction time affects manual readings.",
+    "experimentId": "pendulum"
+  },
+  {
+    "id": "physics-apparatus-3",
+    "subject": "physics",
+    "category": "Precision",
+    "title": "Micrometer screw gauge",
+    "purpose": "Measures small diameters and thicknesses.",
+    "howToUse": "Check zero offset, use ratchet gently and read sleeve and thimble.",
+    "safety": "Excess pressure deforms small specimens.",
+    "experimentId": "pendulum"
+  },
+  {
+    "id": "physics-apparatus-4",
+    "subject": "physics",
+    "category": "Precision",
+    "title": "Vernier calliper",
+    "purpose": "Measures internal, external and depth dimensions.",
+    "howToUse": "Zero the jaws and read main scale plus vernier.",
+    "safety": "Avoid overtightening or sharp edges.",
+    "experimentId": "convex-lens"
+  },
+  {
+    "id": "physics-apparatus-5",
+    "subject": "physics",
+    "category": "Electricity",
+    "title": "Ammeter",
+    "purpose": "Measures current flowing through a circuit.",
+    "howToUse": "Connect in series with a suitable rated range.",
+    "safety": "Connecting directly across a supply can short the circuit.",
+    "experimentId": "ohms-law"
+  },
+  {
+    "id": "physics-apparatus-6",
+    "subject": "physics",
+    "category": "Electricity",
+    "title": "Voltmeter",
+    "purpose": "Measures potential difference between points.",
+    "howToUse": "Connect in parallel across the component.",
+    "safety": "Check polarity and rating.",
+    "experimentId": "ohms-law"
+  },
+  {
+    "id": "physics-apparatus-7",
+    "subject": "physics",
+    "category": "Electricity",
+    "title": "DC power supply",
+    "purpose": "Provides adjustable electrical potential difference.",
+    "howToUse": "Begin at low voltage and increase gradually.",
+    "safety": "Do not exceed safe current limits; disconnect before rewiring.",
+    "experimentId": "ohms-law"
+  },
+  {
+    "id": "physics-apparatus-8",
+    "subject": "physics",
+    "category": "Electricity",
+    "title": "Resistor",
+    "purpose": "Limits current according to its resistance.",
+    "howToUse": "Choose the rated resistance and power capacity.",
+    "safety": "Resistors can heat under excessive power.",
+    "experimentId": "ohms-law"
+  },
+  {
+    "id": "physics-apparatus-9",
+    "subject": "physics",
+    "category": "Optics",
+    "title": "Convex lens",
+    "purpose": "Refracts light to form images.",
+    "howToUse": "Move an object and screen to find sharp real images.",
+    "safety": "Never focus direct sunlight into eyes or onto flammable surfaces.",
+    "experimentId": "convex-lens"
+  },
+  {
+    "id": "physics-apparatus-10",
+    "subject": "physics",
+    "category": "Optics",
+    "title": "Optical bench and screen",
+    "purpose": "Supports optical alignment and receives real images.",
+    "howToUse": "Align lamp, lens and screen centres along one axis.",
+    "safety": "Avoid looking into intense light sources.",
+    "experimentId": "convex-lens"
+  },
+  {
+    "id": "physics-apparatus-11",
+    "subject": "physics",
+    "category": "Mechanics",
+    "title": "Pendulum bob and string",
+    "purpose": "Forms a gravity-driven oscillating system.",
+    "howToUse": "Set measured length from pivot to bob centre.",
+    "safety": "Use a secure pivot; keep clear of the swing path.",
+    "experimentId": "pendulum"
+  },
+  {
+    "id": "physics-apparatus-12",
+    "subject": "physics",
+    "category": "Forces",
+    "title": "Spring balance",
+    "purpose": "Measures force through spring extension.",
+    "howToUse": "Zero the instrument and read the calibrated force scale.",
+    "safety": "Do not overload the spring.",
+    "experimentId": "pendulum"
+  },
+  {
+    "id": "biology-apparatus-1",
+    "subject": "biology",
+    "category": "Microscopy",
+    "title": "Compound light microscope",
+    "purpose": "Magnifies prepared specimens using eyepiece and objective lenses.",
+    "howToUse": "Begin with low power, centre specimen, then move to higher magnification.",
+    "safety": "Avoid forcing objective into slide.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "biology-apparatus-2",
+    "subject": "biology",
+    "category": "Microscopy",
+    "title": "Microscope slide",
+    "purpose": "Supports thin specimens for observation.",
+    "howToUse": "Place sample in liquid mount when appropriate and cover gently.",
+    "safety": "Glass edges can cut.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "biology-apparatus-3",
+    "subject": "biology",
+    "category": "Microscopy",
+    "title": "Cover slip",
+    "purpose": "Flattens wet mounts and protects the objective.",
+    "howToUse": "Lower at an angle to reduce trapped air.",
+    "safety": "Handle delicate glass with care.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "biology-apparatus-4",
+    "subject": "biology",
+    "category": "Preparation",
+    "title": "Dropper pipette",
+    "purpose": "Transfers small drops of liquids.",
+    "howToUse": "Dispense clean drops without contaminating stock reagents.",
+    "safety": "Avoid contact with mouth or eyes.",
+    "experimentId": "osmosis"
+  },
+  {
+    "id": "biology-apparatus-5",
+    "subject": "biology",
+    "category": "Preparation",
+    "title": "Forceps",
+    "purpose": "Handles small samples without fingers touching them.",
+    "howToUse": "Grip tissues or coverslips gently.",
+    "safety": "Points may be sharp.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "biology-apparatus-6",
+    "subject": "biology",
+    "category": "Preparation",
+    "title": "Scalpel",
+    "purpose": "Cuts or dissects prepared materials precisely.",
+    "howToUse": "Only use in a supervised, authorised practical.",
+    "safety": "Sharp blade; use protective procedures.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "biology-apparatus-7",
+    "subject": "biology",
+    "category": "Culture",
+    "title": "Petri dish",
+    "purpose": "Holds small specimens or prepared cultures.",
+    "howToUse": "Label and observe only teacher-approved specimens.",
+    "safety": "Do not open unknown microbial cultures.",
+    "experimentId": "osmosis"
+  },
+  {
+    "id": "biology-apparatus-8",
+    "subject": "biology",
+    "category": "Plant physiology",
+    "title": "Potometer",
+    "purpose": "Estimates water uptake by a cut shoot.",
+    "howToUse": "Track bubble displacement along capillary with measured dimensions.",
+    "safety": "Leaks and tissue storage affect the estimate.",
+    "experimentId": "transpiration"
+  },
+  {
+    "id": "biology-apparatus-9",
+    "subject": "biology",
+    "category": "Storage",
+    "title": "Specimen jar",
+    "purpose": "Keeps labelled biological specimens contained.",
+    "howToUse": "Label specimen, preservative and date.",
+    "safety": "Do not open unknown preservatives.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "biology-apparatus-10",
+    "subject": "biology",
+    "category": "Observation",
+    "title": "Hand lens",
+    "purpose": "Provides low-power magnification of visible specimens.",
+    "howToUse": "Hold near eye and adjust working distance.",
+    "safety": "Never use to look at the sun.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "biology-apparatus-11",
+    "subject": "biology",
+    "category": "Preparation",
+    "title": "Test tube and rack",
+    "purpose": "Holds small reagent samples safely.",
+    "howToUse": "Keep upright in rack and direct mouth away during heating.",
+    "safety": "Hot glass and reagents may cause injury.",
+    "experimentId": "osmosis"
+  },
+  {
+    "id": "biology-apparatus-12",
+    "subject": "biology",
+    "category": "Preparation",
+    "title": "Dissecting tray",
+    "purpose": "Provides stable work surface for authorised specimens.",
+    "howToUse": "Arrange tools and labels before supervised investigation.",
+    "safety": "Follow hygiene and disinfection procedures.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "agriculture-apparatus-1",
+    "subject": "agriculture",
+    "category": "Farm tools",
+    "title": "Hoe",
+    "purpose": "Breaks shallow soil and assists weeding.",
+    "howToUse": "Keep a safe working distance and maintain the handle.",
+    "safety": "Sharp metal head can injure feet or bystanders.",
+    "experimentId": "soil"
+  },
+  {
+    "id": "agriculture-apparatus-2",
+    "subject": "agriculture",
+    "category": "Farm tools",
+    "title": "Spade",
+    "purpose": "Lifts and turns soil or compost.",
+    "howToUse": "Use the edge to cut and lever soil appropriately.",
+    "safety": "Use safe lifting posture.",
+    "experimentId": "soil"
+  },
+  {
+    "id": "agriculture-apparatus-3",
+    "subject": "agriculture",
+    "category": "Farm tools",
+    "title": "Rake",
+    "purpose": "Levels soil and gathers residues.",
+    "howToUse": "Pull across prepared soil or beds.",
+    "safety": "Store with tines turned down and away.",
+    "experimentId": "soil"
+  },
+  {
+    "id": "agriculture-apparatus-4",
+    "subject": "agriculture",
+    "category": "Farm tools",
+    "title": "Hand trowel",
+    "purpose": "Moves small quantities of soil for planting or sampling.",
+    "howToUse": "Use clean trowel for consistent sample depth.",
+    "safety": "Avoid contaminated or sharp debris.",
+    "experimentId": "soil"
+  },
+  {
+    "id": "agriculture-apparatus-5",
+    "subject": "agriculture",
+    "category": "Soil science",
+    "title": "Soil auger",
+    "purpose": "Collects soil cores from particular depths.",
+    "howToUse": "Sample multiple representative locations using cleaned tools.",
+    "safety": "Check for buried services before sampling.",
+    "experimentId": "soil"
+  },
+  {
+    "id": "agriculture-apparatus-6",
+    "subject": "agriculture",
+    "category": "Soil science",
+    "title": "Soil pH meter",
+    "purpose": "Estimates acidity or alkalinity in a prepared soil sample.",
+    "howToUse": "Use manufacturer-specified slurry and calibration.",
+    "safety": "Moisture and electrode condition affect readings.",
+    "experimentId": "soil"
+  },
+  {
+    "id": "agriculture-apparatus-7",
+    "subject": "agriculture",
+    "category": "Propagation",
+    "title": "Seed tray",
+    "purpose": "Holds seedlings in separate cells.",
+    "howToUse": "Use clean medium and label crop or variety.",
+    "safety": "Avoid waterlogging.",
+    "experimentId": "germination"
+  },
+  {
+    "id": "agriculture-apparatus-8",
+    "subject": "agriculture",
+    "category": "Irrigation",
+    "title": "Watering can",
+    "purpose": "Applies water gently to nursery beds.",
+    "howToUse": "Use a rose head for even watering.",
+    "safety": "Overwatering can limit soil aeration.",
+    "experimentId": "germination"
+  },
+  {
+    "id": "agriculture-apparatus-9",
+    "subject": "agriculture",
+    "category": "Measurement",
+    "title": "Weighing scale",
+    "purpose": "Measures harvested material or feed mass.",
+    "howToUse": "Zero container and record calibrated mass.",
+    "safety": "Keep within scale capacity.",
+    "experimentId": "nutrients"
+  },
+  {
+    "id": "agriculture-apparatus-10",
+    "subject": "agriculture",
+    "category": "Field protection",
+    "title": "Knapsack sprayer",
+    "purpose": "Applies liquids in agricultural settings.",
+    "howToUse": "Use only authorised products, labelled rates and appropriate supervision.",
+    "safety": "Chemical exposure requires training and approved PPE; no application advice here.",
+    "experimentId": "nutrients"
+  },
+  {
+    "id": "agriculture-apparatus-11",
+    "subject": "agriculture",
+    "category": "Soil science",
+    "title": "Soil sampling bag",
+    "purpose": "Holds identified field soil samples.",
+    "howToUse": "Label plot, depth, date and source before storage.",
+    "safety": "Keep samples uncontaminated.",
+    "experimentId": "soil"
+  },
+  {
+    "id": "agriculture-apparatus-12",
+    "subject": "agriculture",
+    "category": "Weather",
+    "title": "Rain gauge",
+    "purpose": "Collects precipitation for rainfall measurement.",
+    "howToUse": "Place upright in an unobstructed location and read depth consistently.",
+    "safety": "Check placement and accumulation intervals.",
+    "experimentId": "germination"
+  }
+]

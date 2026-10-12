@@ -1,0 +1,402 @@
+[
+  {
+    "id": "chemistry-concept-1",
+    "subject": "chemistry",
+    "topic": "Foundations",
+    "title": "Matter and particle model",
+    "overview": "Matter has mass and occupies space. Solids, liquids and gases differ in particle arrangement and motion.",
+    "example": "A closed container can hold water vapour even when it looks empty.",
+    "misconception": "Particles are not motionless in a solid.",
+    "experimentId": "separation"
+  },
+  {
+    "id": "chemistry-concept-2",
+    "subject": "chemistry",
+    "topic": "Atomic structure",
+    "title": "Atoms, protons and isotopes",
+    "overview": "Atomic number counts protons. Isotopes share a proton number but differ in neutron number.",
+    "example": "Carbon-12 and carbon-14 are both carbon isotopes.",
+    "misconception": "An atom's mass number is not always its relative atomic mass.",
+    "experimentId": "ph-indicators"
+  },
+  {
+    "id": "chemistry-concept-3",
+    "subject": "chemistry",
+    "topic": "Elements",
+    "title": "Periodic table and families",
+    "overview": "Elements are arranged by increasing atomic number. Group members often share characteristic valence patterns.",
+    "example": "Sodium and potassium are Group 1 metals.",
+    "misconception": "Hydrogen's position does not make it an alkali metal.",
+    "experimentId": "ph-indicators"
+  },
+  {
+    "id": "chemistry-concept-4",
+    "subject": "chemistry",
+    "topic": "Chemical bonds",
+    "title": "Ionic and covalent bonding",
+    "overview": "Ionic models involve electrostatic attraction between oppositely charged ions. Covalent models involve shared electron pairs.",
+    "example": "Sodium chloride forms an extended ionic lattice; water contains polar covalent bonds.",
+    "misconception": "A chemical bond is not simply two atoms touching.",
+    "experimentId": "separation"
+  },
+  {
+    "id": "chemistry-concept-5",
+    "subject": "chemistry",
+    "topic": "Methods",
+    "title": "Mixtures and separation",
+    "overview": "A mixture contains substances without a fixed chemical ratio. Separation uses differences in properties such as solubility or boiling behaviour.",
+    "example": "Filter sand from salt water; then evaporate water to recover salt.",
+    "misconception": "Dissolved salt will not be caught by ordinary filter paper.",
+    "experimentId": "separation"
+  },
+  {
+    "id": "chemistry-concept-6",
+    "subject": "chemistry",
+    "topic": "Solutions",
+    "title": "Acids, bases and pH",
+    "overview": "pH indicates hydrogen-ion activity on a logarithmic scale. Indicators change colour over particular ranges.",
+    "example": "Dilute strong acid and strong base may neutralise at an equivalence point near pH 7 under ideal conditions.",
+    "misconception": "An indicator endpoint is not always exactly the equivalence point.",
+    "experimentId": "titration"
+  },
+  {
+    "id": "chemistry-concept-7",
+    "subject": "chemistry",
+    "topic": "Calculations",
+    "title": "Concentration and moles",
+    "overview": "Amount of substance is measured in moles. For a solution, concentration in mol/L equals moles of solute divided by volume in litres.",
+    "example": "0.100 mol/L contains 0.00250 mol in 25.0 mL.",
+    "misconception": "Volume in mL must be converted to litres before calculating moles.",
+    "experimentId": "titration"
+  },
+  {
+    "id": "chemistry-concept-8",
+    "subject": "chemistry",
+    "topic": "Reactions",
+    "title": "Chemical equations",
+    "overview": "Balanced equations conserve each type of atom and represent proportions of reacting substances.",
+    "example": "HCl + NaOH → NaCl + H₂O.",
+    "misconception": "A balanced equation does not tell you reaction speed.",
+    "experimentId": "titration"
+  },
+  {
+    "id": "chemistry-concept-9",
+    "subject": "chemistry",
+    "topic": "Reactions",
+    "title": "Rates and energy changes",
+    "overview": "Rate describes how fast reactant concentrations change. Reactions may absorb or release energy.",
+    "example": "Increasing temperature often speeds an ordinary reaction, but not every mechanism responds identically.",
+    "misconception": "Catalysts do not change the overall equilibrium constant.",
+    "experimentId": "ph-indicators"
+  },
+  {
+    "id": "chemistry-concept-10",
+    "subject": "chemistry",
+    "topic": "Scientific skills",
+    "title": "Laboratory measurement and errors",
+    "overview": "Measure with appropriate apparatus, include units and estimate uncertainty. Repeat readings and distinguish systematic from random error.",
+    "example": "Record burette start and end readings before calculating delivered volume.",
+    "misconception": "A digital-looking number is not automatically exact.",
+    "experimentId": "titration"
+  },
+  {
+    "id": "physics-concept-1",
+    "subject": "physics",
+    "topic": "Foundations",
+    "title": "Physical quantities and SI units",
+    "overview": "Measurement combines a number and unit. SI base quantities include length, mass and time.",
+    "example": "A speed of 5 m/s is not the same as 5 km/h.",
+    "misconception": "Units are part of the physical answer.",
+    "experimentId": "pendulum"
+  },
+  {
+    "id": "physics-concept-2",
+    "subject": "physics",
+    "topic": "Motion",
+    "title": "Distance, displacement and velocity",
+    "overview": "Distance is path length; displacement has magnitude and direction. Velocity is rate of displacement.",
+    "example": "Walking around a track can give zero displacement but a nonzero distance.",
+    "misconception": "Speed and velocity are not interchangeable.",
+    "experimentId": "pendulum"
+  },
+  {
+    "id": "physics-concept-3",
+    "subject": "physics",
+    "topic": "Forces",
+    "title": "Newton's laws of motion",
+    "overview": "A net force changes momentum. For constant mass, F = ma is useful in an inertial reference frame.",
+    "example": "Doubling the net force doubles acceleration at fixed mass.",
+    "misconception": "Motion does not always require a net force.",
+    "experimentId": "pendulum"
+  },
+  {
+    "id": "physics-concept-4",
+    "subject": "physics",
+    "topic": "Energy",
+    "title": "Work, energy and power",
+    "overview": "Work transfers energy when force acts through displacement. Power is energy transfer per time.",
+    "example": "An electrical resistor dissipates energy at P = VI.",
+    "misconception": "Energy and power have different units.",
+    "experimentId": "ohms-law"
+  },
+  {
+    "id": "physics-concept-5",
+    "subject": "physics",
+    "topic": "Electricity",
+    "title": "Voltage, current and resistance",
+    "overview": "Voltage is electric potential difference; current is charge flow rate. An ideal fixed resistor obeys V = IR.",
+    "example": "A 10 Ω resistor draws 0.5 A at 5 V in an ideal circuit.",
+    "misconception": "Current is not used up by components in a single series loop.",
+    "experimentId": "ohms-law"
+  },
+  {
+    "id": "physics-concept-6",
+    "subject": "physics",
+    "topic": "Electricity",
+    "title": "Series and parallel circuits",
+    "overview": "Series components share current; parallel branches share voltage between common nodes.",
+    "example": "Two identical resistors in parallel have half the resistance of either alone.",
+    "misconception": "Adding parallel paths need not increase total resistance.",
+    "experimentId": "ohms-law"
+  },
+  {
+    "id": "physics-concept-7",
+    "subject": "physics",
+    "topic": "Waves and motion",
+    "title": "Oscillations and the pendulum",
+    "overview": "For small swings, pendulum period T ≈ 2π√(L/g). Length affects period more strongly than bob mass in the ideal model.",
+    "example": "Quadrupling length doubles an ideal pendulum's period.",
+    "misconception": "The small-angle formula is not accurate for arbitrarily large angles.",
+    "experimentId": "pendulum"
+  },
+  {
+    "id": "physics-concept-8",
+    "subject": "physics",
+    "topic": "Waves",
+    "title": "Wave properties",
+    "overview": "Wavelength, frequency and wave speed are related by v = fλ in a specified medium.",
+    "example": "A 2 Hz wave with wavelength 3 m travels at 6 m/s.",
+    "misconception": "Wave speed does not always stay fixed across different media.",
+    "experimentId": "pendulum"
+  },
+  {
+    "id": "physics-concept-9",
+    "subject": "physics",
+    "topic": "Optics",
+    "title": "Lenses and image formation",
+    "overview": "Ideal thin lenses follow 1/f = 1/u + 1/v with a specified sign convention. Image character depends on object distance.",
+    "example": "An object beyond a convex lens focal point can form a real inverted image.",
+    "misconception": "Magnification is not always positive.",
+    "experimentId": "convex-lens"
+  },
+  {
+    "id": "physics-concept-10",
+    "subject": "physics",
+    "topic": "Scientific skills",
+    "title": "Experimental graphs and uncertainty",
+    "overview": "A graph should label both axes and units. Gradients have physical interpretations only when model assumptions apply.",
+    "example": "Slope of current versus voltage gives conductance for an ideal ohmic resistor.",
+    "misconception": "A straight line alone does not prove causation.",
+    "experimentId": "ohms-law"
+  },
+  {
+    "id": "biology-concept-1",
+    "subject": "biology",
+    "topic": "Foundations",
+    "title": "Cell theory and living cells",
+    "overview": "Cells are the basic structural and functional units of organisms. Different cell types have specialised structures.",
+    "example": "Plant cells commonly have a cellulose wall and a large vacuole.",
+    "misconception": "Not every cell contains a nucleus.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "biology-concept-2",
+    "subject": "biology",
+    "topic": "Cells",
+    "title": "Cell organelles",
+    "overview": "The nucleus stores most eukaryotic genetic material; mitochondria participate in aerobic energy metabolism.",
+    "example": "Chloroplasts enable photosynthesis in many plant cells.",
+    "misconception": "All cells do not contain chloroplasts.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "biology-concept-3",
+    "subject": "biology",
+    "topic": "Lab skills",
+    "title": "Microscope magnification",
+    "overview": "Total magnification is eyepiece magnification multiplied by objective magnification.",
+    "example": "A ×10 eyepiece with ×40 objective gives ×400.",
+    "misconception": "Magnification does not guarantee high resolution.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "biology-concept-4",
+    "subject": "biology",
+    "topic": "Transport",
+    "title": "Diffusion and osmosis",
+    "overview": "Diffusion is net movement down a concentration gradient. Osmosis is net water movement across a selectively permeable membrane driven by water potential.",
+    "example": "A plant cell in a sufficiently hypotonic solution becomes turgid.",
+    "misconception": "Osmosis is not movement of dissolved sugar across the membrane.",
+    "experimentId": "osmosis"
+  },
+  {
+    "id": "biology-concept-5",
+    "subject": "biology",
+    "topic": "Biochemistry",
+    "title": "Enzymes and metabolic reactions",
+    "overview": "Enzymes catalyse biochemical reactions. Conditions such as temperature and pH influence their activity.",
+    "example": "Amylase breaks down starch during digestion.",
+    "misconception": "Enzymes are not consumed each time they catalyse a reaction.",
+    "experimentId": "osmosis"
+  },
+  {
+    "id": "biology-concept-6",
+    "subject": "biology",
+    "topic": "Plant processes",
+    "title": "Photosynthesis",
+    "overview": "Photosynthesis uses light energy to convert carbon dioxide and water into organic compounds and releases oxygen in oxygenic organisms.",
+    "example": "Leaves absorb light and chloroplasts support sugar synthesis.",
+    "misconception": "Plants also perform cellular respiration.",
+    "experimentId": "transpiration"
+  },
+  {
+    "id": "biology-concept-7",
+    "subject": "biology",
+    "topic": "Plant processes",
+    "title": "Transpiration and plant transport",
+    "overview": "Transpiration is water loss as vapour from plant surfaces, often via stomata. A potometer directly tracks water uptake instead.",
+    "example": "Bubble displacement in a capillary estimates uptake volume.",
+    "misconception": "Water uptake is not exactly equal to transpiration at every moment.",
+    "experimentId": "transpiration"
+  },
+  {
+    "id": "biology-concept-8",
+    "subject": "biology",
+    "topic": "Energy",
+    "title": "Respiration",
+    "overview": "Cellular respiration releases usable energy from molecules. Aerobic respiration generally requires oxygen.",
+    "example": "Mitochondria help generate ATP during aerobic respiration.",
+    "misconception": "Respiration is not identical to breathing.",
+    "experimentId": "osmosis"
+  },
+  {
+    "id": "biology-concept-9",
+    "subject": "biology",
+    "topic": "Genetics",
+    "title": "Inheritance and variation",
+    "overview": "Genes are inherited DNA sequences; combinations of alleles and environment influence traits.",
+    "example": "Crosses illustrate predicted genotype ratios under specific assumptions.",
+    "misconception": "Not every trait follows a single-gene dominant pattern.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "biology-concept-10",
+    "subject": "biology",
+    "topic": "Ecology",
+    "title": "Classification and ecosystems",
+    "overview": "Organisms can be classified by shared features and evolutionary relationships. Ecosystems involve organisms and physical conditions.",
+    "example": "Food webs connect producers, consumers and decomposers.",
+    "misconception": "An organism can have several food sources and roles.",
+    "experimentId": "microscopy"
+  },
+  {
+    "id": "agriculture-concept-1",
+    "subject": "agriculture",
+    "topic": "Foundations",
+    "title": "Agricultural systems",
+    "overview": "Agricultural science studies crops, livestock, soil, water and sustainable management of farm resources.",
+    "example": "A mixed farm raises animals alongside crops.",
+    "misconception": "Agriculture includes science and management, not only planting.",
+    "experimentId": "germination"
+  },
+  {
+    "id": "agriculture-concept-2",
+    "subject": "agriculture",
+    "topic": "Soils",
+    "title": "Soil composition and texture",
+    "overview": "Mineral soils contain sand, silt and clay particles along with organic matter, water and air.",
+    "example": "A soil texture triangle uses sand, silt and clay percentages.",
+    "misconception": "Soil texture is not the same as soil fertility.",
+    "experimentId": "soil"
+  },
+  {
+    "id": "agriculture-concept-3",
+    "subject": "agriculture",
+    "topic": "Soils",
+    "title": "Soil pH and fertility",
+    "overview": "Soil pH influences nutrient availability and microbial processes. Fertility also depends on nutrient supply, structure and other conditions.",
+    "example": "Acidic soils can change how available phosphorus is to plants.",
+    "misconception": "A single pH reading cannot diagnose every fertility problem.",
+    "experimentId": "soil"
+  },
+  {
+    "id": "agriculture-concept-4",
+    "subject": "agriculture",
+    "topic": "Plant nutrition",
+    "title": "Plant nutrients N, P and K",
+    "overview": "Nitrogen supports proteins and leaves; phosphorus supports energy transfer and development; potassium supports enzyme and water regulation.",
+    "example": "Older-leaf yellowing can have several possible causes, including nitrogen shortage.",
+    "misconception": "Leaf appearance alone does not establish a nutrient deficiency.",
+    "experimentId": "nutrients"
+  },
+  {
+    "id": "agriculture-concept-5",
+    "subject": "agriculture",
+    "topic": "Crops",
+    "title": "Seed germination",
+    "overview": "A viable seed typically requires suitable moisture, oxygen and temperature to germinate. Species can have additional requirements.",
+    "example": "Too little water limits imbibition; waterlogging can restrict oxygen.",
+    "misconception": "More water is not always better for germination.",
+    "experimentId": "germination"
+  },
+  {
+    "id": "agriculture-concept-6",
+    "subject": "agriculture",
+    "topic": "Crops",
+    "title": "Photosynthesis and crop growth",
+    "overview": "Crop growth depends on photosynthesis, water, mineral nutrition, temperature and disease pressures.",
+    "example": "Adequate light supports biomass production when other conditions are suitable.",
+    "misconception": "More fertiliser cannot compensate for every limiting factor.",
+    "experimentId": "nutrients"
+  },
+  {
+    "id": "agriculture-concept-7",
+    "subject": "agriculture",
+    "topic": "Crop health",
+    "title": "Crop pests and diseases",
+    "overview": "Biotic threats include insects, pathogens and weeds. Identification is needed before choosing a response.",
+    "example": "Leaf damage can come from pests, disease or environmental stress.",
+    "misconception": "Visual similarity does not prove the same underlying problem.",
+    "experimentId": "nutrients"
+  },
+  {
+    "id": "agriculture-concept-8",
+    "subject": "agriculture",
+    "topic": "Farm operations",
+    "title": "Farm irrigation and water management",
+    "overview": "Irrigation supplies water when rainfall is insufficient; drainage removes excess water. Scheduling depends on soil and crop.",
+    "example": "Drip irrigation can direct water near root zones.",
+    "misconception": "More frequent irrigation is not universally best.",
+    "experimentId": "soil"
+  },
+  {
+    "id": "agriculture-concept-9",
+    "subject": "agriculture",
+    "topic": "Animal production",
+    "title": "Livestock nutrition and welfare",
+    "overview": "Animals require species-appropriate diets, clean water, shelter and health care.",
+    "example": "Feed requirements differ for ruminants and poultry.",
+    "misconception": "One ration does not fit every growth stage.",
+    "experimentId": "germination"
+  },
+  {
+    "id": "agriculture-concept-10",
+    "subject": "agriculture",
+    "topic": "Farm operations",
+    "title": "Farm tools and safe operations",
+    "overview": "Tools are chosen for specific operations and maintained to reduce accidents and waste.",
+    "example": "A hoe breaks surface soil; a spade lifts or turns material.",
+    "misconception": "Protective equipment does not eliminate every machinery hazard.",
+    "experimentId": "soil"
+  }
+]
