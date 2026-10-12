@@ -372,8 +372,8 @@ test('chemistry equipment guide explains burette use and connects to practicals'
  await library.getByRole('searchbox',{name:'Search apparatus'}).fill('burette');
  await expect(library.locator('.apparatus-choice').filter({hasText:/^Burette/})).toHaveCount(1);
  await library.getByRole('button',{name:/^Burette/}).click();
- await expect(library.getByRole('region',{name:'Equipment guide: Burette'})).toContainText('meniscus');
- await expect(library.getByRole('region',{name:'Equipment guide: Burette'})).toContainText('Safety and limitations');
+ await expect(library.getByRole('article',{name:'Equipment guide: Burette'})).toContainText('meniscus');
+ await expect(library.getByRole('article',{name:'Equipment guide: Burette'})).toContainText('Safety and limitations');
  await library.getByRole('button',{name:/Try related practical:/}).click();
  await expect(page.locator('.experiment-pill.active')).toContainText('Titration');
 });
