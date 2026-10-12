@@ -338,3 +338,58 @@ test('Scoolabs Help and About is usable offline and links to teacher setup',asyn
  await about.getByRole('button',{name:/Continue learning/}).click();
  await expect(page.getByRole('region',{name:'Student progress dashboard'})).toBeVisible();
 });
+
+
+test('chemistry periodic table shows 118 actual elements and meaningful properties',async({page})=>{
+ await page.goto('/');
+ const hub=page.getByRole('region',{name:'Chemistry knowledge and apparatus hub'});
+ await expect(hub).toBeVisible();
+ await hub.getByRole('tab',{name:'Periodic table'}).click();
+ const table=page.getByRole('region',{name:'Interactive periodic table'});
+ await expect(table.getByRole('button',{name:/atomic number/})).toHaveCount(118);
+ await table.getByRole('button',{name:'Oxygen, atomic number 8'}).click();
+ const detail=table.getByRole('region',{name:'Element properties: Oxygen'});
+ await expect(detail).toBeVisible();
+ await expect(detail).toContainText('8');
+ await expect(detail).toContainText('Electron configuration');
+ await table.getByRole('button',{name:'Add to comparison'}).click();
+ await table.getByRole('button',{name:'Hydrogen, atomic number 1'}).click();
+ await table.getByRole('button',{name:'Add to comparison'}).click();
+ const compare=table.getByRole('region',{name:'Compare elements'});
+ await expect(compare).toContainText('Oxygen');
+ await expect(compare).toContainText('Hydrogen');
+ await table.getByRole('searchbox',{name:'Search elements'}).fill('gold');
+ await expect(table.getByText('1 / 118')).toBeVisible();
+ await table.getByRole('button',{name:'Gold, atomic number 79'}).click();
+ await expect(table.getByRole('region',{name:'Element properties: Gold'})).toBeVisible();
+});
+
+test('chemistry equipment guide explains burette use and connects to practicals',async({page})=>{
+ await page.goto('/');
+ const hub=page.getByRole('region',{name:'Chemistry knowledge and apparatus hub'});
+ await hub.getByRole('tab',{name:'Apparatus'}).click();
+ const library=page.getByRole('region',{name:'Chemistry apparatus'});
+ await library.getByRole('searchbox',{name:'Search apparatus'}).fill('burette');
+ await expect(library.locator('.apparatus-choice')).toHaveCount(1);
+ await expect(library.getByRole('region',{name:'Equipment guide: Burette'})).toContainText('meniscus');
+ await expect(library.getByRole('region',{name:'Equipment guide: Burette'})).toContainText('Safety and limitations');
+ await library.getByRole('button',{name:/Try related practical:/}).click();
+ await expect(page.locator('.experiment-pill.active')).toContainText('Titration');
+});
+
+test('all four subjects include searchable concepts and apparatus libraries',async({page})=>{
+ await page.goto('/');
+ for(const subject of ['Chemistry','Physics','Biology','Agriculture']){
+   await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:subject}).click();
+   const hub=page.locator('.subject-explorer');
+   await expect(hub).toBeVisible();
+   await hub.getByRole('tab',{name:'Key concepts'}).click();
+   await expect(hub.locator('.reference-item')).toHaveCount(10);
+   await expect(hub.getByText('10 topics found')).toBeVisible();
+   await hub.locator('.reference-item').first().locator('summary').click();
+   await expect(hub.locator('.reference-details').first()).toBeVisible();
+   await hub.getByRole('tab',{name:'Apparatus'}).click();
+   await expect(hub.locator('.apparatus-choice')).toHaveCount(12);
+   await expect(hub.locator('.apparatus-detail')).toBeVisible();
+ }
+});

@@ -62,3 +62,11 @@ No WAEC, NECO, NERDC, safety or curriculum certification is claimed.
 - [ ] Check the installer properties report Scoolabs and Simeon's Laboratories and Co Technologies Ltd as publisher metadata. A separate signing certificate is required for verified signatures.
 - [ ] Confirm Windows Defender SmartScreen behaviour with an *unsigned* build. Do not misrepresent unsigned files as trusted signed software.
 - [ ] Confirm product version in the About page matches installed package version.
+
+
+## Subject reference libraries and periodic-table acceptance
+- [ ] Verify the Chemistry periodic table displays 118 recognized elements, accurate symbols, numbers, groups, periods and units.
+- [ ] Review detailed values for ten representative elements with current scientific references; identify theoretical/missing measurements.
+- [ ] Navigate each subject's concepts and apparatus, checking search, keyboard accessibility, labels, definitions and related practical links.
+- [ ] Replace generic apparatus symbols with qualified-teacher-approved, labelled 2D/3D diagrams before advertising a complete instrument library.
+- [ ] Validate lesson sequencing against the target Nigerian junior/senior secondary curriculum, with documented reviewer and version.

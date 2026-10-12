@@ -81,3 +81,10 @@ SQLite persistence and import/restore, local classes and teacher marking, curric
 
 ## Branding generation in CI
 The original Scoolabs SVG is stored in `public/brand/scoolabs-mark.svg`. Both workflows now generate `src-tauri/icons/icon.ico` and `icon.png` using the pinned project's Tauri CLI, then validate the outputs using `node scripts/verify-brand.mjs`. The generated icons do not need to be manually copied from Windows. Run `npm run desktop:build` for a branded local installer. The pre-run HTML placeholder uses the same inline/offline Scoolabs mark. Physical installer and shortcut appearance remain post-branding device tests.
+
+
+## Offline knowledge-centre regression
+- Verify exactly 118 periodic elements, unique atomic numbers and grid positions, correct basic element identities, and no unconfirmed element 119.
+- Verify ten evidence-aware concept entries and twelve apparatus guides for each of the four subjects. Every article links only to an implemented experiment from its own subject.
+- In Chromium, search and filter elements, examine properties and compare two, search apparatus including Burette, and switch between all four subject libraries without internet.
+- These are content integrity and workflow tests; a qualified teacher must validate scientific accuracy, completeness, and appropriate safety framing.

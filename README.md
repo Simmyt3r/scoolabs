@@ -99,3 +99,10 @@ For a local **branded** developer build use `npm run desktop:build`. The install
 
 ## v0.9 branded desktop candidate
 The first-run welcome screen now presents a distinct student access area and a direct teacher setup path. The Help & About page explains the offline school workflow, printer support, local data retention limits, and official company support details. The SVG logo is the authoritative source for both the installed UI and Windows icon assets. The Tauri bundle sets Simeon's Laboratories and Co Technologies Ltd as the Windows installer publisher metadata. This is **metadata, not a digital signature**: Windows may still warn about an unsigned installer. The official branded installer is built in the Windows GitHub workflow and must still be checked on a real PC before a school pilot.
+
+
+## v0.10 subject knowledge centres: rebuilding the virtual science lab
+
+A working installer is not enough to represent the intended teaching environment. Each subject now opens a **knowledge centre** with foundational concepts, examples, misconceptions, an offline catalogue of equipment and associated safety notes, and shortcuts into relevant hands-on simulations. Chemistry adds a searchable **118-element periodic table**, element-family filters, electron shell/configuration and selected reference properties (where established), and a two-element comparison. The underlying source is attributed and licensed in [docs/ELEMENT_DATA_ATTRIBUTION.md](docs/ELEMENT_DATA_ATTRIBUTION.md).
+
+This is the **first content-layer milestone**, not a complete chemistry textbook, physics atlas, biological specimen gallery or agricultural field school. The reference apparatus graphics are placeholders and must be replaced with reviewed technical diagrams. See [docs/SCIENCE_LAB_REBUILD.md](docs/SCIENCE_LAB_REBUILD.md) for the new product acceptance criteria and roadmap.
