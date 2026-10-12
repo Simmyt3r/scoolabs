@@ -18,6 +18,7 @@ import { addMeasurement, readingSummary, type Measurement } from './measurements
 import { parseRubricFeedback } from './assessment';
 import KnowledgeCheck from './KnowledgeCheck';
 import StudentDashboard from './StudentDashboard';
+import SubjectExplorer from './SubjectExplorer';
 import BrandLockup from './BrandLockup';
 import AboutScoolabs from './AboutScoolabs';
 import {version as appVersion} from '../package.json';
@@ -424,11 +425,17 @@ function App() {
           onOpenExperiment={experimentId=>{const match=experiments.find(e=>e.id===experimentId);if(match){setActiveId(match.id);setPage(match.subject);setSidebar(false);setSaved(false);setDraft(null)}}}
           onAssignments={()=>navigate('assignments')} onNotebook={()=>navigate('notebook')}/>:page==='notebook'?<Records records={records} assignments={assignments} onBack={()=>navigate('chemistry')}/>:page==='assignments'?<MyAssignments assignments={assignments} records={records} onOpen={experimentId=>{const match=experiments.find(e=>e.id===experimentId);if(match){setActiveId(match.id);setPage(match.subject);setSidebar(false);setSaved(false);setDraft(null)}}}/>:
           <>
-          <div className="page-title"><div><span className="eyebrow">DISCOVER · EXPERIMENT · LEARN</span><h1>Welcome to the {SUBJECTS[subject].label} Lab<span className="title-period">.</span></h1><p>{SUBJECTS[subject].subtitle}. Explore through practice, not just theory.</p></div><div className="progress-badge"><CheckCircle2 size={18}/><div><strong>{completed} activities recorded</strong><small>{records.length} saved observations</small></div></div></div>
+          <div className="page-title"><div><span className="eyebrow">DISCOVER · EXPERIMENT · LEARN</span><h1>{SUBJECTS[subject].label} Learning Laboratory<span className="title-period">.</span></h1><p>{SUBJECTS[subject].subtitle}. Study concepts, explore instruments and apply knowledge through experiments.</p></div><div className="progress-badge"><CheckCircle2 size={18}/><div><strong>{completed} activities recorded</strong><small>{records.length} saved observations</small></div></div></div>
           <div className="subject-grid">
             {subjectKeys.map(s=>{const data=SUBJECTS[s];return <button key={s} className={'subject-card '+(subject===s?'current':'')} onClick={()=>navigate(s)}><LabIllustration subject={s}/><span><strong>{data.label}</strong><small>{data.short}</small></span><ArrowRight size={16} className="subject-arrow"/></button>})}
           </div>
-          <div className="section-heading"><div><span className="eyebrow">PRACTICAL LEARNING</span><h2>Choose an experiment</h2></div><span>{visible.filter(x=>x.ready).length} available · {visible.length} planned</span></div>
+          <SubjectExplorer key={subject} subject={subject} onChoosePractical={id=>{
+            const match=experiments.find(e=>e.id===id && e.subject===subject);
+            if(match){setActiveId(match.id);setSaved(false);setDraft(null);
+              document.getElementById('scoolabs-practicals')?.scrollIntoView({block:'start',behavior:'smooth'});
+            }
+          }}/>
+          <div id="scoolabs-practicals" className="section-heading"><div><span className="eyebrow">VIRTUAL PRACTICAL WORKBENCH</span><h2>Choose an experiment</h2></div><span>{visible.filter(x=>x.ready).length} available · {visible.length} planned</span></div>
           <div className="experiment-tabs" role="group" aria-label="Select an experiment">{visible.map(exp=><button key={exp.id} className={'experiment-pill '+(activeId===exp.id?'active':'')} disabled={!exp.ready} title={exp.ready?exp.description:'Planned for a future version'} onClick={()=>{setActiveId(exp.id);setSaved(false);setDraft(null)}}>{exp.ready&&<span className="live-dot"/>}{exp.title}{!exp.ready&&<small>Coming soon</small>}</button>)}</div>
           <div className="experiment-intro"><div><div className="experiment-tag"><Beaker size={14}/> VIRTUAL PRACTICAL · {selected.level}</div><h2>{selected.title}</h2><p>{selected.description}</p></div><div className="duration">{selected.minutes} MIN <span>•</span> GUIDED MODE</div></div>
           {assignments.filter(a=>a.experimentId===selected.id).map(a=><div className="record-note" key={a.id}><ClipboardList size={18}/><span><strong>Class assignment: {a.title}</strong> {a.instructions} <small className="assignment-status">{records.some(r=>r.assignmentId===a.id)?'Submitted':'Awaiting submission'}</small></span></div>)}
