@@ -84,7 +84,7 @@
     "subject": "chemistry",
     "category": "Measuring",
     "title": "Electronic balance",
-    "purpose": "Measures the mass of samples.",
+    "purpose": "Measures the mass of samples and containers using a calibrated electronic load cell.",
     "howToUse": "Tare the container and record values with appropriate precision.",
     "safety": "Do not put corrosive material directly on the pan.",
     "experimentId": "separation"
@@ -204,7 +204,7 @@
     "subject": "physics",
     "category": "Optics",
     "title": "Convex lens",
-    "purpose": "Refracts light to form images.",
+    "purpose": "Refracts light to form real or virtual images depending on object distance.",
     "howToUse": "Move an object and screen to find sharp real images.",
     "safety": "Never focus direct sunlight into eyes or onto flammable surfaces.",
     "experimentId": "convex-lens"
@@ -254,9 +254,9 @@
     "subject": "biology",
     "category": "Microscopy",
     "title": "Microscope slide",
-    "purpose": "Supports thin specimens for observation.",
+    "purpose": "Supports thin prepared specimens for viewing through a light microscope.",
     "howToUse": "Place sample in liquid mount when appropriate and cover gently.",
-    "safety": "Glass edges can cut.",
+    "safety": "Slides are fragile glass; inspect for chips and dispose of broken glass using a safe procedure.",
     "experimentId": "microscopy"
   },
   {
@@ -284,9 +284,9 @@
     "subject": "biology",
     "category": "Preparation",
     "title": "Forceps",
-    "purpose": "Handles small samples without fingers touching them.",
+    "purpose": "Grips and handles small samples or coverings without directly touching them.",
     "howToUse": "Grip tissues or coverslips gently.",
-    "safety": "Points may be sharp.",
+    "safety": "Pointed forceps can puncture skin or damage fragile biological samples.",
     "experimentId": "microscopy"
   },
   {
@@ -424,9 +424,9 @@
     "subject": "agriculture",
     "category": "Propagation",
     "title": "Seed tray",
-    "purpose": "Holds seedlings in separate cells.",
+    "purpose": "Provides separated compartments for germinating seeds and raising young seedlings.",
     "howToUse": "Use clean medium and label crop or variety.",
-    "safety": "Avoid waterlogging.",
+    "safety": "Avoid waterlogging and clean trays between batches to reduce contamination.",
     "experimentId": "germination"
   },
   {
