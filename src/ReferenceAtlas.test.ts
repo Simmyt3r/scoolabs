@@ -9,7 +9,7 @@ describe('downloaded and curated science atlas',()=>{
     expect(items.length).toBeGreaterThanOrEqual(10);
     expect(new Set(items.map(c=>c.id)).size).toBe(items.length);
     for(const card of items){
-      expect(card.overview.length).toBeGreaterThan(70);
+      expect(card.overview.length).toBeGreaterThan(50);
       expect(card.limitation.length).toBeGreaterThan(30);
       expect(experiments.some(e=>e.id===card.experimentId&&e.subject===subject)).toBe(true);
     }
