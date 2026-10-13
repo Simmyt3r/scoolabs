@@ -3,7 +3,7 @@ import {Beaker, Microscope, Ruler, Sprout} from 'lucide-react';
 import type {Subject} from './engine';
 
 type Part={name:string;purpose:string};
-type Sketch='beaker'|'burette'|'metre'|'microscope'|'hoe'|'generic';
+type Sketch='beaker'|'burette'|'metre'|'microscope'|'hoe'|'filter-funnel'|'measuring-cylinder'|'meter'|'convex-lens'|'potometer'|'petri-dish'|'watering-can'|'rain-gauge'|'generic';
 export function apparatusSketch(title:string):Sketch{
   const t=title.toLowerCase();
   if(t==='beaker')return 'beaker';
@@ -11,6 +11,14 @@ export function apparatusSketch(title:string):Sketch{
   if(t==='metre rule')return 'metre';
   if(t==='compound light microscope')return 'microscope';
   if(t==='hoe')return 'hoe';
+  if(t==='filter funnel')return 'filter-funnel';
+  if(t==='measuring cylinder')return 'measuring-cylinder';
+  if(t==='ammeter'||t==='voltmeter')return 'meter';
+  if(t==='convex lens')return 'convex-lens';
+  if(t==='potometer')return 'potometer';
+  if(t==='petri dish')return 'petri-dish';
+  if(t==='watering can')return 'watering-can';
+  if(t==='rain gauge')return 'rain-gauge';
   return 'generic';
 }
 const labelledParts:Record<Exclude<Sketch,'generic'>,Part[]>={
@@ -38,6 +46,46 @@ const labelledParts:Record<Exclude<Sketch,'generic'>,Part[]>={
     {name:'Handle',purpose:'Allows controlled leverage while keeping hands clear of the cutting edge.'},
     {name:'Metal head',purpose:'Breaks surface soil and cuts small weeds.'},
     {name:'Working space',purpose:'Keep people away from the swing arc before using the tool.'}
+  ],
+  'filter-funnel':[
+    {name:'Funnel bowl',purpose:'Receives the mixture and supports the folded filter paper.'},
+    {name:'Filter paper',purpose:'Retains suitable insoluble particles while liquid passes through.'},
+    {name:'Stem',purpose:'Channels filtrate into a receiving container.'}
+  ],
+  'measuring-cylinder':[
+    {name:'Graduated scale',purpose:'Provides a volume estimate; read the meniscus at eye level.'},
+    {name:'Meniscus',purpose:'Curved liquid surface whose lower level is read for many aqueous liquids.'},
+    {name:'Base',purpose:'Supports the cylinder upright on a stable bench.'}
+  ],
+  meter:[
+    {name:'Display',purpose:'Indicates the measured current or potential difference, depending on the meter.'},
+    {name:'Terminals',purpose:'Connect suitable leads to the correct input sockets.'},
+    {name:'Measurement mode',purpose:'The meter type and selected range must match the circuit being tested.'}
+  ],
+  'convex-lens':[
+    {name:'Converging lens',purpose:'Refracts paraxial light rays toward a focal region.'},
+    {name:'Optical axis',purpose:'Reference axis used for object and image positions.'},
+    {name:'Focal region',purpose:'Parallel rays converge near the focal plane in the ideal model.'}
+  ],
+  potometer:[
+    {name:'Leafy shoot',purpose:'Provides the plant tissues taking up water during the experiment.'},
+    {name:'Capillary tube',purpose:'A narrow tube in which bubble displacement can be monitored.'},
+    {name:'Air bubble',purpose:'Its movement estimates water uptake volume, not direct transpiration.'}
+  ],
+  'petri-dish':[
+    {name:'Lid',purpose:'Covers the dish to reduce contamination during observation.'},
+    {name:'Dish base',purpose:'Holds a suitable specimen or prepared medium.'},
+    {name:'Sample area',purpose:'A representative observation space, not an identified microbial culture.'}
+  ],
+  'watering-can':[
+    {name:'Water container',purpose:'Holds the water for controlled application.'},
+    {name:'Handle',purpose:'Allows the user to lift and tip the filled container.'},
+    {name:'Rose or spout',purpose:'Distributes water onto the soil surface.'}
+  ],
+  'rain-gauge':[
+    {name:'Collection opening',purpose:'Receives rainfall over a known aperture area.'},
+    {name:'Graduated collector',purpose:'Allows the amount collected to be read using a calibrated scale.'},
+    {name:'Upright support',purpose:'Keeps the instrument level and suitably positioned outdoors.'}
   ]
 };
 const stroke='#21677a',accent='#18a896',fill='#d1f2e9';
@@ -92,6 +140,71 @@ export default function ApparatusDiagram({title,subject}:{title:string;subject:S
        <path d="M142 189q45-14 91-8" fill="none" stroke={partStroke(2,active)} strokeDasharray="4 5" strokeWidth="2"/>
        <text x="66" y="27">handle</text><path d="M86 34l28 26" stroke={stroke} strokeWidth="2"/>
        <text x="245" y="123">head</text><path d="M246 132l-8 38" stroke={stroke} strokeWidth="2"/>
+      </>}
+
+      {sketch==='filter-funnel'&&<>
+        <path d="M83 44h164l-66 82v62" fill="#d1f2e9" fillOpacity=".35" stroke={partStroke(0,active)} strokeWidth="5"/>
+        <path d="M110 52l55 66 55-66z" fill="#fff1c9" stroke={partStroke(1,active)} strokeWidth="3"/>
+        <path d="M165 128v62" stroke={partStroke(2,active)} strokeWidth="7"/>
+        <path d="M124 197h82" stroke={stroke} strokeWidth="3"/>
+        <text x="242" y="68">paper</text><path d="M229 70l-28 8" stroke={stroke} strokeWidth="2"/>
+      </>}
+      {sketch==='measuring-cylinder'&&<>
+        <path d="M137 35h56v141h-56z" fill="#ecfaf9" stroke={partStroke(0,active)} strokeWidth="4"/>
+        {Array.from({length:8},(_,i)=><path key={i} d={'M138 '+(47+i*14)+'h'+(i%2===0?22:13)} stroke={partStroke(0,active)} strokeWidth="2"/>)}
+        <path d="M141 120q24 9 48 0v48h-48z" fill="#84d6dd" fillOpacity=".65"/>
+        <path d="M141 120q24 9 48 0" stroke={partStroke(1,active)} strokeWidth="3" fill="none"/>
+        <path d="M120 185h90" stroke={partStroke(2,active)} strokeWidth="9"/>
+        <text x="214" y="124">meniscus</text><path d="M207 127l-18 3" stroke={stroke} strokeWidth="1.6"/>
+      </>}
+      {sketch==='meter'&&<>
+        <rect x="95" y="48" width="140" height="116" rx="18" stroke={stroke} strokeWidth="5" fill="#e6f6f2"/>
+        <rect x="121" y="64" width="89" height="55" rx="6" fill="white" stroke={partStroke(0,active)} strokeWidth="3"/>
+        <text x="165" y="102" textAnchor="middle" fontSize="32">{title==='Ammeter'?'A':'V'}</text>
+        <circle cx="126" cy="142" r="8" fill="#cb4949" stroke={partStroke(1,active)} strokeWidth="3"/>
+        <circle cx="205" cy="142" r="8" fill="#3d5864" stroke={partStroke(1,active)} strokeWidth="3"/>
+        <path d="M146 136h40" stroke={partStroke(2,active)} strokeWidth="3"/>
+        <text x="165" y="190" textAnchor="middle">Idealised circuit meter</text>
+      </>}
+      {sketch==='convex-lens'&&<>
+        <path d="M165 25q-30 78 0 166q30-88 0-166z" fill="#c5f3f0" stroke={partStroke(0,active)} strokeWidth="4"/>
+        <path d="M28 107h274" stroke={partStroke(1,active)} strokeDasharray="6 7" strokeWidth="2.5"/>
+        <path d="M40 50h125l80 57" stroke={partStroke(2,active)} strokeWidth="2.5" fill="none"/>
+        <path d="M40 164h125l80-57" stroke={partStroke(2,active)} strokeWidth="2.5" fill="none"/>
+        <circle cx="245" cy="107" r="5" fill="#e2a34a"/>
+        <text x="251" y="94">F</text>
+      </>}
+      {sketch==='potometer'&&<>
+        <path d="M143 108l-12-45-27-23M143 108l21-58 31-17M143 108l-48-4" stroke={partStroke(0,active)} strokeWidth="8" fill="none"/>
+        <ellipse cx="104" cy="40" rx="25" ry="11" fill="#93caa7" stroke={partStroke(0,active)} strokeWidth="2"/>
+        <ellipse cx="200" cy="32" rx="28" ry="12" fill="#93caa7" stroke={partStroke(0,active)} strokeWidth="2"/>
+        <path d="M141 110v35h107v35" stroke={partStroke(1,active)} strokeWidth="12" fill="none"/>
+        <path d="M141 110v35h107v35" stroke="#9bdfe2" strokeWidth="7" fill="none"/>
+        <circle cx="201" cy="145" r="7" fill="#fff6d9" stroke={partStroke(2,active)} strokeWidth="3"/>
+        <text x="207" y="126">bubble</text>
+      </>}
+      {sketch==='petri-dish'&&<>
+        <ellipse cx="165" cy="113" rx="100" ry="48" fill="#e5faf4" stroke={partStroke(1,active)} strokeWidth="5"/>
+        <path d="M65 113v25c0 27 44 49 100 49s100-22 100-49v-25" fill="#d5f1ed" stroke={partStroke(1,active)} strokeWidth="4"/>
+        <ellipse cx="165" cy="90" rx="100" ry="45" fill="#e7fbff" fillOpacity=".55" stroke={partStroke(0,active)} strokeWidth="4"/>
+        <circle cx="132" cy="103" r="8" fill="#8cccbd" stroke={partStroke(2,active)} strokeWidth="2"/>
+        <circle cx="199" cy="105" r="6" fill="#8cccbd" stroke={partStroke(2,active)} strokeWidth="2"/>
+        <text x="165" y="209" textAnchor="middle">covered sample dish</text>
+      </>}
+      {sketch==='watering-can'&&<>
+        <path d="M94 95h143l-22 90H114z" fill="#b4d8e8" stroke={partStroke(0,active)} strokeWidth="5"/>
+        <path d="M99 106Q41 81 52 153q3 25 51 18" stroke={partStroke(1,active)} strokeWidth="12" fill="none"/>
+        <path d="M232 114l64-52M291 61l11 17" stroke={partStroke(2,active)} strokeWidth="12"/>
+        <path d="M291 78l-16 7" stroke={partStroke(2,active)} strokeWidth="5"/>
+        <circle cx="271" cy="102" r="4" fill="#5cbadd"/><circle cx="292" cy="106" r="4" fill="#5cbadd"/>
+        <text x="166" y="205" textAnchor="middle">watering can</text>
+      </>}
+      {sketch==='rain-gauge'&&<>
+        <path d="M102 36h126l-45 50v91h-36V86z" fill="#e4f5f8" stroke={partStroke(0,active)} strokeWidth="4"/>
+        <path d="M148 122h34v48h-34z" fill="#9edbe6"/>
+        {Array.from({length:6},(_,i)=><path key={i} d={'M149 '+(99+i*13)+'h'+(i%2?16:27)} stroke={partStroke(1,active)} strokeWidth="2"/>)}
+        <path d="M164 178v24M131 202h66" stroke={partStroke(2,active)} strokeWidth="7"/>
+        <text x="215" y="107">scale</text><path d="M208 109l-29 9" stroke={stroke} strokeWidth="2"/>
       </>}
       <circle cx="20" cy="20" r="6" fill={accent}/><text x="32" y="24">SIMPLIFIED SCHEMATIC</text>
     </svg>}
