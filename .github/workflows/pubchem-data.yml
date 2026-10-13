@@ -1,0 +1,44 @@
+name: Acquire PubChem compound reference
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/sync-pubchem.py'
+      - '.github/workflows/pubchem-data.yml'
+permissions:
+  contents: write
+concurrency:
+  group: scoolabs-pubchem
+  cancel-in-progress: false
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download and validate compound properties from NIH PubChem
+        run: python scripts/sync-pubchem.py --download --check
+      - name: Upload validated reference and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: scoolabs-pubchem-reference
+          path: |
+            src/data/compounds.json
+            docs/PUBCHEM_DATA.md
+          retention-days: 30
+      - name: Commit validated references to offline app
+        run: |
+          git config user.name "scoolabs-data-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/compounds.json docs/PUBCHEM_DATA.md
+          if ! git diff --cached --quiet; then
+            git commit -m "data: update verified PubChem compound reference"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
