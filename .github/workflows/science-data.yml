@@ -1,0 +1,54 @@
+name: Acquire verified science datasets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/science-data.yml'
+      - 'scripts/sync-science-data.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scoolabs-science-data
+  cancel-in-progress: false
+
+jobs:
+  acquire:
+    name: Download and validate science references
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Acquire pinned periodic source and NIST 2022 CODATA constants
+        run: python scripts/sync-science-data.py --download
+      - name: Validate bundled data after acquisition
+        run: python scripts/sync-science-data.py --check
+      - name: Upload reference provenance and generated constants
+        uses: actions/upload-artifact@v4
+        with:
+          name: scoolabs-science-references
+          path: |
+            science-data-artifacts/
+            src/data/physical-constants.json
+            docs/SCIENCE_DATA_SOURCES.md
+          retention-days: 30
+      - name: Commit validated generated data
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "scoolabs-data-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/physical-constants.json docs/SCIENCE_DATA_SOURCES.md
+          if git diff --cached --quiet; then
+            echo "Science data already current."
+          else
+            git commit -m "data: refresh validated CODATA science reference"
+            git push origin HEAD:main
+          fi

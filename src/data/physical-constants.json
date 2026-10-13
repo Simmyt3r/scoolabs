@@ -1,0 +1,82 @@
+[
+  {
+    "id": "speed-of-light-in-vacuum",
+    "name": "Speed of light in vacuum",
+    "valueText": "299 792 458",
+    "uncertainty": "(exact)",
+    "unit": "m s^-1",
+    "source": "NIST 2022 CODATA"
+  },
+  {
+    "id": "-lanck-constant",
+    "name": "Planck constant",
+    "valueText": "6.626 070 15 e-34",
+    "uncertainty": "(exact)",
+    "unit": "J Hz^-1",
+    "source": "NIST 2022 CODATA"
+  },
+  {
+    "id": "elementary-charge",
+    "name": "Elementary charge",
+    "valueText": "1.602 176 634 e-19",
+    "uncertainty": "(exact)",
+    "unit": "C",
+    "source": "NIST 2022 CODATA"
+  },
+  {
+    "id": "-vogadro-constant",
+    "name": "Avogadro constant",
+    "valueText": "6.022 140 76 e23",
+    "uncertainty": "(exact)",
+    "unit": "mol^-1",
+    "source": "NIST 2022 CODATA"
+  },
+  {
+    "id": "-oltzmann-constant",
+    "name": "Boltzmann constant",
+    "valueText": "1.380 649 e-23",
+    "uncertainty": "(exact)",
+    "unit": "J K^-1",
+    "source": "NIST 2022 CODATA"
+  },
+  {
+    "id": "-ewtonian-constant-of-gravitation",
+    "name": "Newtonian constant of gravitation",
+    "valueText": "6.674 30 e-11",
+    "uncertainty": "0.000 15 e-11",
+    "unit": "m^3 kg^-1 s^-2",
+    "source": "NIST 2022 CODATA"
+  },
+  {
+    "id": "electron-mass",
+    "name": "Electron mass",
+    "valueText": "9.109 383 7139 e-31",
+    "uncertainty": "0.000 000 0028 e-31",
+    "unit": "kg",
+    "source": "NIST 2022 CODATA"
+  },
+  {
+    "id": "proton-mass",
+    "name": "Proton mass",
+    "valueText": "1.672 621 925 95 e-27",
+    "uncertainty": "0.000 000 000 52 e-27",
+    "unit": "kg",
+    "source": "NIST 2022 CODATA"
+  },
+  {
+    "id": "atomic-mass-constant",
+    "name": "Atomic mass constant",
+    "valueText": "1.660 539 068 92 e-27",
+    "uncertainty": "0.000 000 000 52 e-27",
+    "unit": "kg",
+    "source": "NIST 2022 CODATA"
+  },
+  {
+    "id": "molar-gas-constant",
+    "name": "Molar gas constant",
+    "valueText": "8.314 462 618...",
+    "uncertainty": "(exact)",
+    "unit": "J mol^-1 K^-1",
+    "source": "NIST 2022 CODATA"
+  }
+]
