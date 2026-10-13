@@ -137,7 +137,7 @@ def main():
         )
         print("Downloaded: periodic source hash and",len(constants),"CODATA constants")
     stored = json.loads(OUTPUT.read_text(encoding="utf-8"))
-    if len(stored) != len(CONSTANT_NAMES) or [row["name"].lower() for row in stored] != list(CONSTANT_NAMES):
+    if len(stored) != len(CONSTANT_NAMES) or [row["name"].casefold() for row in stored] != [name.casefold() for name in CONSTANT_NAMES]:
         raise ValueError("The packaged physics constants list has unexpected names or order")
     for row in stored:
         if row.get("source") != "NIST 2022 CODATA" or not row.get("valueText") or "unit" not in row:
