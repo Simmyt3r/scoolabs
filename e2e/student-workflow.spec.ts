@@ -444,5 +444,5 @@ test('biology specimen names and agriculture crops are distinct subject referenc
  const agriculture=page.getByRole('region',{name:'agriculture interactive reference atlas'});
  await agriculture.getByRole('searchbox',{name:'Search reference cards'}).fill('Manihot');
  await expect(agriculture.getByText('Manihot esculenta')).toBeVisible();
- await expect(agriculture.getByText('Cassava',{exact:true})).toBeVisible();
+ await expect(agriculture.getByRole('heading',{name:'Cassava',exact:true})).toBeVisible();
 });
