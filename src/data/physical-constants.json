@@ -8,7 +8,7 @@
     "source": "NIST 2022 CODATA"
   },
   {
-    "id": "lanck-constant",
+    "id": "planck-constant",
     "name": "Planck constant",
     "valueText": "6.626 070 15 e-34",
     "uncertainty": "(exact)",
@@ -24,7 +24,7 @@
     "source": "NIST 2022 CODATA"
   },
   {
-    "id": "vogadro-constant",
+    "id": "avogadro-constant",
     "name": "Avogadro constant",
     "valueText": "6.022 140 76 e23",
     "uncertainty": "(exact)",
@@ -32,7 +32,7 @@
     "source": "NIST 2022 CODATA"
   },
   {
-    "id": "oltzmann-constant",
+    "id": "boltzmann-constant",
     "name": "Boltzmann constant",
     "valueText": "1.380 649 e-23",
     "uncertainty": "(exact)",
@@ -40,7 +40,7 @@
     "source": "NIST 2022 CODATA"
   },
   {
-    "id": "ewtonian-constant-of-gravitation",
+    "id": "newtonian-constant-of-gravitation",
     "name": "Newtonian constant of gravitation",
     "valueText": "6.674 30 e-11",
     "uncertainty": "0.000 15 e-11",
