@@ -88,3 +88,6 @@ The original Scoolabs SVG is stored in `public/brand/scoolabs-mark.svg`. Both wo
 - Verify ten evidence-aware concept entries and twelve apparatus guides for each of the four subjects. Every article links only to an implemented experiment from its own subject.
 - In Chromium, search and filter elements, examine properties and compare two, search apparatus including Burette, and switch between all four subject libraries without internet.
 - These are content integrity and workflow tests; a qualified teacher must validate scientific accuracy, completeness, and appropriate safety framing.
+
+## Reproducible offline science sources
+To refresh the pinned Bowserinator periodic reference comparison and NIST constants locally run `python scripts/sync-science-data.py --download`, followed by `python scripts/sync-science-data.py --check`. The same acquisition runs automatically in GitHub Actions when the data script or its workflow changes. Each run includes an artifact with the full source hashes and commits the narrow, validated CODATA subset. Never silently rewrite the CC BY-SA periodic adaptation or use automated science downloads as proof of classroom accuracy.

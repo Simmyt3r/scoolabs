@@ -51,3 +51,8 @@ Scoolabs is an **offline-first interactive science learning environment** for Ni
 
 ## Source-to-product distinction
 The original uploaded proposal gives broad requirements for personalized learning, curriculum integration, learning analytics and offline access, but does **not** specify a detailed periodic table or apparatus inventory. The new subject reference requirements were supplied later through product-owner feedback. The current content is authored supplemental teaching material and must be reviewed against the intended Nigerian curriculum before production deployment.
+
+## October 2026 dataset acquisition and subject atlas
+A GitHub Actions workflow now retrieves a fixed licensed snapshot of the upstream chemistry periodic table and the NIST 2022 CODATA physical constants list. It validates the 118 curated element identities and generates ten reference constants with uncertainties/units, committing the validated subset for offline use. An auditable source-hash artifact is published on each run. These are data references, not an AI training corpus.
+
+The library gains 32 age-appropriate reference cards covering physics equations/parameters, biology microscope specimens and structures, and crops/livestock in Agricultural Science. The app presents a searchable subject atlas, worked physics examples, experimental caveats, and a link from each card to an existing virtual practical. These summaries are separately authored for Scoolabs and have not yet received an independent Nigerian curriculum review.

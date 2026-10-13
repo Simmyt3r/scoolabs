@@ -415,3 +415,34 @@ test('representative apparatus expose labelled, interactive diagrams in all four
   await expect(guide.getByRole('button',{name:item.part})).toHaveAttribute('aria-pressed','true');
  }
 });
+
+
+test('physics subject reference shows searchable equations and downloaded constants offline', async({page})=>{
+ await page.goto('/');
+ await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Physics'}).click();
+ await page.getByRole('tab',{name:'Subject reference'}).click();
+ const atlas=page.getByRole('region',{name:'physics interactive reference atlas'});
+ await expect(atlas).toBeVisible();
+ await atlas.getByRole('searchbox',{name:'Search reference cards'}).fill('Ohm');
+ await expect(atlas.getByText('1 reference card')).toBeVisible();
+ await expect(atlas.getByText('V = IR')).toBeVisible();
+ await atlas.getByRole('button',{name:'View 10 constants'}).click();
+ await expect(atlas.getByText('Speed of light in vacuum')).toBeVisible();
+ await expect(atlas.getByText('299 792 458')).toBeVisible();
+ await atlas.getByRole('button',{name:'Hide constants'}).click();
+ await expect(atlas.getByText('299 792 458')).toHaveCount(0);
+});
+test('biology specimen names and agriculture crops are distinct subject references',async({page})=>{
+ await page.goto('/');
+ await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Biology'}).click();
+ await page.getByRole('tab',{name:'Subject reference'}).click();
+ const biology=page.getByRole('region',{name:'biology interactive reference atlas'});
+ await biology.getByRole('searchbox',{name:'Search reference cards'}).fill('Paramecium');
+ await expect(biology.getByText('Paramecium (genus)')).toBeVisible();
+ await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Agriculture'}).click();
+ await page.getByRole('tab',{name:'Subject reference'}).click();
+ const agriculture=page.getByRole('region',{name:'agriculture interactive reference atlas'});
+ await agriculture.getByRole('searchbox',{name:'Search reference cards'}).fill('Manihot');
+ await expect(agriculture.getByText('Manihot esculenta')).toBeVisible();
+ await expect(agriculture.getByText('Cassava',{exact:true})).toBeVisible();
+});

@@ -82,7 +82,7 @@ def parse_nist(source: bytes) -> list[dict]:
         if len(unit) > 90 or len(uncertainty) > 70:
             raise ValueError("Malformed CODATA row")
         found[key] = {
-            "id": re.sub(r"[^a-z0-9]+", "-", key).strip("-"),
+            "id": re.sub(r"[^a-z0-9]+", "-", key.lower()).strip("-"),
             "name": key[0].upper() + key[1:],
             "valueText": value_text,
             "uncertainty": uncertainty,

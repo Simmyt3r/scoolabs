@@ -411,3 +411,43 @@
 .apparatus-part-inspector p{color:#4c7980;font-size:11px;line-height:1.65;margin:0}
 .apparatus-diagram-caption{color:#81979f;font-size:10px;line-height:1.6;margin:14px 4px 3px}
 @media(prefers-reduced-motion:reduce){.apparatus-part-tabs button{transition:none}}
+
+
+/* Subject reference atlas, fully bundled and usable without Wi-Fi. */
+.atlas-filter-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0 5px}
+.atlas-filter-bar .library-search{flex:1;min-width:230px}
+.atlas-filter-bar select{background:#fff;color:#315466;border:1px solid #dbe6e9;border-radius:8px;padding:12px;font-size:12px;max-width:100%}
+.atlas-layout{display:grid;grid-template-columns:minmax(190px,.43fr) minmax(0,1fr);gap:17px;margin:15px 0 24px;align-items:start}
+.atlas-list{max-height:510px;overflow:auto;border-radius:12px;border:1px solid #dbe8ea;background:white;padding:7px;display:flex;flex-direction:column;gap:4px}
+.atlas-choice{appearance:none;cursor:pointer;background:transparent;border:1px solid transparent;border-radius:8px;text-align:left;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:11px;color:#43687a}
+.atlas-choice small{grid-column:1/-1;font-size:10px;color:#8096a2}
+.atlas-choice strong{font-size:12px;line-height:1.4}
+.atlas-choice svg{grid-column:2;grid-row:2}
+.atlas-choice:hover,.atlas-choice:focus-visible{background:#f0f9f8}
+.atlas-choice.active{background:#e7f6f3;border-color:#a5d8cd;color:#147c70}
+.atlas-card{background:#fff;border:1px solid #dbe8ea;border-radius:12px;padding:24px;min-width:0;line-height:1.7}
+.atlas-card h3{margin:9px 0 12px;font-size:22px;color:#21495b}
+.atlas-card h4{font-size:12px;color:#226a71;margin:0 0 4px}
+.atlas-card p{font-size:12px;line-height:1.75;color:#5d7a8a;margin:8px 0 15px;overflow-wrap:anywhere}
+.atlas-card>section{padding-top:12px;border-top:1px solid #edf2f2;margin:15px 0}
+.atlas-card .atlas-scientific{font-size:12px;color:#367c76}
+.atlas-equation{padding:14px 16px;border-radius:9px;background:#eff9f6;border:1px solid #d2eae3;display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center}
+.atlas-equation span{font-size:10px;letter-spacing:.8px;font-weight:800;color:#4a817f}
+.atlas-equation strong{font-size:19px;color:#17675f}
+.atlas-limitation{border-radius:8px;background:#fff9ea;border:1px solid #f2e5c1!important;padding:12px!important}
+.atlas-limitation h4{color:#8a6422}
+.atlas-limitation p{margin:0;color:#816e55}
+.atlas-card>.button-outline{margin-top:12px;white-space:normal;text-align:left}
+.physics-constants{padding:22px;background:white;border:1px solid #dce8ea;border-radius:12px;margin:22px 0}
+.physics-constants .library-heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px}
+.physics-constants .library-heading h3{font-size:16px;color:#224b5d;margin:4px 0}
+.physics-constants .library-heading p{max-width:700px}
+.physics-constants-scroll{overflow-x:auto;border:1px solid #dbe7ea;border-radius:9px;margin-top:13px}
+.physics-constants-scroll table{border-collapse:collapse;width:100%;min-width:560px;text-align:left}
+.physics-constants-scroll td,.physics-constants-scroll th{padding:10px 12px;border-bottom:1px solid #e8eff0;font-size:11px;color:#4a6777}
+.physics-constants-scroll thead th{background:#eaf5f2;font-weight:800;color:#285d65}
+.physics-constants-scroll tbody th{font-weight:700;color:#355a68}
+.physics-constants .atlas-source,.atlas-disclaimer{font-size:11px;color:#778e98;line-height:1.7;margin:14px 0 0}
+.atlas-disclaimer{display:flex;align-items:start;gap:9px}
+.atlas-disclaimer svg{flex:none;margin-top:2px}
+@media(max-width:750px){.atlas-layout{grid-template-columns:1fr}.atlas-list{max-height:200px}.atlas-card{padding:17px}.physics-constants{padding:16px}}
