@@ -5,8 +5,9 @@ import {experiments} from './engine';
 import {searchLibrary,subjectApparatus,subjectConcepts,type Apparatus,type KeyConcept} from './subject-library';
 import PeriodicTable from './PeriodicTable';
 import ApparatusDiagram from './ApparatusDiagram';
+import ReferenceAtlas from './ReferenceAtlas';
 
-type Section='overview'|'concepts'|'apparatus'|'periodic';
+type Section='overview'|'concepts'|'apparatus'|'periodic'|'atlas';
 const labels:Record<Subject,string>={chemistry:'Chemistry',physics:'Physics',biology:'Biology',agriculture:'Agricultural Science'};
 const subjectDescriptions:Record<Subject,string>={
  chemistry:'Understand matter, explore elements and properties, inspect laboratory apparatus, then investigate reactions and solutions.',
@@ -59,8 +60,8 @@ function ApparatusLibrary({subject,onOpen}:{subject:Subject;onOpen:(id:string)=>
 export default function SubjectExplorer({subject,onChoosePractical}:{subject:Subject;onChoosePractical:(id:string)=>void}){
  const [tab,setTab]=useState<Section>('overview');
  const Icon=IconBySubject[subject];
- const options:Section[]=subject==='chemistry'?['overview','concepts','periodic','apparatus']:['overview','concepts','apparatus'];
- const title=(id:Section)=>id==='overview'?'Subject overview':id==='concepts'?'Key concepts':id==='periodic'?'Periodic table':'Apparatus';
+ const options:Section[]=subject==='chemistry'?['overview','concepts','periodic','apparatus']:['overview','concepts','atlas','apparatus'];
+ const title=(id:Section)=>id==='overview'?'Subject overview':id==='concepts'?'Key concepts':id==='periodic'?'Periodic table':id==='atlas'?'Subject reference':'Apparatus';
  return <section className="subject-explorer" aria-label={labels[subject]+' knowledge and apparatus hub'}>
    <div className="subject-hub-hero"><span className="subject-hub-icon"><Icon size={24}/></span><div><span className="eyebrow">EXPLORE THE SCIENCE</span>
       <h2>{labels[subject]} knowledge centre</h2><p>{subjectDescriptions[subject]}</p></div>
@@ -75,9 +76,10 @@ export default function SubjectExplorer({subject,onChoosePractical}:{subject:Sub
          <button type="button" className="hub-feature-card" onClick={()=>setTab('concepts')}><BookOpen size={23}/><strong>Build understanding</strong><span>{subjectConcepts(subject).length} key ideas with examples and misconceptions</span><small>Explore concepts <ArrowRight size={14}/></small></button>
          <button type="button" className="hub-feature-card" onClick={()=>setTab('apparatus')}><Wrench size={23}/><strong>Know your instruments</strong><span>{subjectApparatus(subject).length} tools, functions and safety notes</span><small>Explore apparatus <ArrowRight size={14}/></small></button>
          {subject==='chemistry'?<button type="button" className="hub-feature-card" onClick={()=>setTab('periodic')}><Atom size={23}/><strong>Discover the elements</strong><span>Search all 118 elements and compare properties</span><small>Open periodic table <ArrowRight size={14}/></small></button>:
+         <button type="button" className="hub-feature-card" onClick={()=>setTab('atlas')}><Atom size={23}/><strong>Discover subject references</strong><span>{subject==='physics'?'Equations, worked examples and verified physical constants':subject==='biology'?'Microscope specimens and living structures':'Crops, livestock and agricultural classifications'}</span><small>Open reference atlas <ArrowRight size={14}/></small></button>
          <button type="button" className="hub-feature-card" onClick={()=>onChoosePractical(experiments.find(e=>e.subject===subject)!.id)}><Beaker size={23}/><strong>Learn by experimenting</strong><span>Apply concepts in guided virtual practicals</span><small>Open a practical <ArrowRight size={14}/></small></button>}
         </div>
-      </div>:tab==='concepts'?<Concepts subject={subject} onOpen={onChoosePractical}/>:tab==='apparatus'?<ApparatusLibrary subject={subject} onOpen={onChoosePractical}/>:<PeriodicTable/>}
+      </div>:tab==='concepts'?<Concepts subject={subject} onOpen={onChoosePractical}/>:tab==='apparatus'?<ApparatusLibrary subject={subject} onOpen={onChoosePractical}/>:tab==='atlas'?<ReferenceAtlas subject={subject} onChoosePractical={onChoosePractical}/>:<PeriodicTable/>}
    </div>
  </section>;
 }
