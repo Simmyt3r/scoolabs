@@ -30,6 +30,8 @@ jobs:
         run: npm run brand:icons
       - name: Verify branded icon assets
         run: node scripts/verify-brand.mjs
+      - name: Validate bundled CODATA science reference
+        run: python3 scripts/sync-science-data.py --check
       - name: Type-check source
         run: npm run typecheck
       - name: Test scientific simulation engines

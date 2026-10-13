@@ -4,7 +4,7 @@
 
 Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 
-## Current prototype (v0.9 branding candidate)
+## Current prototype (v0.11: science library expansion)
 
 | Subject | Working simulation | Current controls |
 | --- | --- | --- |
@@ -112,3 +112,10 @@ This is the **first content-layer milestone**, not a complete chemistry textbook
 The `Acquire verified science datasets` GitHub Actions workflow downloads two non-user-data resources during the build: the pinned upstream periodic-table dataset (CC BY-SA 3.0) and NIST 2022 CODATA physical constants. It verifies all 118 existing Scoolabs element identities, selects ten physical constants preserving their source values and uncertainties, publishes a provenance artifact, and commits approved generated constants. See `docs/SCIENCE_DATA_SOURCES.md`.
 
 A searchable **Subject reference** tab now complements apparatus and concepts in Physics (11 formulas and worked examples plus ten NIST constants), Biology (10 organism/cell specimen references) and Agricultural Science (11 crop and livestock references). None of these features makes runtime HTTP requests; the product remains usable offline.
+
+## v0.11: references beyond the twelve practicals
+Physics adds eleven formulas and worked examples, alongside ten NIST 2022 CODATA constants. Biology adds ten specimen and biological-structure references, and Agricultural Science adds eleven crop/livestock references. Chemistry retains its 118-element interactive table. The existing forty concepts and forty-eight apparatus guides remain accessible; fourteen named pieces of equipment now have clickable labelled diagrams.
+
+The science dataset workflow downloads pinned public references during GitHub Actions, verifies the periodic element identities, preserves provenance hashes as an artifact and commits a narrow NIST physical-constants subset. The installed Windows app does not download datasets during use.
+
+No untested AI model is bundled just to attach an AI label. A future small local model will require model licence checks, source-grounded retrieval, offline speed and memory measurements, and independent teaching evaluation. The next major content milestone is a much more manipulable visual laboratory rather than another list of shallow topics.

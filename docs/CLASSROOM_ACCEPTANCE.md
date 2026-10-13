@@ -70,3 +70,11 @@ No WAEC, NECO, NERDC, safety or curriculum certification is claimed.
 - [ ] Navigate each subject's concepts and apparatus, checking search, keyboard accessibility, labels, definitions and related practical links.
 - [ ] Replace generic apparatus symbols with qualified-teacher-approved, labelled 2D/3D diagrams before advertising a complete instrument library.
 - [ ] Validate lesson sequencing against the target Nigerian junior/senior secondary curriculum, with documented reviewer and version.
+
+## v0.11 reference testing
+- [ ] In Chemistry, search hydrogen, oxygen and iron and compare periodic element properties.
+- [ ] In Physics, find the Ohm formula and independently compare physical constants, units and uncertainties against the cited NIST table.
+- [ ] In Biology, locate Paramecium and onion epidermis and check descriptions with a subject teacher.
+- [ ] In Agriculture, find cassava, cowpea and domestic chicken without implying field prescriptions.
+- [ ] Verify all fourteen illustrated apparatus are labelled correctly; log missing illustrations separately.
+- [ ] Disconnect the network and use these references on the actual Windows installation.
