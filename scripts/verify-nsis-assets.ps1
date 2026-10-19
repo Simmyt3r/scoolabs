@@ -18,3 +18,14 @@ foreach ($name in $required) {
   if (!$listing.Contains($name)) { throw "Packaged installer is missing $name" }
 }
 Write-Host "PASS: NSIS installer contains AI model, tokenizer, provenance, manifest and five science references"
+
+# Tauri embeds Vite frontend files inside its executable; these are not listed
+# individually when 7-Zip inspects the compressed NSIS archive.
+$wasmFiles = @(Get-ChildItem 'dist/offline-ai/wasm/ort-wasm*.wasm' -File -ErrorAction Stop)
+if ($wasmFiles.Count -lt 1) { throw 'ONNX WASM runtime missing from compiled frontend' }
+foreach ($file in $wasmFiles) {
+  if ($file.Length -lt 10000) { throw "Incomplete ONNX WASM binary: $($file.Name)" }
+}
+$embeddedModel = 'dist/offline-ai/models/Xenova/all-MiniLM-L6-v2/onnx/model_quantized.onnx'
+if (!(Test-Path $embeddedModel)) { throw 'The local model weights were not included in Vite frontend assets' }
+Write-Host "PASS: Vite assets contain $($wasmFiles.Count) local ONNX WASM binaries"

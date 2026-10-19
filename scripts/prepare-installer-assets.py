@@ -33,6 +33,48 @@ MODEL = (
 MODEL_SHA256 = "afdb6f1a0e45b715d0bb9b11772f032c399babd23bfc31fed1c170afc848bdb1"
 MODEL_BYTES = 22972370
 
+WEBROOT = ROOT / "public" / "offline-ai"
+MODEL_WEB = WEBROOT / "models" / "Xenova" / "all-MiniLM-L6-v2"
+WASM_WEB = WEBROOT / "wasm"
+
+
+def stage_browser_runtime():
+    """Copy pinned model and local WASM execution binaries into the bundled web app."""
+    if WEBROOT.exists():
+        shutil.rmtree(WEBROOT)
+    for relative in MODEL:
+        target = MODEL_WEB / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(MODEL_SOURCE / relative, target)
+    candidates = [
+        ROOT / "node_modules" / "onnxruntime-web" / "dist",
+        ROOT / "node_modules" / "@xenova" / "transformers" / "node_modules" / "onnxruntime-web" / "dist",
+    ]
+    wasm_assets = []
+    for folder in candidates:
+        if folder.is_dir():
+            wasm_assets = sorted(folder.glob("ort-wasm*.wasm"))
+            if wasm_assets:
+                break
+    if not wasm_assets:
+        raise FileNotFoundError("ONNX Runtime WASM binaries missing; run npm install first")
+    WASM_WEB.mkdir(parents=True, exist_ok=True)
+    for item in wasm_assets:
+        shutil.copyfile(item, WASM_WEB / item.name)
+    print(f"Staged {len(wasm_assets)} local ONNX Runtime WASM binaries")
+
+
+def check_browser_runtime():
+    for relative in MODEL:
+        source = MODEL_SOURCE / relative
+        installed = MODEL_WEB / relative
+        if not installed.is_file() or digest(installed) != digest(source):
+            raise ValueError(f"Local web model component missing or changed: {relative}")
+    wasm_assets = list(WASM_WEB.glob("ort-wasm*.wasm")) if WASM_WEB.exists() else []
+    if not wasm_assets or any(item.stat().st_size < 10000 for item in wasm_assets):
+        raise ValueError("ONNX WASM execution binaries missing or incomplete")
+    print(f"PASS: local AI frontend contains model and {len(wasm_assets)} WASM binaries")
+
 
 def digest(path):
     h = hashlib.sha256()
@@ -107,6 +149,7 @@ def prepare():
         "files": entries,
     }
     (DEST / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    stage_browser_runtime()
 
 
 def check():
@@ -128,6 +171,7 @@ def check():
     weights = DEST / "model" / MODEL[0]
     if weights.stat().st_size != MODEL_BYTES or digest(weights) != MODEL_SHA256:
         raise ValueError("Audited model checksum mismatch in installer staging")
+    check_browser_runtime()
     print(f"PASS: installer resource manifest verified ({len(entries)} files)")
 
 

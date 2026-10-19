@@ -92,7 +92,7 @@ fn inspect(base: &Path) -> Result<OfflineAssetsStatus, String> {
         science_datasets: REQUIRED_DATASETS.len(),
         model_installed: true,
         model_inference_enabled: false,
-        message: "Verified science references and embedding model are installed locally. Model-powered search remains disabled until teaching and low-spec performance validation.".into(),
+        message: "Verified science references and embedding model are installed locally. Experimental semantic search can be started manually from Offline AI Search; it is not an automated tutor or grading system.".into(),
     })
 }
 

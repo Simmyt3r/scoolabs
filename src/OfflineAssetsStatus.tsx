@@ -33,7 +33,7 @@ export default function OfflineAssetsStatus(){
     {!status?<p>Checking the local resource pack...</p>:<>
       <p role="status">{status.message}</p>
       {status.verified&&<p><strong>{status.scienceDatasets} science datasets verified.</strong> Quantised MiniLM embedding model installed: <strong>{status.modelInstalled?'Yes':'No'}</strong>.</p>}
-      <p className="learning-explainer">Science references are available without internet. The packaged model does not yet generate answers or grade students. Teachers remain responsible for checking scientific content.</p>
+      <p className="learning-explainer">Science references are available without internet. Experimental offline semantic search is available from the Offline AI Search workspace on supported systems. The model does not generate scientific answers or grade students. Teachers remain responsible for checking scientific content.</p>
     </>}
   </section>;
 }

@@ -4,7 +4,7 @@
 
 Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 
-## Current prototype (v0.13: science references and offline AI packaged in installer)
+## Current prototype (v0.14: experimental offline semantic science search)
 
 | Subject | Working simulation | Current controls |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 | Biology | Microscope | Specimen, objective, focus, magnification |
 | Agriculture | Seed germination | Crop, moisture, temperature, days |
 
-**New in v0.13:** Students receive local, explainable study recommendations tied to their latest knowledge checks. Chemistry continues to use verified offline element, compound and physical-constant references. Biology and Agriculture now include 12 GBIF-linked offline taxonomic identities. The [23 MB ONNX language embedding model](docs/OFFLINE_INTELLIGENCE.md) is downloaded and verified during the Windows installer workflow, then installed alongside the source science datasets. It is packaged for offline retrieval research, but model-driven search/inference remains disabled pending classroom qualification. No student data is sent to a cloud AI provider.
+**New in v0.14:** Students receive local, explainable study recommendations tied to their latest knowledge checks. Chemistry continues to use verified offline element, compound and physical-constant references. Biology and Agriculture now include 12 GBIF-linked offline taxonomic identities. The [23 MB ONNX language embedding model](docs/OFFLINE_INTELLIGENCE.md) is downloaded and verified during the Windows installer workflow, then installed alongside the source science datasets. It is packaged for offline retrieval research, but model-driven search/inference remains disabled pending classroom qualification. No student data is sent to a cloud AI provider.
 
 All twelve practicals are now accessible. Laboratory diagrams are generated locally by the app, and there are no runtime downloads of teaching assets.
 
@@ -27,7 +27,7 @@ Installed desktop students sign in using a teacher-issued access code and PIN, s
 
 **Installer contents (v0.13):** Five validated science JSON datasets (periodic elements, PubChem compounds, NIST physical constants, GBIF taxonomy, and science reference atlas), plus model weights, tokenizer, metadata, model card, attribution and checksums. The student dashboard shows an integrity-checked installation status. All assets are present without classroom internet access.
 
-## Developer commands
+**New AI Search workspace:** The optional quantised MiniLM model can now rank cited, locally bundled science facts by meaning using WebView2 and locally packaged ONNX WASM binaries. Students explicitly start model search; normal exact-word lookup remains available without inference. No generative answers, automated grading, or external AI endpoints are used. First-run model loading and indexing may take longer on older computers.\n\n## Developer commands
 - npm install
 - npm test
 - npm run build

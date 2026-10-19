@@ -453,3 +453,18 @@
 @media(max-width:750px){.atlas-layout{grid-template-columns:1fr}.atlas-list{max-height:200px}.atlas-card{padding:17px}.physics-constants{padding:16px}}
 
 .compound-ref{padding:16px 0}.compound-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}.compound-card{padding:17px;border:1px solid #dbe9ed;background:#fff;border-radius:12px;min-width:0}.compound-card h3{margin:8px 0;font-size:18px;color:#22526a}.compound-card>strong{font-size:17px;color:#087f73}.compound-card dl{display:grid;gap:10px}.compound-card dt{font-size:11px;color:#6a8695}.compound-card dd{margin:3px 0 0;font-size:12px;color:#315a70;overflow-wrap:anywhere}.compound-card a{font-size:12px;color:#087e75;text-decoration:underline}
+
+/* Offline reference retrieval: readable on school laptops and narrow screens */
+.offline-search{display:grid;gap:22px;padding-bottom:28px}
+.offline-search .learning-panel{display:grid;gap:12px}
+.offline-search .learning-panel select{width:min(100%,340px);border:1px solid #d9e8e7;border-radius:8px;padding:11px;background:#fff;color:#224b5d}
+.offline-search-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.offline-search-controls .library-search{flex:1 1 330px;min-width:210px;margin:0}
+.offline-search-controls button{min-height:40px;white-space:normal}
+.offline-search .learning-explainer svg{display:inline;vertical-align:middle;margin-right:5px}
+.offline-search-results{display:grid;gap:16px}
+.offline-search-result-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:14px}
+.offline-search-result-list .atlas-card{min-width:0}
+.offline-search-result-list .atlas-card .atlas-source{overflow-wrap:anywhere;font-size:11px}
+.offline-search .page-title h1{max-width:780px}
+@media(max-width:700px){.offline-search-result-list{grid-template-columns:1fr}.offline-search-controls button{width:100%}}

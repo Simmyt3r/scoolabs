@@ -16,3 +16,6 @@ test-results/
 # CI-generated verified desktop resource pack and model candidate
 model-candidate-artifacts/
 src-tauri/resources/offline-assets/
+
+# Generated local-only model and WASM web assets
+public/offline-ai/
