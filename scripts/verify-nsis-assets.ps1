@@ -11,7 +11,7 @@ $listing = (& $binary l -slt $installers[0].FullName) -join "`n"
 if ($LASTEXITCODE -ne 0) { throw 'Unable to inspect the completed NSIS installer' }
 $required = @(
   'model_quantized.onnx', 'tokenizer.json', 'PROVENANCE.json',
-  'manifest.json', 'elements.json', 'compounds.json',
+  'manifest.json', 'ort-wasm', 'elements.json', 'compounds.json',
   'physical-constants.json', 'taxonomy.json', 'reference-atlas.json'
 )
 foreach ($name in $required) {
