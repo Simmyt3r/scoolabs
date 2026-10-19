@@ -5,6 +5,7 @@ import type {Assignment,KnowledgeResult} from './native-storage';
 import {studentProgress} from './progress';
 import {parseRubricFeedback} from './assessment';
 import {learningRecommendations} from './learningPath';
+import OfflineAssetsStatus from './OfflineAssetsStatus';
 
 const meta:Record<Subject,{name:string;icon:typeof FlaskConical;theme:string}>={
   chemistry:{name:'Chemistry',icon:FlaskConical,theme:'purple'},
@@ -35,6 +36,7 @@ export default function StudentDashboard({records,assignments,checks,studentName
       <div className="progress-badge"><GraduationCap size={20}/><div><strong>Learning overview</strong><small>{isPreview?'Browser preview':'Stored on this computer'}</small></div></div>
     </div>
     {isPreview&&<div className="record-note"><BookOpen size={17}/> Browser preview mode. These figures use local browser notebook data. Secure student accounts and assignment grades require the installed desktop application.</div>}
+    <OfflineAssetsStatus/>
     <div className="learning-stats">
       <div><span>Practicals tried</span><strong>{progress.triedPracticals}<small> / {progress.availablePracticals}</small></strong><small>Different laboratory experiments with saved reports</small></div>
       <div><span>Reports saved</span><strong>{progress.reportCount}</strong><small>{progress.assessedReports} marked by a teacher</small></div>
