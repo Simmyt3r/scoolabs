@@ -24,8 +24,8 @@ Scoolabs is a science learning system, not just twelve stand-alone calculation w
 - 118-element property reference is already bundled. Values include source citations and unknowns remain null.
 - The physics reference bundles selected CODATA values and records their source provenance.
 - Chemistry additionally acquires and checks 15 PubChem compound records using GitHub Actions; this does not introduce live calls into the desktop application.
-- A future biology source (e.g. species taxonomy) needs licensing, coverage and review before it can be used. The same applies to an agricultural image library.
-- **AI models are not yet included.** Only consider an optional, quantised, locally runnable science tutor after CPU/memory benchmarking, model-licence review, hallucination/safety evaluation, curriculum review and an explicit offline packaging decision. Auto-downloading multi-GB weights into the installer would make classroom distribution harder.
+- A curated GBIF Backbone taxonomic dataset now contributes 12 verified species identities for Biology and Agriculture. It contains classifications, not imagery, distribution, field predictions or safety advice. An agricultural image library still needs licensing, coverage and review before use.
+- **An AI embedding model candidate is acquired as a separate verified CI artifact, but not included in the installer or active as a tutor.** Only consider an optional, quantised, locally runnable science tutor after CPU/memory benchmarking, model-licence review, hallucination/safety evaluation, curriculum review and an explicit offline packaging decision. Auto-downloading multi-GB weights into the installer would make classroom distribution harder.
 
 ## Educational acceptance
 Before expanding each subject, have an educator verify terminology, calculations, specimen illustrations and level-specific outcomes. Reference cards should identify their provenance; missing fields should not be filled by AI guesses. Test teacher-led 30-45 minute lessons on low-powered Windows machines before calling Scoolabs classroom-ready.

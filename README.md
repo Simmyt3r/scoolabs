@@ -4,7 +4,7 @@
 
 Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 
-## Current prototype (v0.11: science library expansion)
+## Current prototype (v0.12: offline guidance and scientific reference expansion)
 
 | Subject | Working simulation | Current controls |
 | --- | --- | --- |
@@ -12,6 +12,8 @@ Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 | Physics | Ohm's law | Voltage, resistance, current, power |
 | Biology | Microscope | Specimen, objective, focus, magnification |
 | Agriculture | Seed germination | Crop, moisture, temperature, days |
+
+**New in v0.12:** Students receive local, explainable study recommendations tied to their latest knowledge checks. Chemistry continues to use verified offline element, compound and physical-constant references. Biology and Agriculture now include 12 GBIF-linked offline taxonomic identities. The [optional 23 MB ONNX language embedding model](docs/OFFLINE_INTELLIGENCE.md) is acquired as a checksum-verified CI artifact, not silently shipped as an untested tutor. No student data is sent to a cloud AI provider.
 
 All twelve practicals are now accessible. Laboratory diagrams are generated locally by the app, and there are no runtime downloads of teaching assets.
 
