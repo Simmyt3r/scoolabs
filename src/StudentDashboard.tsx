@@ -4,6 +4,7 @@ import type {LabRecord} from './store';
 import type {Assignment,KnowledgeResult} from './native-storage';
 import {studentProgress} from './progress';
 import {parseRubricFeedback} from './assessment';
+import {learningRecommendations} from './learningPath';
 
 const meta:Record<Subject,{name:string;icon:typeof FlaskConical;theme:string}>={
   chemistry:{name:'Chemistry',icon:FlaskConical,theme:'purple'},
@@ -24,6 +25,7 @@ type Props={
 };
 export default function StudentDashboard({records,assignments,checks,studentName,classroom,isPreview,onOpenExperiment,onAssignments,onNotebook}:Props){
   const progress=studentProgress(records,assignments,checks);
+  const guidance=learningRecommendations(checks,records);
   const next=experiments.find(e=>e.id===progress.nextExperimentId);
   const firstName=studentName.trim().split(/\s+/)[0]||'student';
   return <section className="student-dashboard" aria-label="Student progress dashboard">
@@ -79,5 +81,17 @@ export default function StudentDashboard({records,assignments,checks,studentName
         <button className="text-button" onClick={onNotebook}>Review practical reports <ArrowRight size={14}/></button>
       </section>
     </div>
+    <section className="learning-panel" aria-label="Personalised study guidance">
+      <div className="learning-panel-heading"><div><span className="eyebrow">OFFLINE STUDY GUIDANCE</span><h2>What to revise next</h2></div><BookOpen size={20}/></div>
+      <p>These suggestions use only your latest saved self-checks and practical activity on this computer. They are explanations, not AI-generated grades or proof of mastery.</p>
+      <div className="learning-subjects">
+        {guidance.map(item=><article className="learning-subject" key={item.experimentId}>
+          <div className="learning-subject-row"><strong>{item.title}</strong><span>{item.status}</span></div>
+          <p>{item.message}</p>
+          <button type="button" className="text-button" onClick={()=>onOpenExperiment(item.experimentId)}>Study and practise <ArrowRight size={15}/></button>
+        </article>)}
+      </div>
+      {guidance.length===0&&<p>All available activities have been attempted. Continue practising and review your teacher's feedback.</p>}
+    </section>
   </section>;
 }
