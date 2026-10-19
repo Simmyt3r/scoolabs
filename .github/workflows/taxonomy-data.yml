@@ -1,0 +1,42 @@
+name: Acquire GBIF biology and agriculture taxonomy
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/taxonomy-data.yml'
+      - 'scripts/sync-taxonomy.py'
+permissions:
+  contents: write
+concurrency:
+  group: scoolabs-taxonomy
+  cancel-in-progress: false
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download exact-match GBIF taxonomic data
+        run: python scripts/sync-taxonomy.py --download --check
+      - name: Publish provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: scoolabs-gbif-taxonomy
+          path: |
+            src/data/taxonomy.json
+            docs/TAXONOMY_DATA.md
+          retention-days: 30
+      - name: Commit verified small offline reference pack
+        run: |
+          git config user.name "scoolabs-data-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/taxonomy.json docs/TAXONOMY_DATA.md
+          if ! git diff --cached --quiet; then
+            git commit -m "data: update verified biology and agriculture taxonomy"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

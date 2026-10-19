@@ -2,6 +2,7 @@ import {useMemo,useState} from 'react';
 import {ArrowRight, Atom, BookOpen, FlaskConical, Leaf, Search} from 'lucide-react';
 import rawCards from './data/reference-atlas.json';
 import rawConstants from './data/physical-constants.json';
+import rawTaxonomy from './data/taxonomy.json';
 import type {Subject} from './engine';
 import {experiments} from './engine';
 
@@ -14,6 +15,8 @@ export type PhysicalConstant={id:string;name:string;valueText:string;uncertainty
 
 export const atlasCards:ReferenceCard[]=rawCards as ReferenceCard[];
 export const physicalConstants:PhysicalConstant[]=rawConstants as PhysicalConstant[];
+export type TaxonomyEntry={name:string;acceptedName:string;gbifKey:number;rank:string;kingdom:string;family:string;source:string};
+export const taxonomy:TaxonomyEntry[]=rawTaxonomy as TaxonomyEntry[];
 export function filterAtlas(subject:Subject,query:string,category='all'){
   const q=query.trim().toLocaleLowerCase('en');
   return atlasCards.filter(card=>card.subject===subject&&(category==='all'||card.category===category)&&
@@ -35,6 +38,7 @@ export default function ReferenceAtlas({subject,onChoosePractical}:{
   const categories=useMemo(()=>[...new Set(atlasCards.filter(c=>c.subject===subject).map(c=>c.category))], [subject]);
   const entries=useMemo(()=>filterAtlas(subject,query,category),[subject,query,category]);
   const chosen=entries.find(e=>e.id===selection)??entries[0];
+  const taxon=chosen?.scientificName?taxonomy.find(x=>x.name.toLowerCase()===chosen.scientificName?.toLowerCase()):undefined;
   const Icon=subject==='physics'?Atom:subject==='biology'?FlaskConical:Leaf;
   return <section className="reference-atlas" aria-label={subject+' interactive reference atlas'}>
     <div className="library-heading"><div><span className="eyebrow">SUBJECT REFERENCE</span><h2>{subject==='physics'?'Formulas and physical constants':subject==='biology'?'Specimens and biological structures':'Crops and livestock'}</h2>
@@ -55,6 +59,7 @@ export default function ReferenceAtlas({subject,onChoosePractical}:{
           <span className="eyebrow">{chosen.category.toUpperCase()}</span><h3>{chosen.title}</h3>
           {chosen.scientificName&&<p className="atlas-scientific"><em>{chosen.scientificName}</em></p>}
           <p>{chosen.overview}</p>
+          {taxon&&<section className="atlas-limitation" aria-label="Verified species taxonomy"><h4>Reference taxonomy · GBIF</h4><p><strong>Accepted name:</strong> <em>{taxon.acceptedName}</em></p><p><strong>Kingdom:</strong> {taxon.kingdom} · <strong>Family:</strong> {taxon.family} · <strong>Rank:</strong> {taxon.rank}</p><small>GBIF Backbone species identity. Classification is not a cultivation, husbandry or safety recommendation. Source: {taxon.source}</small></section>}
           {chosen.equation&&<div className="atlas-equation"><span>REFERENCE EQUATION</span><strong>{chosen.equation}</strong></div>}
           {chosen.workedExample&&<section><h4>Worked example</h4><p>{chosen.workedExample}</p></section>}
           {chosen.observation&&<section><h4>What to observe or compare</h4><p>{chosen.observation}</p></section>}

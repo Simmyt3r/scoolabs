@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {atlasCards,physicalConstants,filterAtlas} from './ReferenceAtlas';
+import {atlasCards,physicalConstants,filterAtlas,taxonomy} from './ReferenceAtlas';
 import {experiments} from './engine';
 describe('downloaded and curated science atlas',()=>{
  it('covers physics, biology and agriculture with rich reference cards',()=>{
@@ -21,6 +21,17 @@ describe('downloaded and curated science atlas',()=>{
   expect(filterAtlas('agriculture','Manihot')).toHaveLength(1);
   expect(filterAtlas('physics','','Electricity').length).toBeGreaterThan(0);
   expect(filterAtlas('agriculture','zzzzzzzz')).toEqual([]);
+ });
+ it('recognises GBIF taxonomy pack entries when curated by the acquisition workflow',()=>{
+   expect(Array.isArray(taxonomy)).toBe(true);
+   expect(new Set(taxonomy.map(x=>x.name)).size).toBe(taxonomy.length);
+   for(const item of taxonomy){
+     expect(item.gbifKey).toBeGreaterThan(0);
+     expect(item.source).toBe('https://www.gbif.org/species/'+item.gbifKey);
+     expect(item.rank).toBe('SPECIES');
+     expect(item.kingdom.length).toBeGreaterThan(2);
+     expect(item.family.length).toBeGreaterThan(2);
+   }
  });
  it('packages ten well-specified source-attributed NIST constants',()=>{
   expect(physicalConstants).toHaveLength(10);
