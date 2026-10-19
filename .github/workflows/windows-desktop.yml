@@ -33,14 +33,6 @@ jobs:
           workspaces: src-tauri
       - name: Install npm packages
         run: npm install --no-audit --no-fund
-      - name: Test mathematical simulation engines
-        run: npm test
-      - name: Type-check and bundle frontend
-        run: npm run build
-      - name: Generate Scoolabs branded Windows icons
-        run: npm run brand:icons
-      - name: Verify branded icon assets
-        run: node scripts/verify-brand.mjs
       - name: Verify source science datasets before packaging
         shell: pwsh
         run: |
@@ -52,6 +44,16 @@ jobs:
         run: python scripts/fetch-offline-model.py --download --check
       - name: Embed AI weights, tokenizer and all science datasets into desktop resources
         run: python scripts/prepare-installer-assets.py --prepare --check
+      - name: Test scientific simulations and offline search ranking
+        run: npm test
+      - name: Type-check application including local AI runtime
+        run: npm run typecheck
+      - name: Bundle browser interface with local ONNX weights and WASM
+        run: npm run build
+      - name: Generate and validate Scoolabs Windows branding
+        run: |
+          npm run brand:icons
+          node scripts/verify-brand.mjs
       - name: Test Tauri native implementation
         run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Build Tauri Windows installer with embedded offline resources
