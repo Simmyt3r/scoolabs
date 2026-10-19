@@ -63,7 +63,7 @@ export const scienceCorpus: ScienceHit[] = [
 ];
 
 const normalise = (value: string) => value.toLocaleLowerCase('en').normalize('NFKC');
-const tokens = (value: string) => normalise(value).match(/[a-z0-9]+/g) ?? [];
+const tokens = (value: string): string[] => normalise(value).split(/[^a-z0-9]+/).filter(Boolean);
 
 export function keywordSearch(query: string, corpus: readonly ScienceHit[] = scienceCorpus): ScoredHit[] {
   const q = normalise(query.trim());
