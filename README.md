@@ -4,7 +4,7 @@
 
 Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 
-## Current prototype (v0.12: offline guidance and scientific reference expansion)
+## Current prototype (v0.13: science references and offline AI packaged in installer)
 
 | Subject | Working simulation | Current controls |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ Built for Windows by Simeon's Laboratories and Co Technologies Ltd.
 | Biology | Microscope | Specimen, objective, focus, magnification |
 | Agriculture | Seed germination | Crop, moisture, temperature, days |
 
-**New in v0.12:** Students receive local, explainable study recommendations tied to their latest knowledge checks. Chemistry continues to use verified offline element, compound and physical-constant references. Biology and Agriculture now include 12 GBIF-linked offline taxonomic identities. The [optional 23 MB ONNX language embedding model](docs/OFFLINE_INTELLIGENCE.md) is acquired as a checksum-verified CI artifact, not silently shipped as an untested tutor. No student data is sent to a cloud AI provider.
+**New in v0.13:** Students receive local, explainable study recommendations tied to their latest knowledge checks. Chemistry continues to use verified offline element, compound and physical-constant references. Biology and Agriculture now include 12 GBIF-linked offline taxonomic identities. The [23 MB ONNX language embedding model](docs/OFFLINE_INTELLIGENCE.md) is downloaded and verified during the Windows installer workflow, then installed alongside the source science datasets. It is packaged for offline retrieval research, but model-driven search/inference remains disabled pending classroom qualification. No student data is sent to a cloud AI provider.
 
 All twelve practicals are now accessible. Laboratory diagrams are generated locally by the app, and there are no runtime downloads of teaching assets.
 
@@ -24,6 +24,8 @@ Installed desktop students sign in using a teacher-issued access code and PIN, s
 **Limits:** Students have PIN-protected local accounts, but device administrators can access database files and backups. There is no cloud identity provider or centrally managed school-wide gradebook. Models are teaching approximations; qualified teachers must independently validate lessons and results before school rollout.
 
 **Now available:** Twelve interactive lessons, three per subject. Newly added: filtration/evaporation, convex thin-lens images, potometer water uptake, and illustrative nutrient limitation symptoms.
+
+**Installer contents (v0.13):** Five validated science JSON datasets (periodic elements, PubChem compounds, NIST physical constants, GBIF taxonomy, and science reference atlas), plus model weights, tokenizer, metadata, model card, attribution and checksums. The student dashboard shows an integrity-checked installation status. All assets are present without classroom internet access.
 
 ## Developer commands
 - npm install

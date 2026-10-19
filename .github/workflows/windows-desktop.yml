@@ -40,8 +40,23 @@ jobs:
         run: npm run brand:icons
       - name: Verify branded icon assets
         run: node scripts/verify-brand.mjs
-      - name: Build Tauri Windows installer
+      - name: Verify source science datasets before packaging
+        shell: pwsh
+        run: |
+          python scripts/sync-science-data.py --check
+          python scripts/sync-pubchem.py --check
+          python scripts/sync-taxonomy.py --check
+          python scripts/prepare-installer-assets.py --validate-source
+      - name: Download and audit the offline MiniLM model and tokenizer
+        run: python scripts/fetch-offline-model.py --download --check
+      - name: Embed AI weights, tokenizer and all science datasets into desktop resources
+        run: python scripts/prepare-installer-assets.py --prepare --check
+      - name: Test Tauri native implementation
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+      - name: Build Tauri Windows installer with embedded offline resources
         run: npm run tauri build
+      - name: Recheck resource checksums after building installer
+        run: python scripts/prepare-installer-assets.py --check
       - name: Run native SQLite and teacher authentication tests
         run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Publish installer as Actions artifact

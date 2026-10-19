@@ -12,3 +12,7 @@ coverage/
 
 playwright-report/
 test-results/
+
+# CI-generated verified desktop resource pack and model candidate
+model-candidate-artifacts/
+src-tauri/resources/offline-assets/
