@@ -1,6 +1,7 @@
 mod database;
 mod student;
 mod knowledge;
+mod offline_assets;
 
 use std::{collections::HashMap, sync::Mutex};
 
@@ -41,6 +42,7 @@ pub fn run() {
             knowledge::submit_knowledge_check,
             knowledge::student_knowledge_results,
             knowledge::teacher_knowledge_results,
+            offline_assets::offline_assets_status,
         ])
         .run(tauri::generate_context!())
         .expect("failed to start Scoolabs");
