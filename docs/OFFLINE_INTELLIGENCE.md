@@ -1,19 +1,27 @@
-# Scoolabs: offline intelligence and optional model acquisition
+# Scoolabs: AI and science references inside the Windows installer
 
-## What ships now
-A transparent formative recommendation engine reads a student's **latest valid local two-question self-check** and existing practical records. It prioritises missed questions, reproduces teacher-authored explanations, and recommends an actionable next practical. It does not transmit student data, predict IQ, assign official grades, or claim scientific mastery. Teachers remain responsible for assessment.
+## What is bundled (v0.13)
+The Windows NSIS installer now contains a dedicated offline resource pack under the Tauri resource directory at `offline-assets/`. The pack comprises all five validated source science JSON datasets, the quantised Xenova/all-MiniLM-L6-v2 ONNX weights, tokenizer and metadata, the model card, provenance and a file-by-file SHA-256 manifest.
 
-## Optional pretrained asset workflow
-The [candidate acquisition workflow](../.github/workflows/offline-ai-model.yml) downloads the Apache-2.0 [Xenova/all-MiniLM-L6-v2](https://huggingface.co/Xenova/all-MiniLM-L6-v2) English sentence-embedding model. It retrieves a quantised ONNX weight file, tokenizer, config and model card, checks the 22,972,370-byte model SHA-256 **afdb6f1a0e45b715d0bb9b11772f032c399babd23bfc31fed1c170afc848bdb1**, and publishes the verified files and provenance as a 30-day GitHub Actions artifact.
+The build downloads and audits the model using `scripts/fetch-offline-model.py`, then runs `scripts/prepare-installer-assets.py --prepare --check` before packaging. The ONNX model has fixed size 22,972,370 bytes and pinned SHA-256 `afdb6f1a0e45b715d0bb9b11772f032c399babd23bfc31fed1c170afc848bdb1`. The build fails if it changes. Other acquired model files are integrity-checked against the generated manifest and retain provenance; independent hash pinning of every upstream tokenizer file remains a release-hardening task.
 
-The expected checksum is a fixed reviewed release gate. Any upstream change makes the workflow fail, not silently upgrade. Tokenizer files are fetched with the same run and their hashes are recorded for the artifact, but their hashes are not yet independently pinned; this must be resolved before shipping. The model is a **retrieval/semantic-similarity model**, not a question-answering or laboratory safety model.
+On application startup, the local desktop status panel can inspect the installed manifest and recompute file hashes through a read-only Tauri command. This reads no pupil data and makes no network requests. The ordinary reference atlas and teacher-authored formative study recommendations already work offline using frontend-bundled source content.
 
-## Production gates, not yet passed
-- Benchmark offline startup, memory and retrieval latency on low-power Windows 10 machines.
-- Lock the full revision and hashes for tokenizer, config and dependencies.
-- Create a teacher-reviewed biology, chemistry, physics and agriculture fact set with citations and exact-answer checks.
-- Evaluate hallucination, out-of-scope, unsafe lab advice and educational bias before any AI response is shown.
-- Package model only as an **optional offline download**, with explicit installer size and license notice; never add runtime download requests.
-- Validate result quality in a Nigerian secondary-school pilot; formative activity is not a proficiency score.
+## Important distinction: embedded weights are not live AI tutoring
+The MiniLM model is **an embedding / semantic retrieval candidate**, not a language model that writes answers. The installer ships its files for research and later integration, **but does not enable ONNX execution, semantic search, generative tutoring, automated grading or lab-safety advice**. The interface states this explicitly. It would be misleading to advertise active model-powered tutoring before actual inference, scientific evaluation and low-spec Windows testing pass.
 
-Existing [science reference](SCIENCE_DATA_SOURCES.md) and [PubChem](PUBCHEM_DATA.md) acquisition workflows continue to support reproducible content. The current training UI does not depend on the optional model artifact.
+## Build and test
+1. Run `python scripts/sync-science-data.py --check`, `python scripts/sync-pubchem.py --check`, and `python scripts/sync-taxonomy.py --check`.
+2. With internet in a build environment, run `python scripts/fetch-offline-model.py --download --check`.
+3. Run `python scripts/prepare-installer-assets.py --prepare --check`.
+4. Run `npm run tauri build`. This makes the Windows NSIS installer with the staged AI and datasets.
+5. Install on an offline Windows 10 device, open the student's progress dashboard and verify all five datasets and the model are reported. Test all four science subjects without connecting to the internet.
+
+## Remaining release gates
+- Independently pin tokenizer/config source revision and all upstream SHA-256 digests.
+- Add an audited native ONNX or all-local WASM inference implementation; benchmark startup, memory, latency and installer footprint on low-power Windows laptops.
+- Build teacher-reviewed subject retrieval passages and accuracy/safety evaluation. Never fabricate citations or scientific claims.
+- Test actual Windows NSIS installation and clean uninstall, including offline WebView2 setup.
+- Get curriculum specialists to review content before declaring classroom deployment readiness.
+
+Scoolabs remains an offline learning aid. Its source science datasets are teaching references, not unsupervised laboratory protocols.
