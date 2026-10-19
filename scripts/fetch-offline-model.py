@@ -9,6 +9,7 @@ import hashlib
 import json
 import pathlib
 import urllib.request
+from urllib.parse import urlsplit
 
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 DEST=ROOT/"model-candidate-artifacts"
@@ -22,9 +23,10 @@ FILES={WEIGHTS:25_000_000,"tokenizer.json":2_000_000,"config.json":200_000,
 def download(name,limit):
     req=urllib.request.Request(BASE+name,headers={"User-Agent":"Scoolabs-verified-build/1.0"})
     with urllib.request.urlopen(req,timeout=120) as response:
-        if not response.geturl().startswith(("https://huggingface.co/","https://cdn-lfs.hf.co/",
-                                              "https://cas-bridge.xethub.hf.co/")):
-            raise ValueError("Unapproved asset redirect host")
+        host=urlsplit(response.geturl()).hostname or ""
+        if not (host=="huggingface.co" or host.endswith(".huggingface.co") or
+                host=="hf.co" or host.endswith(".hf.co")):
+            raise ValueError("Unapproved asset redirect host: "+host)
         data=response.read(limit+1)
     if not data or len(data)>limit:raise ValueError(f"Invalid size for {name}")
     path=DEST/name
