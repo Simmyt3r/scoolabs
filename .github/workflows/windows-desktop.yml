@@ -50,6 +50,8 @@ jobs:
         run: npm run typecheck
       - name: Bundle browser interface with local ONNX weights and WASM
         run: npm run build
+      - name: Execute local ONNX model inference smoke test
+        run: node scripts/smoke-offline-ai.mjs
       - name: Generate and validate Scoolabs Windows branding
         run: |
           npm run brand:icons
