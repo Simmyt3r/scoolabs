@@ -14,7 +14,7 @@ test('offline AI search still returns cited references without the model in brow
   await page.getByRole('searchbox',{name:'Science reference question'}).fill('sodium chloride');
   await page.getByRole('button',{name:'Search references'}).click();
   await expect(page.getByRole('heading',{name:'Sodium chloride'})).toBeVisible();
-  await expect(page.getByText(/Source: NIH PubChem/)).toBeVisible();
+  await expect(page.getByText(/Source: NIH PubChem/).first()).toBeVisible();
   await expect(page.getByRole('button',{name:/Find by meaning/})).toBeDisabled();
   expect(external).toEqual([]);
 });
