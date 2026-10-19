@@ -1,1 +1,110 @@
-[]
+[
+  {
+    "name": "Allium cepa",
+    "acceptedName": "Allium cepa L.",
+    "gbifKey": 2857697,
+    "rank": "SPECIES",
+    "kingdom": "Plantae",
+    "family": "Amaryllidaceae",
+    "source": "https://www.gbif.org/species/2857697"
+  },
+  {
+    "name": "Saccharomyces cerevisiae",
+    "acceptedName": "Saccharomyces cerevisiae (Desm.) Meyen",
+    "gbifKey": 7440012,
+    "rank": "SPECIES",
+    "kingdom": "Fungi",
+    "family": "Saccharomycetaceae",
+    "source": "https://www.gbif.org/species/7440012"
+  },
+  {
+    "name": "Zea mays",
+    "acceptedName": "Zea mays L.",
+    "gbifKey": 5290052,
+    "rank": "SPECIES",
+    "kingdom": "Plantae",
+    "family": "Poaceae",
+    "source": "https://www.gbif.org/species/5290052"
+  },
+  {
+    "name": "Oryza sativa",
+    "acceptedName": "Oryza sativa L.",
+    "gbifKey": 2703459,
+    "rank": "SPECIES",
+    "kingdom": "Plantae",
+    "family": "Poaceae",
+    "source": "https://www.gbif.org/species/2703459"
+  },
+  {
+    "name": "Sorghum bicolor",
+    "acceptedName": "Sorghum bicolor (L.) Moench",
+    "gbifKey": 2705181,
+    "rank": "SPECIES",
+    "kingdom": "Plantae",
+    "family": "Poaceae",
+    "source": "https://www.gbif.org/species/2705181"
+  },
+  {
+    "name": "Manihot esculenta",
+    "acceptedName": "Manihot esculenta Crantz",
+    "gbifKey": 3060998,
+    "rank": "SPECIES",
+    "kingdom": "Plantae",
+    "family": "Euphorbiaceae",
+    "source": "https://www.gbif.org/species/3060998"
+  },
+  {
+    "name": "Vigna unguiculata",
+    "acceptedName": "Vigna unguiculata (L.) Walp.",
+    "gbifKey": 2982583,
+    "rank": "SPECIES",
+    "kingdom": "Plantae",
+    "family": "Fabaceae",
+    "source": "https://www.gbif.org/species/2982583"
+  },
+  {
+    "name": "Arachis hypogaea",
+    "acceptedName": "Arachis hypogaea L.",
+    "gbifKey": 5353770,
+    "rank": "SPECIES",
+    "kingdom": "Plantae",
+    "family": "Fabaceae",
+    "source": "https://www.gbif.org/species/5353770"
+  },
+  {
+    "name": "Solanum lycopersicum",
+    "acceptedName": "Solanum lycopersicum L.",
+    "gbifKey": 2930137,
+    "rank": "SPECIES",
+    "kingdom": "Plantae",
+    "family": "Solanaceae",
+    "source": "https://www.gbif.org/species/2930137"
+  },
+  {
+    "name": "Bos taurus",
+    "acceptedName": "Bos taurus Linnaeus, 1758",
+    "gbifKey": 2441022,
+    "rank": "SPECIES",
+    "kingdom": "Animalia",
+    "family": "Bovidae",
+    "source": "https://www.gbif.org/species/2441022"
+  },
+  {
+    "name": "Capra hircus",
+    "acceptedName": "Capra hircus Linnaeus, 1758",
+    "gbifKey": 2441056,
+    "rank": "SPECIES",
+    "kingdom": "Animalia",
+    "family": "Bovidae",
+    "source": "https://www.gbif.org/species/2441056"
+  },
+  {
+    "name": "Gallus gallus",
+    "acceptedName": "Gallus gallus (Linnaeus, 1758)",
+    "gbifKey": 9326020,
+    "rank": "SPECIES",
+    "kingdom": "Animalia",
+    "family": "Phasianidae",
+    "source": "https://www.gbif.org/species/9326020"
+  }
+]
