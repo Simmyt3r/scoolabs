@@ -44,9 +44,9 @@ def check():
     weight=entries[WEIGHTS]
     if weight["sha256"]!=EXPECTED_SHA256 or weight["bytes"]!=EXPECTED_BYTES:
         raise ValueError("ONNX checksum or size changed: review upstream model before use")
-    metadata=json.loads((DEST/"config.json").read_text())
+    metadata=json.loads((DEST/"config.json").read_text(encoding="utf-8"))
     if metadata.get("model_type")!="bert":raise ValueError("Unexpected model architecture")
-    tokenizer=json.loads((DEST/"tokenizer.json").read_text())
+    tokenizer=json.loads((DEST/"tokenizer.json").read_text(encoding="utf-8"))
     if not isinstance(tokenizer.get("model"),dict):raise ValueError("Invalid tokenizer")
     (DEST/"PROVENANCE.json").write_text(json.dumps({
       "repository":REPO,"origin":f"https://huggingface.co/{REPO}",
