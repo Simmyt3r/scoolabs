@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Scoolabs",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "identifier": "ng.silabs.scoolabs",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -45,6 +45,9 @@
     "publisher": "Simeon's Laboratories and Co Technologies Ltd",
     "category": "Education",
     "copyright": "Copyright 2026 Simeon's Laboratories and Co Technologies Ltd",
-    "shortDescription": "Offline interactive science laboratories for schools"
+    "shortDescription": "Offline interactive science laboratories for schools",
+    "resources": {
+      "resources/offline-assets/": "offline-assets/"
+    }
   }
 }
