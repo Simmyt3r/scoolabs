@@ -1,6 +1,6 @@
 [package]
 name = "scoolabs"
-version = "0.11.0"
+version = "0.13.0"
 description = "Scoolabs offline virtual science laboratory"
 authors = ["Simeon's Laboratories and Co Technologies Ltd"]
 license = "Proprietary"
@@ -19,3 +19,5 @@ rusqlite = { version = "0.32", features = ["bundled", "backup"] }
 argon2 = "0.5"
 uuid = { version = "1", features = ["v4"] }
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
