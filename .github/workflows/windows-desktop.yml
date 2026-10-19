@@ -5,6 +5,7 @@ on:
     branches: [main]
     tags: ['v*']
   workflow_dispatch:
+  pull_request:
 
 concurrency:
   group: scoolabs-${{ github.workflow }}-${{ github.ref }}
@@ -57,6 +58,9 @@ jobs:
         run: npm run tauri build
       - name: Recheck resource checksums after building installer
         run: python scripts/prepare-installer-assets.py --check
+      - name: Inspect finished NSIS installer for AI and science resources
+        shell: pwsh
+        run: ./scripts/verify-nsis-assets.ps1
       - name: Run native SQLite and teacher authentication tests
         run: cargo test --manifest-path src-tauri/Cargo.toml
       - name: Publish installer as Actions artifact
