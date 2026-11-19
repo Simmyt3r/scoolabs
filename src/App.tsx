@@ -251,7 +251,7 @@ function MyAssignments({assignments,records,onOpen}:{assignments:Assignment[];re
   </section>;
 }
 
-function StudentSignIn({onSignedIn,onTeacher}:{onSignedIn:(session:StudentSession)=>Promise<void>;onTeacher:()=>void}) {
+function StudentSignIn({onSignedIn,onTeacher,onSmartTeacher}:{onSignedIn:(session:StudentSession)=>Promise<void>;onTeacher:()=>void;onSmartTeacher:()=>void}) {
   const [accessCode,setAccessCode]=useState('');
   const [pin,setPin]=useState('');
   const [busy,setBusy]=useState(false);
@@ -292,7 +292,7 @@ function StudentSignIn({onSignedIn,onTeacher}:{onSignedIn:(session:StudentSessio
         {error&&<div role="alert" className="error-message">{error}</div>}
       </form>
       <div className="welcome-teacher-path"><strong>Setting up Scoolabs for a school?</strong><p>Teachers start by creating a local teacher account, then add classes and issue student access codes.</p>
-      <button className="button-outline" type="button" onClick={onTeacher}>Open teacher setup <ArrowRight size={15}/></button></div>
+      <button className="button-outline" type="button" onClick={onTeacher}>Open teacher setup <ArrowRight size={15}/></button><button className="button-outline" type="button" onClick={onSmartTeacher}>Open Smart Teacher <ArrowRight size={15}/></button></div>
       <p className="signin-note"><WifiOff size={14}/> No Wi-Fi required. Your school's data stays on this computer.</p>
     </div>
   </section>;
@@ -423,7 +423,7 @@ function App() {
       <div className="content-pad">
         {storageError&&<div role="alert" className="storage-warning">{storageError}</div>}
         {!storageReady&&<div className="record-note">Opening offline database...</div>}
-        {page==='smart-teacher'?<SmartTeacher/>:page==='teacher'?<TeacherPanel/>:page==='about'?<AboutScoolabs onTeacher={()=>navigate('teacher')} onStudent={()=>navigate('progress')}/>:isTauri()&&!studentSession?<StudentSignIn onSignedIn={onSignedIn} onTeacher={()=>navigate('teacher')}/>:page==='progress'?<StudentDashboard
+        {page==='smart-teacher'?<SmartTeacher/>:page==='teacher'?<TeacherPanel/>:page==='about'?<AboutScoolabs onTeacher={()=>navigate('teacher')} onStudent={()=>navigate('progress')}/>:isTauri()&&!studentSession?<StudentSignIn onSignedIn={onSignedIn} onTeacher={()=>navigate('teacher')} onSmartTeacher={()=>navigate('smart-teacher')}/>:page==='progress'?<StudentDashboard
           records={records} assignments={assignments} checks={knowledgeResults} studentName={profile.name}
           classroom={profile.classroom} isPreview={!isTauri()}
           onOpenExperiment={experimentId=>{const match=experiments.find(e=>e.id===experimentId);if(match){setActiveId(match.id);setPage(match.subject);setSidebar(false);setSaved(false);setDraft(null)}}}
