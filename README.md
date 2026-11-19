@@ -123,3 +123,7 @@ Physics adds eleven formulas and worked examples, alongside ten NIST 2022 CODATA
 The science dataset workflow downloads pinned public references during GitHub Actions, verifies the periodic element identities, preserves provenance hashes as an artifact and commits a narrow NIST physical-constants subset. The installed Windows app does not download datasets during use.
 
 No untested AI model is bundled just to attach an AI label. A future small local model will require model licence checks, source-grounded retrieval, offline speed and memory measurements, and independent teaching evaluation. The next major content milestone is a much more manipulable visual laboratory rather than another list of shallow topics.
+
+## Smart Teacher classroom milestone
+
+Scoolabs includes a teacher-supplied lesson delivery workspace for a connected television or projector. Paste a topic and complete teaching notes, present large classroom sections, use optional local English narration and pause for typed questions. Approved Q/A pairs and explicitly labelled related lesson excerpts remain grounded in the supplied plan. See [Smart Teacher roadmap and limitations](docs/SMART_TEACHER.md). This is a supervised, non-generative first milestone; offline microphone recognition and autonomous lesson authoring are not yet implemented.
