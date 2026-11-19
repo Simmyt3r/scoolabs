@@ -41,3 +41,5 @@
 .st-controls{border-top:1px solid #38576a;padding-top:15px}
 .st-controls .st-actions:last-child button:last-child{background:#087d72;border-color:#61e8d2}
 @media(max-width:850px){.st-setup{grid-template-columns:1fr}.st-classroom-inner{gap:12px}.st-classroom-header,.st-controls{align-items:start}.st-stage{justify-content:start}}
+
+.st-auto{display:flex;gap:9px;align-items:start;font-size:14px;line-height:1.5;color:#173449;margin:16px 0}.st-auto input{accent-color:#087d72;margin-top:4px}.welcome-teacher-path>.button-outline+.button-outline{margin-top:8px}
