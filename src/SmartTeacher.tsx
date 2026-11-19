@@ -82,7 +82,7 @@ export default function SmartTeacher(){
       active.current=false;utterance.current=null;setSpeech(checkpoint?'checkpoint':'idle');
       setVoiceError('Narration could not play. The lesson remains available on screen.');
     };
-    try{window.speechSynthesis.speak(u);}catch{
+    try{if(window.speechSynthesis.paused)window.speechSynthesis.resume();window.speechSynthesis.speak(u);}catch{
       active.current=false;utterance.current=null;setSpeech('idle');
       setVoiceError('Narration is unavailable. Use the projected text.');
     }
