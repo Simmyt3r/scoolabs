@@ -25,6 +25,7 @@ export default function SmartTeacher(){
   const [speech,setSpeech]=useState<SpeechState>('idle');
   const [questionsOpen,setQuestionsOpen]=useState(false);
   const [finished,setFinished]=useState(false);
+  const [autoAdvance,setAutoAdvance]=useState(false);
   const dialog=useRef<HTMLDialogElement>(null);
   const generation=useRef(0);
   const active=useRef(false);
@@ -47,6 +48,13 @@ export default function SmartTeacher(){
     if(lesson&&dialog.current&&!dialog.current.open)dialog.current.showModal();
   },[lesson]);
   const selectedVoice=voices.find(v=>v.voiceURI===voiceId)??voices[0];
+  // In hands-free mode, leave a discussion pause after each narrated section.
+  // Activity pages always require the classroom supervisor to continue manually.
+  useEffect(()=>{
+    if(!autoAdvance||!lesson||questionsOpen||finished||speech!=='checkpoint'||voiceError||index>=lesson.slides.length-1||/activity|exercise|discussion|practice|assessment/i.test(lesson.slides[index].title))return;
+    const timer=window.setTimeout(()=>move(index+1,true),20000);
+    return ()=>window.clearTimeout(timer);
+  },[autoAdvance,lesson,index,questionsOpen,finished,speech,voiceError]);
   function stop(){
     generation.current++;
     if(supported()&&active.current)window.speechSynthesis.cancel();
@@ -89,6 +97,7 @@ export default function SmartTeacher(){
       const next=prepareLesson(topic,plan);
       stop();setError('');setVoiceError('');setLesson(next);setIndex(0);setExchange(null);
       setQuestion('');setQuestionsOpen(false);setFinished(false);
+      if(autoAdvance)speak(next.slides[0].title+'. '+next.slides[0].text,true);
     }catch(e){setError(e instanceof Error?e.message:'Unable to prepare this lesson.');}
   }
   function exit(){
@@ -135,6 +144,7 @@ export default function SmartTeacher(){
             {voices.map(v=><option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>)}
           </select></label>
           <label className="st-field">Speaking speed: {rate.toFixed(1)}×<input type="range" min={0.7} max={1.2} step={0.1} value={rate} onChange={e=>setRate(Number(e.target.value))}/></label>
+          <label className="st-auto"><input type="checkbox" checked={autoAdvance} onChange={e=>setAutoAdvance(e.target.checked)}/> Hands-free narration: advance after 20 seconds of discussion; activity sections wait for the supervisor.</label>
           {error&&<p role="alert" className="st-error">{error}</p>}
           <div className="st-actions"><button ref={launch} className="button-primary" type="submit">Start classroom <ArrowRight size={18}/></button>
             <button className="button-outline" type="button" onClick={()=>{setTopic(DEMO_TOPIC);setPlan(DEMO_PLAN);setError('');}}>Load sample lesson</button></div>
@@ -151,10 +161,10 @@ export default function SmartTeacher(){
         <header className="st-classroom-header"><div><span className="st-overline">SCOOLABS SMART TEACHER</span><strong>{lesson.topic}</strong></div>
           <div className="st-actions"><button type="button" onClick={()=>void fullscreen()}><Maximize size={20}/> Fullscreen</button><button type="button" onClick={exit}><ArrowLeft size={20}/> Exit lesson</button></div></header>
         <progress aria-label="Lesson progress" max={lesson.slides.length} value={finished?lesson.slides.length:index+1}/>
-        <main className="st-stage" aria-live="polite">
+        <div className="st-stage" role="region" aria-label="Lesson content" aria-live="polite">
           {finished?<><span className="st-overline">LESSON COMPLETE</span><h2>Well done, class.</h2><p>Review the lesson and discuss any questions with your teacher.</p></>:
             <><span className="st-overline">SECTION {index+1} OF {lesson.slides.length}</span><h2>{slide.title}</h2><div className="st-slide-text">{slide.text}</div></>}
-          {speech==='checkpoint'&&!questionsOpen&&!finished&&<p className="st-checkpoint" role="status">Discussion break. Ask the class a question or invite learners to ask theirs before continuing.</p>}
+          {speech==='checkpoint'&&!questionsOpen&&!finished&&<p className="st-checkpoint" role="status">Discussion break. Ask the class a question or invite learners to ask theirs before continuing. {autoAdvance&&!voiceError&&index<lesson.slides.length-1&&!/activity|exercise|discussion|practice|assessment/i.test(slide.title)?'Next section begins automatically after 20 seconds.':''}</p>}
           {questionsOpen&&<section className="st-questions" aria-label="Class questions">
             <h3><MessageCircle size={24}/> Ask the Smart Teacher</h3>
             <form onSubmit={e=>{e.preventDefault();ask();}}>
@@ -166,13 +176,14 @@ export default function SmartTeacher(){
             <button type="button" onClick={()=>{stop();setQuestionsOpen(false);}}>Return to lesson</button>
           </section>}
           {voiceError&&<p role="alert" className="st-checkpoint">{voiceError}</p>}
-        </main>
+        </div>
         <footer className="st-controls">
           <div className="st-actions">
             <button type="button" disabled={index===0} onClick={()=>move(index-1)}><ArrowLeft size={19}/> Previous</button>
             {!finished&&<button type="button" disabled={questionsOpen||speech==='speaking'||speech==='paused'} onClick={()=>speak(slide.title+'. '+slide.text,true)}><Play size={20}/> Read section</button>}
             <button type="button" disabled={speech!=='speaking'&&speech!=='paused'} onClick={togglePause}>{speech==='paused'?<Play size={19}/>:<Pause size={19}/>} {speech==='paused'?'Resume':'Pause'}</button>
             <button type="button" disabled={speech!=='speaking'&&speech!=='paused'} onClick={stop}><Square size={18}/> Stop</button>
+            <button type="button" aria-pressed={autoAdvance} onClick={()=>setAutoAdvance(v=>!v)}>Auto advance: {autoAdvance?'on':'off'}</button>
             <button type="button" disabled={questionsOpen} onClick={openQuestions}><MessageCircle size={20}/> Questions</button>
           </div>
           <div className="st-actions">{index<lesson.slides.length-1?<><button type="button" onClick={()=>move(index+1)}>Next <ArrowRight size={19}/></button><button type="button" onClick={()=>move(index+1,true)}>Next and read <Volume2 size={19}/></button></>:<button type="button" disabled={finished} onClick={()=>{stop();setQuestionsOpen(false);setFinished(true);}}>Finish lesson</button>}</div>
