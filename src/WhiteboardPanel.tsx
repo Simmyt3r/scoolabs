@@ -14,7 +14,7 @@ export function BoardVisual({board}:{board:BoardState}){
           <path d="M160 55l10 -12 12 24 12 -24 12 24 12 -24 12 24 12 -24 18 12" stroke="#087d72" strokeWidth="4" fill="none"/>
           <path d="M188 150v50 M232 161v28" stroke="#173449" strokeWidth="5"/>
           <circle cx="335" cy="115" r="23" fill="#e8f5f2" stroke="#087d72" strokeWidth="3"/><text x="335" y="121" textAnchor="middle" fontWeight="bold" fontSize="20">A</text>
-          {board.voltage>0&&<path d="M112 175h42l-9 -7m9 7l-9 7" stroke="#087d72" strokeWidth="3" fill="none"/>}
+          {board.voltage>0&&<path d="M154 175h-42l9 -7m-9 7l9 7" stroke="#087d72" strokeWidth="3" fill="none"/>}
           <text x="210" y="29" textAnchor="middle" fontSize="17" fontWeight="bold">{board.resistance} Ω</text>
           <text x="210" y="220" textAnchor="middle" fontSize="17" fontWeight="bold">{board.voltage} V</text>
           <text x="335" y="153" textAnchor="middle" fontSize="14">{v.primary}</text>
