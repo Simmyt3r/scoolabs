@@ -22,3 +22,5 @@ public/offline-ai/
 
 # Optional model pack build output (multi-GB; never commit)
 /teacher-model-pack/
+
+/whisper-pack/
