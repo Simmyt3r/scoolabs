@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
 import {invoke,isTauri} from '@tauri-apps/api/core';
-import {BoardVisual} from './ClassroomBoard';
+import {BoardVisual} from './WhiteboardPanel';
 import {elapsedClock,type PublicFrame} from './classroomBoard';
 import './smart-teacher.css';
 
