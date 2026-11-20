@@ -19,3 +19,6 @@ src-tauri/resources/offline-assets/
 
 # Generated local-only model and WASM web assets
 public/offline-ai/
+
+# Optional model pack build output (multi-GB; never commit)
+/teacher-model-pack/
