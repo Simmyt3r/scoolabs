@@ -203,3 +203,32 @@ test('optional Whisper requires desktop and keeps typed questions and lesson res
   await classroom.getByRole('button',{name:'Return to lesson',exact:true}).click();
   await expect(classroom.getByRole('heading',{name:'Introduction',exact:true})).toBeVisible();
 });
+
+test('classroom retains selected follow-up context across lesson sections and clears it on exit',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Smart Teacher',exact:true}).click();
+  await page.getByRole('button',{name:'Load sample lesson'}).click();
+  await page.getByRole('button',{name:'Start classroom'}).click();
+  const classroom=page.getByRole('dialog',{name:'Classroom presentation'});
+  await classroom.getByRole('button',{name:'Questions',exact:true}).click();
+  await classroom.getByLabel('Learner question').fill("What is the formula for Ohm's law?");
+  await classroom.getByRole('button',{name:'Ask question'}).click();
+  await classroom.getByRole('button',{name:'Return to lesson',exact:true}).click();
+  await classroom.getByRole('button',{name:'Next',exact:true}).click();
+  await classroom.getByRole('button',{name:'Questions',exact:true}).click();
+  await classroom.getByText(/Classroom conversation · 1\/20/).click();
+  await classroom.getByRole('button',{name:'Follow up on this'}).click();
+  await expect(classroom.getByText('Follow-up context (operator only)')).toBeVisible();
+  await classroom.getByLabel('Learner question').fill('Why?');
+  await expect(classroom.getByRole('button',{name:'Queue for later'})).toBeDisabled();
+  await classroom.getByRole('button',{name:'Ask question'}).click();
+  await expect(classroom.getByText('Follow-up context (operator only)')).toHaveCount(0);
+  await classroom.getByRole('button',{name:'Return to lesson',exact:true}).click();
+  await classroom.getByRole('button',{name:'Explain more simply'}).click();
+  await expect(classroom.getByText('Explain this section in simpler words.',{exact:true})).toBeVisible();
+  await expect(classroom.getByText(/Current approved section:/)).toBeVisible();
+  await classroom.getByRole('button',{name:'Exit lesson'}).click();
+  await page.getByRole('button',{name:'Start classroom'}).click();
+  await classroom.getByRole('button',{name:'Questions',exact:true}).click();
+  await expect(classroom.getByText(/Classroom conversation · 0\/20/)).toBeVisible();
+});
