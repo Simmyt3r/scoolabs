@@ -105,10 +105,10 @@ export default function SmartTeacher(){
   // In hands-free mode, leave a discussion pause after each narrated section.
   // Activity pages always require the classroom supervisor to continue manually.
   useEffect(()=>{
-    if(!autoAdvance||projectorBlank||questionQueue.length||!lesson||questionsOpen||quizIndex!==null||finished||speech!=='checkpoint'||voiceError||index>=lesson.slides.length-1||needsSupervisor(lesson.slides[index].title,lesson.slides[index].cue))return;
+    if(!autoAdvance||agendaOpen||projectorBlank||questionQueue.length||!lesson||questionsOpen||quizIndex!==null||finished||speech!=='checkpoint'||voiceError||index>=lesson.slides.length-1||needsSupervisor(lesson.slides[index].title,lesson.slides[index].cue))return;
     const timer=window.setTimeout(()=>move(index+1,true),discussionDelay(discussionSeconds,lesson.slides[index].cue)*1000);
     return ()=>window.clearTimeout(timer);
-  },[autoAdvance,projectorBlank,questionQueue.length,discussionSeconds,lesson,index,questionsOpen,quizIndex,finished,speech,voiceError,followCues]);
+  },[autoAdvance,agendaOpen,projectorBlank,questionQueue.length,discussionSeconds,lesson,index,questionsOpen,quizIndex,finished,speech,voiceError,followCues]);
   function cancelListening(){
     if(!voicePending.current)return;
     voiceRun.current++;setVoiceNotice('Stopping microphone…');
@@ -276,7 +276,7 @@ export default function SmartTeacher(){
   }
   function openQuiz(){
     if(!lesson?.questions.length)return;
-    invalidateModel();stop();setQuestionsOpen(false);setQuizIndex(0);setRevealed(false);
+    invalidateModel();stop();setQuestionsOpen(false);setQuizIndex(0);setRevealed(false);setAgendaOpen(false);
   }
   function closeQuiz(){stop();setQuizIndex(null);setRevealed(false);}
   async function fullscreen(){
@@ -348,7 +348,7 @@ export default function SmartTeacher(){
         <div className="st-stage" role="region" aria-label="Lesson content" aria-live="polite">
           {finished?<><span className="st-overline">LESSON COMPLETE</span><h2>Well done, class.</h2><p>Review the lesson and discuss any questions with your teacher.</p></>:
             <><span className="st-overline">SECTION {index+1} OF {lesson.slides.length}</span><h2>{slide.title}</h2><div className="st-slide-text">{slide.text}</div></>}
-          {speech==='checkpoint'&&!questionsOpen&&quizIndex===null&&!finished&&<p className="st-checkpoint" role="status">Discussion break. Ask the class a question or invite learners to ask theirs before continuing. {questionQueue.length?' Automatic advancement is held until queued questions are addressed.':needsSupervisor(slide.title,slide.cue)?' Supervisor must continue manually.':autoAdvance&&!projectorBlank&&!voiceError&&index<lesson.slides.length-1?'Next section begins automatically after '+discussionDelay(discussionSeconds,slide.cue)+' seconds.':''}</p>}
+          {speech==='checkpoint'&&!questionsOpen&&quizIndex===null&&!finished&&<p className="st-checkpoint" role="status">Discussion break. Ask the class a question or invite learners to ask theirs before continuing. {questionQueue.length?' Automatic advancement is held until queued questions are addressed.':needsSupervisor(slide.title,slide.cue)?' Supervisor must continue manually.':autoAdvance&&!agendaOpen&&!projectorBlank&&!voiceError&&index<lesson.slides.length-1?'Next section begins automatically after '+discussionDelay(discussionSeconds,slide.cue)+' seconds.':''}</p>}
           {!finished&&!questionsOpen&&quizIndex===null&&<ClassroomBoard board={board} topic={lesson.topic} onChange={setBoard}/>}
           {questionsOpen&&<section className="st-questions" aria-label="Class questions">
             <h3><MessageCircle size={24}/> Ask the Smart Teacher</h3>
