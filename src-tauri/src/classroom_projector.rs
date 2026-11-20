@@ -38,7 +38,7 @@ pub struct Frame{
 impl Frame{
     fn valid(&self)->bool{
         matches!(self.mode.as_str(),"waiting"|"lesson"|"question"|"assessment"|"finished"|"blank")&&
-        self.topic.chars().count()<=150&&self.title.chars().count()<=150&&self.text.chars().count()<=20000&&
+        self.topic.chars().count()<=150&&self.title.chars().count()<=180&&self.text.chars().count()<=20000&&
         self.section<=self.total&&self.total<=100&&self.elapsed_seconds<=86400&&
         (1..=180).contains(&self.target_minutes)&&matches!(self.status.as_str(),"Ready"|"Speaking"|"Paused"|"Discussion"|"Listening")&&self.board.valid()&&
         (self.mode=="lesson"||matches!(&self.board,Board::None))&&
