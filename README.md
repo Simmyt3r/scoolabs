@@ -130,3 +130,6 @@ Scoolabs includes a teacher-supplied lesson delivery workspace for a connected t
 
 ### Shared Silabs AI
 Smart Teacher defaults to the existing Qwen3-1.7B runtime from [Silabs AI](https://github.com/Simmyt3r/silabs-ai). Reuse its materialized local weights with the [shared provider setup](docs/SHARED_SILABS_AI.md); the separate Qwen 4B GGUF pack remains optional. The shared engine still needs real classroom qualification.
+
+### Classroom whiteboard and TV display
+Smart Teacher includes teacher-controlled circuit, pendulum, microscopy and germination demonstrations, a lesson timer, configurable discussion breaks, and a separate read-only Windows classroom display for extended desktops. See [classroom guide](docs/SMART_TEACHER.md). Real dual-monitor and classroom acceptance testing remain required.

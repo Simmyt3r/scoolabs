@@ -4,6 +4,9 @@ import {ArrowLeft,ArrowRight,BookOpen,GraduationCap,Maximize,MessageCircle,Mic,M
 import {answerQuestion,DEMO_PLAN,DEMO_TOPIC,prepareLesson,type Lesson,type Reply} from './lessonEngine';
 import {importTextLesson,lessonReferences,LESSON_FILE_MAX,makeLessonFile,parseLessonFile,referenceDraft,type LessonFile} from './lessonLibrary';
 import {answerRequest,draftRequest,parseModelDraft,validateSuggestion,type ModelResult,type ModelSuggestion} from './localTeacherModel';
+import ClassroomBoard from './WhiteboardPanel';
+import {elapsedClock,newBoard,publicFrame,type BoardState} from './classroomBoard';
+import {useProjector} from './ClassroomProjector';
 import './smart-teacher.css';
 
 type SpeechState='idle'|'speaking'|'paused'|'checkpoint';
@@ -28,6 +31,12 @@ export default function SmartTeacher(){
   const [speech,setSpeech]=useState<SpeechState>('idle');
   const [questionsOpen,setQuestionsOpen]=useState(false);
   const [finished,setFinished]=useState(false);
+  const [board,setBoard]=useState<BoardState>(newBoard('none'));
+  const [targetMinutes,setTargetMinutes]=useState(40);
+  const [discussionSeconds,setDiscussionSeconds]=useState(20);
+  const [elapsedSeconds,setElapsedSeconds]=useState(0);
+  const [projectorBlank,setProjectorBlank]=useState(false);
+  const lessonStarted=useRef(0);
   const [autoAdvance,setAutoAdvance]=useState(false);
   const [referenceSubject,setReferenceSubject]=useState('physics');
   const [referenceId,setReferenceId]=useState('');
@@ -79,14 +88,20 @@ export default function SmartTeacher(){
   useEffect(()=>{
     if(lesson&&dialog.current&&!dialog.current.open)dialog.current.showModal();
   },[lesson]);
+  useEffect(()=>{
+    if(!lesson||finished)return;
+    const tick=()=>setElapsedSeconds(Math.min(86400,Math.max(0,Math.floor((Date.now()-lessonStarted.current)/1000))));
+    tick();const timer=window.setInterval(tick,1000);return ()=>window.clearInterval(timer);
+  },[lesson,finished]);
+  const projector=useProjector(publicFrame({lesson,index,finished,questionsOpen,quizIndex,revealed,exchange,blank:projectorBlank,speech,listening,elapsedSeconds,targetMinutes,board}));
   const selectedVoice=voices.find(v=>v.voiceURI===voiceId)??voices[0];
   // In hands-free mode, leave a discussion pause after each narrated section.
   // Activity pages always require the classroom supervisor to continue manually.
   useEffect(()=>{
-    if(!autoAdvance||!lesson||questionsOpen||quizIndex!==null||finished||speech!=='checkpoint'||voiceError||index>=lesson.slides.length-1||/activity|exercise|discussion|practice|assessment/i.test(lesson.slides[index].title))return;
-    const timer=window.setTimeout(()=>move(index+1,true),20000);
+    if(!autoAdvance||projectorBlank||!lesson||questionsOpen||quizIndex!==null||finished||speech!=='checkpoint'||voiceError||index>=lesson.slides.length-1||/activity|exercise|discussion|practice|assessment/i.test(lesson.slides[index].title))return;
+    const timer=window.setTimeout(()=>move(index+1,true),discussionSeconds*1000);
     return ()=>window.clearTimeout(timer);
-  },[autoAdvance,lesson,index,questionsOpen,quizIndex,finished,speech,voiceError]);
+  },[autoAdvance,projectorBlank,discussionSeconds,lesson,index,questionsOpen,quizIndex,finished,speech,voiceError]);
   function cancelListening(){
     if(!voicePending.current)return;
     voiceRun.current++;setVoiceNotice('Stopping microphone…');
@@ -204,7 +219,7 @@ export default function SmartTeacher(){
       const result=await invoke<ModelResult>('local_teacher_generate',{request,provider:modelProvider});
       if(!mounted.current||modelRun.current!==id)return;
       const suggestion=validateSuggestion(request,result);
-      setModelSuggestion(suggestion);setModelNotice(suggestion?'A suggestion is ready for supervisor review. Blank the TV before revealing it.':'The model abstained. Ask the supervising teacher.');
+      setModelSuggestion(suggestion);setModelNotice(suggestion?'A suggestion is ready for supervisor review. Use the separate TV window in extended display mode, or blank a mirrored TV before revealing it.':'The model abstained. Ask the supervising teacher.');
     }catch(e){if(mounted.current&&modelRun.current===id)setModelNotice(typeof e==='string'?e:e instanceof Error?e.message:'Model unavailable. The original response is still available.');}
     finally{if(mounted.current&&modelRun.current===id){modelPending.current=false;setModelBusy(false);}}
   }
@@ -221,12 +236,12 @@ export default function SmartTeacher(){
       if(draftReview&&!reviewed)throw new Error('Confirm that you reviewed this lesson before teaching.');
       const next=prepareLesson(topic,plan);
       invalidateModel();stop();setError('');setVoiceError('');setLesson(next);setIndex(0);setExchange(null);
-      setQuestion('');setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setFinished(false);
+      setQuestion('');setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setFinished(false);setBoard(newBoard('none'));setProjectorBlank(false);lessonStarted.current=Date.now();setElapsedSeconds(0);
       if(autoAdvance)speak(next.slides[0].title+'. '+next.slides[0].text,true);
     }catch(e){setError(e instanceof Error?e.message:'Unable to prepare this lesson.');}
   }
   function exit(){
-    invalidateModel();stop();
+    projector.close();invalidateModel();stop();
     if(document.fullscreenElement===dialog.current)void document.exitFullscreen().catch(()=>undefined);
     dialog.current?.close();setLesson(null);
     requestAnimationFrame(()=>launch.current?.focus());
@@ -290,7 +305,9 @@ export default function SmartTeacher(){
           </select></label>
           <label className="st-field">Speaking speed: {rate.toFixed(1)}×<input type="range" min={0.7} max={1.2} step={0.1} value={rate} onChange={e=>setRate(Number(e.target.value))}/></label>
           <label className="st-auto"><input type="checkbox" checked={autoSpeakReply} onChange={e=>setAutoSpeakReply(e.target.checked)}/> Read classroom answers aloud automatically when a local voice is available.</label>
-          <label className="st-auto"><input type="checkbox" checked={autoAdvance} onChange={e=>setAutoAdvance(e.target.checked)}/> Hands-free narration: advance after 20 seconds of discussion; activity sections wait for the supervisor.</label>
+          <label className="st-auto"><input type="checkbox" checked={autoAdvance} onChange={e=>setAutoAdvance(e.target.checked)}/> Hands-free narration: advance after a discussion break; activity sections wait for the supervisor.</label>
+          <label className="st-field">Lesson duration (minutes)<input type="number" min={1} max={180} value={targetMinutes} onChange={e=>setTargetMinutes(Math.min(180,Math.max(1,Math.round(Number(e.target.value)||1))))}/></label>
+          <label className="st-field">Discussion break (seconds)<input type="number" min={5} max={180} value={discussionSeconds} onChange={e=>setDiscussionSeconds(Math.min(180,Math.max(5,Math.round(Number(e.target.value)||5))))}/></label>
           {error&&<p role="alert" className="st-error">{error}</p>}
           <div className="st-actions"><button ref={launch} className="button-primary" type="submit" disabled={fileBusy||modelBusy||(draftReview&&!reviewed)}>Start classroom <ArrowRight size={18}/></button>
             <button className="button-outline" type="button" disabled={fileBusy||modelBusy} onClick={()=>{setTopic(DEMO_TOPIC);setPlan(DEMO_PLAN);setError('');setFileStatus('');setDraftReview(false);setReviewed(false);}}>Load sample lesson</button>
@@ -300,18 +317,20 @@ export default function SmartTeacher(){
       <aside className="st-panel"><h2><BookOpen size={20}/> How it teaches</h2>
         <ol><li>Present a large, readable section of the lesson.</li><li>Read it aloud using an installed local English voice, when available.</li><li>Pause for discussion and classroom activities after every section.</li><li>Type learner questions. Approved answers are repeated verbatim; related notes are labelled as excerpts.</li><li>Advance to the next section and recap.</li></ol>
         <p><Mic size={17}/> Windows desktop users can explicitly start one short offline microphone session using an installed English recognizer. Confirm the transcript before asking. Browser preview and unavailable microphones retain typed questions. An optional local language model can propose lesson drafts and answers, but a supervisor must review them before use.</p>
-        <p>Keep a responsible adult present, verify the lesson content before teaching, and do not enter student personal information. Project the application onto a connected TV or projector using Windows display settings.</p>
+        <p>Keep a responsible adult present, verify the lesson content before teaching, and do not enter student personal information. Extend your Windows desktop to the connected TV, open the separate classroom display, move it to the TV and maximize it. Use the main classroom view if a separate window is unavailable. Mirrored displays show the operator screen.</p>
       </aside>
     </div>
     {lesson&&slide&&<dialog ref={dialog} className="st-classroom" aria-label="Classroom presentation" onCancel={e=>{e.preventDefault();exit();}}>
       <div className="st-classroom-inner">
         <header className="st-classroom-header"><div><span className="st-overline">SCOOLABS SMART TEACHER</span><strong>{lesson.topic}</strong></div>
-          <div className="st-actions"><button type="button" onClick={()=>void fullscreen()}><Maximize size={20}/> Fullscreen</button><button type="button" onClick={exit}><ArrowLeft size={20}/> Exit lesson</button></div></header>
+          <div className="st-actions"><button type="button" disabled={!isTauri()||projector.opening||projector.active} onClick={()=>void projector.open()}>{projector.opening?'Opening display…':'Open TV display'}</button>{projector.active&&<><button type="button" aria-pressed={projectorBlank} onClick={()=>{stop();setProjectorBlank(v=>!v);}}>{projectorBlank?'Resume TV display':'Blank TV display'}</button><button type="button" onClick={projector.close}>Close TV display</button></>}<button type="button" onClick={()=>void fullscreen()}><Maximize size={20}/> Fullscreen</button><button type="button" onClick={exit}><ArrowLeft size={20}/> Exit lesson</button></div></header>
+        <div className="st-sessionbar"><span>Lesson time: {elapsedClock(elapsedSeconds)} / {targetMinutes} min{elapsedSeconds>=targetMinutes*60?' · target reached':''}</span><span role="status">{projector.notice||(!isTauri()?'Separate TV display requires the Windows desktop app.':'TV display not open.')} {projector.connected?' · Display connected':''}</span></div>
         <progress aria-label="Lesson progress" max={lesson.slides.length} value={finished?lesson.slides.length:index+1}/>
         <div className="st-stage" role="region" aria-label="Lesson content" aria-live="polite">
           {finished?<><span className="st-overline">LESSON COMPLETE</span><h2>Well done, class.</h2><p>Review the lesson and discuss any questions with your teacher.</p></>:
             <><span className="st-overline">SECTION {index+1} OF {lesson.slides.length}</span><h2>{slide.title}</h2><div className="st-slide-text">{slide.text}</div></>}
-          {speech==='checkpoint'&&!questionsOpen&&quizIndex===null&&!finished&&<p className="st-checkpoint" role="status">Discussion break. Ask the class a question or invite learners to ask theirs before continuing. {autoAdvance&&!voiceError&&index<lesson.slides.length-1&&!/activity|exercise|discussion|practice|assessment/i.test(slide.title)?'Next section begins automatically after 20 seconds.':''}</p>}
+          {speech==='checkpoint'&&!questionsOpen&&quizIndex===null&&!finished&&<p className="st-checkpoint" role="status">Discussion break. Ask the class a question or invite learners to ask theirs before continuing. {autoAdvance&&!projectorBlank&&!voiceError&&index<lesson.slides.length-1&&!/activity|exercise|discussion|practice|assessment/i.test(slide.title)?'Next section begins automatically after '+discussionSeconds+' seconds.':''}</p>}
+          {!finished&&!questionsOpen&&quizIndex===null&&<ClassroomBoard board={board} topic={lesson.topic} onChange={setBoard}/>}
           {questionsOpen&&<section className="st-questions" aria-label="Class questions">
             <h3><MessageCircle size={24}/> Ask the Smart Teacher</h3>
             <form onSubmit={e=>{e.preventDefault();ask();}}>
@@ -323,7 +342,7 @@ export default function SmartTeacher(){
             <p className="st-voice-note" role="status">{voiceNotice||(!isTauri()?'Microphone recognition is available in the Windows desktop application only. Type a question here.':'The microphone opens only after Listen to question. Audio is not saved by Scoolabs. Confirm the transcript before submitting.')}</p>
             {exchange&&<div className="st-answer"><strong>{exchange.question}</strong><p>{exchange.reply.text}</p><small>{exchange.reply.source}{exchange.reply.kind==='excerpt'?' · This excerpt may not directly answer the question.':''}</small>
               <button type="button" disabled={listening} onClick={()=>speak((exchange.reply.kind==='excerpt'?'Here is a related excerpt, not a confirmed answer. ':'')+exchange.reply.text,false)}><Volume2 size={19}/> Read response</button></div>}
-            {modelReady&&exchange&&exchange.reply.kind!=='approved'&&exchange.reply.kind!=='reviewed-ai'&&<div className="st-model-review"><button type="button" disabled={modelBusy||listening} onClick={()=>void suggestAnswer()}>Suggest AI answer</button>{modelBusy&&<button type="button" onClick={invalidateModel}>Discard pending suggestion</button>}<p role="status">{modelNotice}</p>{modelSuggestion&&!showModelReview&&<button type="button" onClick={()=>setShowModelReview(true)}>Show suggestion for supervisor (blank TV first)</button>}{modelSuggestion&&showModelReview&&<div className="st-answer"><strong>Unverified AI suggestion — do not teach until checked</strong><p>{modelSuggestion.text}</p><details open><summary>Supplied evidence (verify the answer against it)</summary>{modelSuggestion.sources.map(p=><p key={p.id}>{p.id}: {p.text}</p>)}</details><div className="st-actions"><button type="button" onClick={acceptSuggestion}>Approve and present answer</button><button type="button" onClick={()=>{setModelSuggestion(null);setShowModelReview(false);setModelNotice('Suggestion rejected.');}}>Reject suggestion</button></div></div>}</div>}
+            {modelReady&&exchange&&exchange.reply.kind!=='approved'&&exchange.reply.kind!=='reviewed-ai'&&<div className="st-model-review"><button type="button" disabled={modelBusy||listening} onClick={()=>void suggestAnswer()}>Suggest AI answer</button>{modelBusy&&<button type="button" onClick={invalidateModel}>Discard pending suggestion</button>}<p role="status">{modelNotice}</p>{modelSuggestion&&!showModelReview&&<button type="button" onClick={()=>setShowModelReview(true)}>Show suggestion for supervisor (use extended TV or blank mirrored TV)</button>}{modelSuggestion&&showModelReview&&<div className="st-answer"><strong>Unverified AI suggestion — do not teach until checked</strong><p>{modelSuggestion.text}</p><details open><summary>Supplied evidence (verify the answer against it)</summary>{modelSuggestion.sources.map(p=><p key={p.id}>{p.id}: {p.text}</p>)}</details><div className="st-actions"><button type="button" onClick={acceptSuggestion}>Approve and present answer</button><button type="button" onClick={()=>{setModelSuggestion(null);setShowModelReview(false);setModelNotice('Suggestion rejected.');}}>Reject suggestion</button></div></div>}</div>}
             <button type="button" onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);}}>Return to lesson</button>
           </section>}
           {quiz&&quizIndex!==null&&<section className="st-questions" aria-label="Class assessment"><h3>Class check · {quizIndex+1} / {lesson.questions.length}</h3><p className="st-quiz-question">{quiz.question}</p><button type="button" onClick={()=>speak(quiz.question,false)}><Volume2 size={19}/> Read question</button><p>Discuss your answer before the supervisor reveals it.</p>{revealed?<div className="st-answer"><strong>Approved answer</strong><p>{quiz.answer}</p><button type="button" onClick={()=>speak(quiz.answer,false)}><Volume2 size={19}/> Read answer</button></div>:<button type="button" onClick={()=>{stop();setRevealed(true);}}>Reveal answer</button>}<div className="st-actions"><button type="button" disabled={quizIndex===0} onClick={()=>{stop();setQuizIndex(quizIndex-1);setRevealed(false);}}>Previous question</button>{quizIndex<lesson.questions.length-1&&<button type="button" disabled={!revealed} onClick={()=>{stop();setQuizIndex(quizIndex+1);setRevealed(false);}}>Next question</button>}<button type="button" onClick={closeQuiz}>Return to lesson</button></div></section>}

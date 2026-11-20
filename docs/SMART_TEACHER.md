@@ -11,7 +11,7 @@ Learners' questions can be typed by a facilitator or dictated using the optional
 1. A portable lesson file library and local reference-based drafts are implemented. Next: teacher-authenticated persistent storage, DOCX import, richer lesson planning and curriculum review.
 2. Local voice narration and a Windows System.Speech push-to-listen prototype are implemented. Next: packaged Whisper offline recognition, Nigerian English/noisy-classroom evaluation and improved speech output.
 3. Optional local generative adapter for drafts and lesson-backed answer suggestions is implemented. Before rollout, validate accuracy, hallucinations, contextual answers, safety, memory and response latency. No unsupported claim that topic-only input produces a complete accurate lesson.
-4. Visual board with equations, diagrams, practical simulation demonstrations, quizzes, hands-up question queue, lesson timing and recap. Separate teacher operator and projector output to avoid exposing private notes.
+4. First visual board, four interactive demonstrations, lesson timing and a separate operator/projector window are implemented. Next: lesson-plan visual sequences, question queue, more simulations, diagrams and physical dual-display testing.
 5. Test on real low-spec Windows computers, offline with actual TV, microphone and speakers; verify typing shortcuts and accessibility, teacher takeover, voice interruption, offline behaviour, scientific correctness, age-appropriate material and classroom acceptance before pilot.
 
 ## Acceptance checks for milestone one
@@ -44,3 +44,25 @@ See [local model installation and qualification](LOCAL_TEACHER_MODEL.md). The se
 
 ## Shared Silabs AI provider
 Scoolabs now defaults to the existing shared Silabs AI Qwen3-1.7B runtime on the same PC. The larger 4B model pack remains an explicit alternative. See [shared provider setup and qualification](SHARED_SILABS_AI.md). No silent provider or cloud fallback occurs.
+
+## Fifth milestone: interactive board and separate classroom display
+
+Choose a lesson duration (1–180 minutes) and a discussion break (5–180 seconds) before starting the class. The timer measures elapsed session wall time, including discussion and interruptions; it does not force the lesson to stop at the target. The existing hands-free narration waits for the configured discussion break after a successfully spoken section. Practical/activity/assessment sections still require adult intervention, and a blank TV or open question/assessment pauses automatic advancement.
+
+In the classroom, open Digital whiteboard. Choose a demonstration or accept the exact-topic suggestion. The teacher controls the values; the display uses deterministic calculation functions from the existing simulation engine:
+- DC circuit: voltage, resistance, current and power, with schematic and V = I × R.
+- Pendulum: length, period and ten-cycle time under small-angle assumptions.
+- Microscope: objective lens, total magnification and modeled field of view.
+- Germination: crop, moisture, temperature, day and illustrative germination/height.
+
+These are simplified schematic demonstrations rather than physical experiment instructions. No AI-generated equations, executable diagrams or simulated values are trusted. The board is hidden while asking questions or conducting assessment and can be cleared or changed manually. Other experiments and model-directed visual sequences remain pending.
+
+### Windows extended display
+
+1. Connect the TV/projector and choose **Extend** in Windows display settings, not Duplicate.
+2. Start a lesson and select Open TV display. Move the new Scoolabs Classroom Display window to the TV and maximize it. The operator remains in the main app. The separate display contains the current section, public question/revealed answer, board and timing only.
+3. Use the main classroom controls to advance, speak, change the board or conduct a class check. Unsubmitted questions, transcripts, private model suggestions, source-review evidence and unrevealed answers are not transmitted to the TV. The supervising teacher must still ensure that the physical TV is showing only the new display. The software cannot detect a mirrored desktop.
+4. Blank TV display for a pause. Resume TV display to return to public content. Close TV display or Exit lesson when done. If the operator stops updating it, the native snapshot lease expires after five seconds and the display falls back to a waiting page. A stalled frontend polling request also blanks locally.
+5. The browser preview intentionally disables the independent TV window, while the full-window classroom and board continue to work. If native window creation or sync fails, use the main view; manually blank any mirrored TV before reviewing unapproved generated content.
+
+The native display receives an explicit, bounded snapshot, not the entire lesson/editor state. Requests are scoped by originating window label and a random display-session ID; stale sequence numbers cannot replace newer frames. Browser unit/E2E tests cover board values, timing workflows and public-frame omission, and native unit tests cover validation. This is not yet a verified dual-monitor deployment: test real extended display, Windows DPI, audio routing, drag/maximize, disconnect/reconnect, blanking, operator close and privacy while reviewing on physical hardware. No automatic monitor detection or placement is implemented.

@@ -125,3 +125,30 @@ test('shared Silabs AI is the default and optional local pack is explicit',async
   await page.getByRole('button',{name:'Load sample lesson'}).click();
   await expect(page.getByRole('button',{name:'Start classroom'})).toBeEnabled();
 });
+
+test('whiteboard uses live science controls and hides demonstrations during assessment',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Smart Teacher',exact:true}).click();
+  await page.getByRole('button',{name:'Load sample lesson'}).click();
+  await page.getByLabel('Lesson duration (minutes)').fill('35');
+  await page.getByLabel('Discussion break (seconds)').fill('30');
+  await page.getByRole('button',{name:'Start classroom'}).click();
+  const classroom=page.getByRole('dialog',{name:'Classroom presentation'});
+  await expect(classroom.getByText(/Lesson time:.*35 min/)).toBeVisible();
+  await expect(classroom.getByRole('button',{name:'Open TV display'})).toBeDisabled();
+  await classroom.getByRole('button',{name:'Digital whiteboard',exact:true}).click();
+  await classroom.getByRole('button',{name:'Use suggested demonstration'}).click();
+  const board=classroom.getByRole('region',{name:'Digital whiteboard'});
+  await expect(board.getByText('V = I × R',{exact:true})).toBeVisible();
+  await expect(board.getByText('3.00 A',{exact:true})).toHaveCount(2);
+  await classroom.getByRole('slider',{name:'Supply voltage'}).fill('24');
+  await expect(board.getByText('6.00 A',{exact:true})).toHaveCount(2);
+  await classroom.getByRole('button',{name:'Class check',exact:true}).click();
+  await expect(board).toHaveCount(0);
+  await classroom.getByRole('button',{name:'Return to lesson'}).click();
+  await expect(board).toBeVisible();
+  await classroom.getByRole('button',{name:'Clear whiteboard'}).click();
+  await expect(board).toHaveCount(0);
+  await classroom.getByRole('button',{name:'Exit lesson'}).click();
+  await expect(classroom).not.toBeVisible();
+});

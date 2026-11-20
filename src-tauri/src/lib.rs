@@ -4,6 +4,7 @@ mod knowledge;
 mod offline_assets;
 mod classroom_voice;
 mod local_teacher;
+mod classroom_projector;
 
 use std::{collections::HashMap, sync::Mutex};
 
@@ -18,6 +19,7 @@ pub fn run() {
             app.manage(student::LoginThrottle(Mutex::new(HashMap::new())));
             app.manage(classroom_voice::ClassroomVoice::default());
             app.manage(local_teacher::LocalTeacher::default());
+            app.manage(classroom_projector::ProjectorState::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -51,6 +53,10 @@ pub fn run() {
             classroom_voice::cancel_class_question,
             local_teacher::local_teacher_status,
             local_teacher::local_teacher_generate,
+            classroom_projector::open_classroom_projector,
+            classroom_projector::publish_classroom_frame,
+            classroom_projector::read_classroom_frame,
+            classroom_projector::close_classroom_projector,
         ])
         .run(tauri::generate_context!())
         .expect("failed to start Scoolabs");
