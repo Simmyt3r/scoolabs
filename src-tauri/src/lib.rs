@@ -3,6 +3,7 @@ mod student;
 mod knowledge;
 mod offline_assets;
 mod classroom_voice;
+mod local_teacher;
 
 use std::{collections::HashMap, sync::Mutex};
 
@@ -16,6 +17,7 @@ pub fn run() {
             app.manage(student::StudentSessions(Mutex::new(HashMap::new())));
             app.manage(student::LoginThrottle(Mutex::new(HashMap::new())));
             app.manage(classroom_voice::ClassroomVoice::default());
+            app.manage(local_teacher::LocalTeacher::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -47,6 +49,8 @@ pub fn run() {
             offline_assets::offline_assets_status,
             classroom_voice::recognize_class_question,
             classroom_voice::cancel_class_question,
+            local_teacher::local_teacher_status,
+            local_teacher::local_teacher_generate,
         ])
         .run(tauri::generate_context!())
         .expect("failed to start Scoolabs");
