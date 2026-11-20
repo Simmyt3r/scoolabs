@@ -1,0 +1,57 @@
+name: Optional offline Smart Teacher model pack
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/teacher-model-pack.lock.json'
+      - 'scripts/build-teacher-model-pack.py'
+      - 'scripts/test-teacher-model-pack.py'
+      - 'scripts/start-teacher-pack.ps1'
+      - 'scripts/qualify-teacher-model.py'
+      - 'docs/OFFLINE_MODEL_PACK.md'
+      - '.github/workflows/teacher-model-pack.yml'
+permissions:
+  contents: read
+concurrency:
+  group: teacher-pack-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  pack:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test offline pack guardrails
+        run: python scripts/test-teacher-model-pack.py
+      - name: Download and verify pinned model and runtime
+        run: python scripts/build-teacher-model-pack.py
+      - name: Verify complete payloads again
+        run: python scripts/build-teacher-model-pack.py --check
+      - name: Actual Windows CPU inference
+        run: python scripts/build-teacher-model-pack.py --smoke
+      - name: Upload qualified smoke-test pilot pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: Scoolabs-Smart-Teacher-Qwen4B-Windows-x64-Pilot
+          path: |
+            teacher-model-pack/model.gguf
+            teacher-model-pack/runtime.zip
+            teacher-model-pack/Start-Smart-Teacher.ps1
+            teacher-model-pack/qualify-teacher-model.py
+            teacher-model-pack/PROVENANCE.json
+            teacher-model-pack/README.md
+            teacher-model-pack/*-LICENSE.txt
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+      - name: Upload inference diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: teacher-model-smoke-diagnostics
+          path: teacher-model-pack/pilot-smoke-server.log
+          if-no-files-found: ignore
+          retention-days: 7

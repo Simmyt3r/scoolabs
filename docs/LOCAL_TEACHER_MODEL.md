@@ -1,6 +1,6 @@
 # Optional local Smart Teacher model (experimental)
 
-The base installer still includes MiniLM for retrieval, teacher-reviewed lessons, OS-local narration and experimental Windows speech recognition. These work without a generative model. MiniLM does not generate lessons. This optional adapter communicates with a separately installed local llama.cpp server; it does not download, embed, launch or authenticate a model.
+For the reproducible separate CPU pilot model pack and Windows launcher, see [offline model pack](OFFLINE_MODEL_PACK.md). The base installer still includes MiniLM for retrieval, teacher-reviewed lessons, OS-local narration and experimental Windows speech recognition. These work without a generative model. MiniLM does not generate lessons. This optional adapter communicates with a separately installed local llama.cpp server; it does not download, embed, launch or authenticate a model.
 
 ## Pilot installation (school technician)
 1. First measure the target PC's RAM, CPU, free disk and Windows version. Test on 8 GB RAM with a compact 4-bit model; 16 GB is preferable. Keep 4 GB PCs on the prepared-lesson edition. These are pilot targets, not guaranteed requirements.
