@@ -41,6 +41,7 @@ export default function SmartTeacher(){
   const [autoSpeakReply,setAutoSpeakReply]=useState(true);
   const voiceRun=useRef(0);
   const voicePending=useRef(false);
+  const voiceRequest=useRef<string|null>(null);
   const mounted=useRef(true);
   const dialog=useRef<HTMLDialogElement>(null);
   const generation=useRef(0);
@@ -50,7 +51,7 @@ export default function SmartTeacher(){
 
   useEffect(()=>{
     mounted.current=true;
-    return ()=>{mounted.current=false;voiceRun.current++;if(voicePending.current)void invoke('cancel_class_question').catch(()=>undefined);};
+    return ()=>{mounted.current=false;voiceRun.current++;if(voiceRequest.current)void invoke('cancel_class_question',{requestId:voiceRequest.current}).catch(()=>undefined);};
   },[]);
   useEffect(()=>{
     if(!supported())return;
@@ -78,18 +79,18 @@ export default function SmartTeacher(){
   function cancelListening(){
     if(!voicePending.current)return;
     voiceRun.current++;setVoiceNotice('Stopping microphone…');
-    void invoke('cancel_class_question').catch(()=>undefined);
+    if(voiceRequest.current)void invoke('cancel_class_question',{requestId:voiceRequest.current}).catch(()=>undefined);
   }
   async function listen(){
     if(!isTauri()||voicePending.current)return;
     stop();setVoiceNotice('Listening for one question on the local Windows recognizer. Speak now.');
-    const id=++voiceRun.current;voicePending.current=true;setListening(true);
+    const id=++voiceRun.current;const requestId=crypto.randomUUID();voiceRequest.current=requestId;voicePending.current=true;setListening(true);
     try{
-      const result=await invoke<{text:string;confidence:number}>('recognize_class_question');
+      const result=await invoke<{text:string;confidence:number}>('recognize_class_question',{requestId});
       if(!mounted.current||voiceRun.current!==id)return;
       setQuestion(result.text);setVoiceNotice('Check or correct the transcript, then select Ask question.');
     }catch(e){if(mounted.current&&voiceRun.current===id)setVoiceNotice(typeof e==='string'?e:'Microphone recognition failed. Type the question instead.');}
-    finally{voicePending.current=false;if(mounted.current){setListening(false);if(voiceRun.current!==id)setVoiceNotice('Microphone stopped.');}}
+    finally{voicePending.current=false;voiceRequest.current=null;if(mounted.current){setListening(false);if(voiceRun.current!==id)setVoiceNotice('Microphone stopped.');}}
   }
   function stop(){
     cancelListening();
@@ -259,7 +260,7 @@ export default function SmartTeacher(){
               <label className="st-field">Learner question<input autoFocus value={question} onChange={e=>setQuestion(e.target.value)} maxLength={300} disabled={listening} placeholder="Type a question from the class"/></label>
               <button type="submit" disabled={!question.trim()||listening}>Ask question</button>
             </form>
-            <div className="st-actions"><button type="button" disabled={!isTauri()||listening} onClick={()=>void listen()}><Mic size={20}/> Listen to question</button><button type="button" disabled={!listening} onClick={cancelListening}><MicOff size={20}/> Stop listening</button></div>
+            <div className="st-actions"><button type="button" disabled={!isTauri()||listening} onClick={()=>void listen()}><Mic size={20}/> Listen to question</button><button type="button" disabled={!listening} onClick={()=>cancelListening()}><MicOff size={20}/> Stop listening</button></div>
             {listening&&<p className="st-checkpoint" role="status">Microphone active or stopping. One short session only.</p>}
             <p className="st-voice-note" role="status">{voiceNotice||(!isTauri()?'Microphone recognition is available in the Windows desktop application only. Type a question here.':'The microphone opens only after Listen to question. Audio is not saved by Scoolabs. Confirm the transcript before submitting.')}</p>
             {exchange&&<div className="st-answer"><strong>{exchange.question}</strong><p>{exchange.reply.text}</p><small>{exchange.reply.source}{exchange.reply.kind==='excerpt'?' · This excerpt may not directly answer the question.':''}</small>
