@@ -1,10 +1,15 @@
 //! Optional loopback-only classroom LLM adapter. The school technician supplies
-//! a vetted local llama-server and model. Never downloads weights or contacts cloud APIs.
+//! the shared Silabs AI service or vetted optional llama-server. Scoolabs itself never downloads weights or contacts cloud APIs.
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{io::Read, sync::{Arc, atomic::{AtomicBool,Ordering}}, time::Duration};
 
 const BASE: &str = "http://127.0.0.1:17891";
+const SILABS_BASE: &str = "http://127.0.0.1:8000";
+const SILABS_MODEL: &str = "Qwen/Qwen3-1.7B";
+#[derive(Clone, Copy, Deserialize)]
+#[serde(rename_all="snake_case")]
+pub enum TeacherProvider { Silabs, Llama }
 const MODEL_ALIAS: &str = "scoolabs-teacher";
 const MAX_RESPONSE: usize = 64 * 1024;
 #[derive(Default, Clone)]
@@ -63,6 +68,15 @@ fn parse_completion(raw:&[u8],r:&TeacherRequest)->Result<TeacherResult,String>{
     let choice=outer.get("choices").and_then(Value::as_array).and_then(|v|v.first()).ok_or_else(invalid)?;
     if choice.get("finish_reason").and_then(Value::as_str)!=Some("stop"){return Err(invalid());}
     let content=choice.pointer("/message/content").and_then(Value::as_str).ok_or_else(invalid)?;
+    parse_content(content,r)
+}
+fn parse_content(content:&str,r:&TeacherRequest)->Result<TeacherResult,String>{
+    let invalid=||"The local model returned an incomplete or invalid draft. Use prepared teaching notes instead.".to_owned();
+    // Silabs Transformers uses plain text generation rather than grammar-constrained JSON.
+    // Permit only a single, well-delimited JSON fence; reject surrounding prose.
+    let content=content.trim();
+    let content=content.strip_prefix("```json\n").or_else(||content.strip_prefix("```\n"))
+        .and_then(|v|v.strip_suffix("```")).map(str::trim).unwrap_or(content);
     let result:Value=serde_json::from_str(content).map_err(|_|invalid())?;
     if r.mode=="draft" {
         let text=result.get("plan").and_then(Value::as_str).ok_or_else(invalid)?.trim();
@@ -98,36 +112,98 @@ fn read_response(response:reqwest::blocking::Response)->Result<Vec<u8>,String>{
     if raw.len()>MAX_RESPONSE{return Err("The local model returned an oversized response.".into());}
     Ok(raw)
 }
-fn probe()->Result<(),String>{
-    let response=client(Duration::from_secs(5))?.get(format!("{BASE}/health")).send()
-        .map_err(|_|"Local teaching model is not running. Prepared lesson mode remains available.")?;
-    let raw=read_response(response)?;
-    let v:Value=serde_json::from_slice(&raw).map_err(|_|"Local model health response is invalid.")?;
-    if v.get("status").and_then(Value::as_str)!=Some("ok"){return Err("Local teaching model is not ready.".into());}
+fn silabs_request_body(r:&TeacherRequest)->Value{
+    let body=request_body(r);
+    json!({"messages":body["messages"],"max_new_tokens":body["max_tokens"],"temperature":body["temperature"],"top_p":0.9})
+}
+fn check_silabs_status(v:&Value)->Result<(),String>{
+    if v.get("model_id").and_then(Value::as_str)!=Some(SILABS_MODEL){
+        return Err("Silabs AI is not configured for the shared Qwen3-1.7B baseline.".into());
+    }
+    if v.get("loaded").and_then(Value::as_bool)!=Some(true){
+        return Err("Start Silabs AI with local weights preloaded before using it in class.".into());
+    }
+    if v.get("guardrails_enabled").and_then(Value::as_bool)!=Some(true){
+        return Err("Enable Silabs AI guardrails before using it in class.".into());
+    }
+    if v.get("rag_enabled").and_then(Value::as_bool)!=Some(false){
+        return Err("Disable server-side RAG for the classroom pilot; Scoolabs supplies the lesson evidence.".into());
+    }
     Ok(())
 }
-fn generate(r:TeacherRequest)->Result<TeacherResult,String>{
+fn parse_silabs_completion(raw:&[u8], r:&TeacherRequest)->Result<TeacherResult,String>{
+    let invalid=||"Silabs AI returned an invalid or incomplete response. Use the prepared lesson fallback.".to_owned();
+    let outer:Value=serde_json::from_slice(raw).map_err(|_|invalid())?;
+    if outer.get("model").and_then(Value::as_str)!=Some(SILABS_MODEL){return Err(invalid());}
+    if outer.get("finish_reason").and_then(Value::as_str)==Some("guardrail"){
+        if r.mode=="answer"{return Ok(TeacherResult{text:String::new(),source_ids:vec![],abstained:true});}
+        return Err("Silabs AI guardrails declined this draft. Use teacher-approved notes.".into());
+    }
+    if outer.get("finish_reason").and_then(Value::as_str)!=Some("stop"){return Err(invalid());}
+    if outer.get("citation_repaired").and_then(Value::as_bool)==Some(true) ||
+        outer.get("sources").and_then(Value::as_array).is_some_and(|s|!s.is_empty()){return Err(invalid());}
+    let content=outer.get("text").and_then(Value::as_str).ok_or_else(invalid)?;
+    parse_content(content,r)
+}
+fn probe(provider:TeacherProvider)->Result<String,String>{
+    let http=client(Duration::from_secs(5))?;
+    match provider {
+        TeacherProvider::Silabs=>{
+            let response=http.get(format!("{SILABS_BASE}/v1/model")).send()
+                .map_err(|_|"Silabs AI is not running on this PC. Prepared lessons remain available.")?;
+            let v:Value=serde_json::from_slice(&read_response(response)?)
+                .map_err(|_|"Silabs AI model status is invalid.")?;
+            check_silabs_status(&v)?;
+            Ok("Silabs AI Qwen3-1.7B reports loaded with guardrails enabled. Verify local-only server setup before class.".into())
+        }
+        TeacherProvider::Llama=>{
+            let response=http.get(format!("{BASE}/health")).send()
+                .map_err(|_|"Optional Qwen model pack is not running. Prepared lessons remain available.")?;
+            let v:Value=serde_json::from_slice(&read_response(response)?).map_err(|_|"Local model health response is invalid.")?;
+            if v.get("status").and_then(Value::as_str)!=Some("ok"){return Err("Local teaching model is not ready.".into());}
+            Ok("Optional model pack responds; model identity and accuracy are not certified.".into())
+        }
+    }
+}
+fn generate(provider:TeacherProvider,r:TeacherRequest)->Result<TeacherResult,String>{
     validate(&r)?;
-    let response=client(Duration::from_secs(180))?.post(format!("{BASE}/v1/chat/completions"))
-        .json(&request_body(&r)).send()
-        .map_err(|_|"The local model did not respond. Check the school PC model service or use prepared teaching notes.")?;
-    parse_completion(&read_response(response)?,&r)
+    if matches!(provider,TeacherProvider::Silabs){probe(provider)?;}
+    let http=client(Duration::from_secs(180))?;
+    let response=match provider {
+        TeacherProvider::Silabs=>{
+            let mut req=http.post(format!("{SILABS_BASE}/v1/generate"))
+                .header("X-Silabs-Client","scoolabs").json(&silabs_request_body(&r));
+            if let Ok(key)=std::env::var("SCOOLABS_SILABS_API_KEY"){
+                if !key.trim().is_empty(){req=req.header("X-Silabs-API-Key",key);}
+            }
+            req.send()
+        }
+        TeacherProvider::Llama=>http.post(format!("{BASE}/v1/chat/completions")).json(&request_body(&r)).send(),
+    }.map_err(|_|"The local model did not respond. Check the school PC model service or use prepared teaching notes.")?;
+    if response.status()==reqwest::StatusCode::UNAUTHORIZED{
+        return Err("Silabs AI rejected the product credentials. Ask the school technician to configure the local API key.".into());
+    }
+    let raw=read_response(response)?;
+    match provider {
+        TeacherProvider::Silabs=>parse_silabs_completion(&raw,&r),
+        TeacherProvider::Llama=>parse_completion(&raw,&r),
+    }
 }
 #[tauri::command]
-pub async fn local_teacher_status()->TeacherStatus{
-    match tauri::async_runtime::spawn_blocking(probe).await {
-        Ok(Ok(()))=>TeacherStatus{available:true,message:"Local model service responds; model identity and accuracy are not certified.".into()},
+pub async fn local_teacher_status(provider:TeacherProvider)->TeacherStatus{
+    match tauri::async_runtime::spawn_blocking(move||probe(provider)).await {
+        Ok(Ok(message))=>TeacherStatus{available:true,message},
         Ok(Err(message))=>TeacherStatus{available:false,message},
         Err(_)=>TeacherStatus{available:false,message:"Local model service check failed.".into()},
     }
 }
 #[tauri::command]
-pub async fn local_teacher_generate(state:tauri::State<'_,LocalTeacher>,request:TeacherRequest)->Result<TeacherResult,String>{
+pub async fn local_teacher_generate(state:tauri::State<'_,LocalTeacher>,provider:TeacherProvider,request:TeacherRequest)->Result<TeacherResult,String>{
     validate(&request)?;
     let busy=state.0.clone();
     if busy.compare_exchange(false,true,Ordering::AcqRel,Ordering::Acquire).is_err(){return Err("The local teaching model is already working.".into());}
     let guard=Busy(busy);
-    tauri::async_runtime::spawn_blocking(move||{let _guard=guard;generate(request)}).await.map_err(|_|"Local teaching inference failed.")?
+    tauri::async_runtime::spawn_blocking(move||{let _guard=guard;generate(provider,request)}).await.map_err(|_|"Local teaching inference failed.")?
 }
 
 #[cfg(test)]
@@ -147,6 +223,26 @@ mod tests{
         assert!(parse_completion(&outer(good,"length"),&r).is_err());
         assert!(parse_completion(&outer(json!({"answer":"Invented","sourceIds":["L9"],"abstained":false}),"stop"),&r).is_err());
         assert!(parse_completion(&outer(json!({"answer":"","sourceIds":[],"abstained":true}),"stop"),&r).unwrap().abstained);
+    }
+    #[test]fn silabs_requires_loaded_baseline_guardrails_and_no_server_rag(){
+        let mut status=json!({"model_id":SILABS_MODEL,"loaded":true,"guardrails_enabled":true,"rag_enabled":false});
+        assert!(check_silabs_status(&status).is_ok());
+        status["loaded"]=json!(false);assert!(check_silabs_status(&status).is_err());
+        status["loaded"]=json!(true);status["guardrails_enabled"]=json!(false);assert!(check_silabs_status(&status).is_err());
+        status["guardrails_enabled"]=json!(true);status["rag_enabled"]=json!(true);assert!(check_silabs_status(&status).is_err());
+        status["rag_enabled"]=json!(false);status["model_id"]=json!("other");assert!(check_silabs_status(&status).is_err());
+    }
+    #[test]fn silabs_adapter_accepts_valid_json_and_declines_guardrails(){
+        let r=answer();
+        let content=json!({"answer":"Electromagnetic radiation.","sourceIds":["L1"],"abstained":false}).to_string();
+        let mut outer=json!({"model":SILABS_MODEL,"finish_reason":"stop","text":content,"sources":[]});
+        let encode=|v:&Value|v.to_string().into_bytes();
+        assert_eq!(parse_silabs_completion(&encode(&outer),&r).unwrap().source_ids,vec!["L1"]);
+        outer["finish_reason"]=json!("guardrail");assert!(parse_silabs_completion(&encode(&outer),&r).unwrap().abstained);
+        outer["finish_reason"]=json!("length");assert!(parse_silabs_completion(&encode(&outer),&r).is_err());
+        outer["finish_reason"]=json!("stop");outer["model"]=json!("wrong");assert!(parse_silabs_completion(&encode(&outer),&r).is_err());
+        let body=silabs_request_body(&r);
+        assert_eq!(body["max_new_tokens"],350);assert!(body.get("model").is_none());
     }
     #[test]fn request_uses_fixed_alias_and_no_streaming(){
         let body=request_body(&answer());assert_eq!(body["model"],MODEL_ALIAS);assert_eq!(body["stream"],false);
