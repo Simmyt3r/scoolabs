@@ -3,6 +3,7 @@ mod student;
 mod knowledge;
 mod offline_assets;
 mod classroom_voice;
+mod classroom_whisper;
 mod local_teacher;
 mod classroom_projector;
 
@@ -51,6 +52,8 @@ pub fn run() {
             offline_assets::offline_assets_status,
             classroom_voice::recognize_class_question,
             classroom_voice::cancel_class_question,
+            classroom_voice::transcribe_class_question,
+            classroom_whisper::classroom_whisper_status,
             local_teacher::local_teacher_status,
             local_teacher::local_teacher_generate,
             classroom_projector::open_classroom_projector,

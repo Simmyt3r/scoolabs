@@ -136,3 +136,6 @@ Smart Teacher includes teacher-controlled circuit, pendulum, microscopy and germ
 
 ### Lesson-directed teaching
 Reviewed lesson plans can now contain bounded whiteboard cues (`@board`), manual checkpoints (`@pause`) and discussion timing (`@discuss`). The operator can jump through a lesson agenda and queue up to 20 private learner questions before explicitly presenting them. See [Smart Teacher guide](docs/SMART_TEACHER.md). AI-generated cues require teacher review; all simulations remain deterministic.
+
+### Offline Whisper speech
+Smart Teacher can optionally use a separately installed local Whisper Base CPU service. Explicit short recording, transcript confirmation, narration interruption and return-to-section are supported; Windows speech and typed-question fallback remain available. See [offline speech pack](docs/OFFLINE_WHISPER.md). Physical microphone and classroom qualification are pending.

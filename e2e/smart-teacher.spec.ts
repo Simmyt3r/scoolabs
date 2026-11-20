@@ -183,3 +183,23 @@ test('lesson agenda launches planned demonstrations and deferred questions survi
   await classroom.getByRole('button',{name:'Next',exact:true}).click();
   await expect(classroom.getByRole('button',{name:'Finish lesson'})).toBeEnabled();
 });
+
+test('optional Whisper requires desktop and keeps typed questions and lesson resumption available',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Smart Teacher',exact:true}).click();
+  const provider=page.getByLabel('Speech recognizer');
+  await expect(provider).toHaveValue('windows');
+  await provider.selectOption('whisper');
+  await expect(page.getByRole('button',{name:'Check Whisper service'})).toBeDisabled();
+  await page.getByRole('button',{name:'Load sample lesson'}).click();
+  await page.getByRole('button',{name:'Start classroom'}).click();
+  const classroom=page.getByRole('dialog',{name:'Classroom presentation'});
+  await expect(classroom.getByRole('button',{name:'Interrupt and listen'})).toBeDisabled();
+  await classroom.getByRole('button',{name:'Questions',exact:true}).click();
+  await classroom.getByLabel('Learner question').fill("What is the formula for Ohm's law?");
+  await classroom.getByRole('button',{name:'Ask question'}).click();
+  await expect(classroom.getByText('Voltage equals current multiplied by resistance: V = I × R.',{exact:true})).toBeVisible();
+  await expect(classroom.getByRole('button',{name:'Return and reread section'})).toBeEnabled();
+  await classroom.getByRole('button',{name:'Return to lesson',exact:true}).click();
+  await expect(classroom.getByRole('heading',{name:'Introduction',exact:true})).toBeVisible();
+});

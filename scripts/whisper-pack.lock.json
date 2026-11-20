@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "model": {
+    "name": "ggml-base.bin",
+    "revision": "5359861c739e955e79d9a303bcbc70fb988958b1",
+    "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-base.bin",
+    "bytes": 147951465,
+    "sha256": "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe",
+    "license": "MIT",
+    "hash_source": "https://huggingface.co/cgerdes/whisper.cpp-mirror/blob/f5befc120f1d56272d3b1d3939c591a89a562323/README.md"
+  },
+  "runtime": {
+    "name": "runtime.zip",
+    "revision": "b5454",
+    "url": "https://github.com/ggml-org/whisper.cpp/releases/download/b5454/whisper-bin-x64.zip",
+    "sha256": "6ba69e3482d7826214f90a6a9c84ca07782aec1e1d0c6a7c30c994fd5d816ccb",
+    "license": "MIT",
+    "hash_source": "https://github.com/ScoopInstaller/Main/blob/master/bucket/whisper-cpp.json"
+  }
+}
