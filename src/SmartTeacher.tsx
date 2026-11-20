@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
 import {ArrowLeft,ArrowRight,BookOpen,GraduationCap,Maximize,MessageCircle,MicOff,Pause,Play,Square,Volume2} from 'lucide-react';
-import {answerQuestion,DEMO_PLAN,DEMO_TOPIC,prepareLesson,type Lesson,type Reply} from './smartTeacher';
+import {answerQuestion,DEMO_PLAN,DEMO_TOPIC,prepareLesson,type Lesson,type Reply} from './lessonEngine';
 import './smart-teacher.css';
 
 type SpeechState='idle'|'speaking'|'paused'|'checkpoint';
