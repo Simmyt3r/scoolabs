@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {answerQuestion,DEMO_PLAN,DEMO_TOPIC,prepareLesson} from './smartTeacher';
+import {answerQuestion,DEMO_PLAN,DEMO_TOPIC,prepareLesson} from './lessonEngine';
 
 describe('Smart Teacher classroom preparation and grounded questioning',()=>{
   it('separates teaching notes from the approved question bank',()=>{
