@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {ArrowLeft,ArrowRight,BookOpen,GraduationCap,Maximize,MessageCircle,MicOff,Pause,Play,Square,Volume2} from 'lucide-react';
 import {answerQuestion,DEMO_PLAN,DEMO_TOPIC,prepareLesson,type Lesson,type Reply} from './lessonEngine';
+import {importTextLesson,lessonReferences,LESSON_FILE_MAX,makeLessonFile,parseLessonFile,referenceDraft,type LessonFile} from './lessonLibrary';
 import './smart-teacher.css';
 
 type SpeechState='idle'|'speaking'|'paused'|'checkpoint';
@@ -26,6 +27,14 @@ export default function SmartTeacher(){
   const [questionsOpen,setQuestionsOpen]=useState(false);
   const [finished,setFinished]=useState(false);
   const [autoAdvance,setAutoAdvance]=useState(false);
+  const [referenceSubject,setReferenceSubject]=useState('physics');
+  const [referenceId,setReferenceId]=useState('');
+  const [draftReview,setDraftReview]=useState(false);
+  const [reviewed,setReviewed]=useState(false);
+  const [fileStatus,setFileStatus]=useState('');
+  const [fileBusy,setFileBusy]=useState(false);
+  const [quizIndex,setQuizIndex]=useState<number|null>(null);
+  const [revealed,setRevealed]=useState(false);
   const dialog=useRef<HTMLDialogElement>(null);
   const generation=useRef(0);
   const active=useRef(false);
@@ -51,10 +60,10 @@ export default function SmartTeacher(){
   // In hands-free mode, leave a discussion pause after each narrated section.
   // Activity pages always require the classroom supervisor to continue manually.
   useEffect(()=>{
-    if(!autoAdvance||!lesson||questionsOpen||finished||speech!=='checkpoint'||voiceError||index>=lesson.slides.length-1||/activity|exercise|discussion|practice|assessment/i.test(lesson.slides[index].title))return;
+    if(!autoAdvance||!lesson||questionsOpen||quizIndex!==null||finished||speech!=='checkpoint'||voiceError||index>=lesson.slides.length-1||/activity|exercise|discussion|practice|assessment/i.test(lesson.slides[index].title))return;
     const timer=window.setTimeout(()=>move(index+1,true),20000);
     return ()=>window.clearTimeout(timer);
-  },[autoAdvance,lesson,index,questionsOpen,finished,speech,voiceError]);
+  },[autoAdvance,lesson,index,questionsOpen,quizIndex,finished,speech,voiceError]);
   function stop(){
     generation.current++;
     if(supported()&&active.current)window.speechSynthesis.cancel();
@@ -92,11 +101,43 @@ export default function SmartTeacher(){
     if(speech==='paused'){window.speechSynthesis.resume();setSpeech('speaking');}
     else if(speech==='speaking'){window.speechSynthesis.pause();setSpeech('paused');}
   }
+  function useFile(file:LessonFile,message:string){
+    setTopic(file.topic);setPlan(file.plan);setDraftReview(true);setReviewed(false);setError('');setFileStatus(message);
+  }
+  function createDraft(){
+    try{useFile(referenceDraft(referenceId),'Draft prepared from the selected local reference. Review and adapt it for the class before starting.');}
+    catch(e){setError(e instanceof Error?e.message:'Could not prepare draft.');}
+  }
+  async function openFile(file:File){
+    if(fileBusy)return;setFileBusy(true);setError('');setFileStatus('');
+    try{
+      if(file.size>LESSON_FILE_MAX)throw new Error('Lesson file is too large.');
+      const raw=await file.text();
+      const isJson=/\.json$/i.test(file.name);
+      const lessonFile=isJson?parseLessonFile(raw):/\.(txt|md)$/i.test(file.name)?importTextLesson(raw,topic.trim()||file.name.replace(/\.(txt|md)$/i,'').slice(0,150)):null;
+      if(!lessonFile)throw new Error('Use a Scoolabs JSON file or plain text / Markdown notes.');
+      useFile(lessonFile,'Lesson imported locally. Review the content before teaching.');
+    }catch(e){setError(e instanceof Error?e.message:'Unable to read lesson file.');}
+    finally{setFileBusy(false);}
+  }
+  function exportFile(){
+    let url:string|undefined;
+    try{
+      if(draftReview&&!reviewed)throw new Error('Review the draft before exporting it.');
+      const data=makeLessonFile(topic,plan);
+      url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+      const link=document.createElement('a');link.href=url;link.download='scoolabs-'+(data.topic.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'lesson')+'.lesson.json';
+      document.body.appendChild(link);link.click();link.remove();setFileStatus('Lesson file prepared. Use your browser or Windows download location to save or share it.');setError('');
+    }catch(e){setError(e instanceof Error?e.message:'Unable to export lesson.');}
+    finally{if(url){const release=url;window.setTimeout(()=>URL.revokeObjectURL(release),1000);}}
+  }
   function startLesson(){
     try{
+      if(fileBusy)throw new Error('Finish importing the lesson first.');
+      if(draftReview&&!reviewed)throw new Error('Confirm that you reviewed this lesson before teaching.');
       const next=prepareLesson(topic,plan);
       stop();setError('');setVoiceError('');setLesson(next);setIndex(0);setExchange(null);
-      setQuestion('');setQuestionsOpen(false);setFinished(false);
+      setQuestion('');setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setFinished(false);
       if(autoAdvance)speak(next.slides[0].title+'. '+next.slides[0].text,true);
     }catch(e){setError(e instanceof Error?e.message:'Unable to prepare this lesson.');}
   }
@@ -108,7 +149,7 @@ export default function SmartTeacher(){
   }
   function move(next:number,read=false){
     if(!lesson||next<0||next>=lesson.slides.length)return;
-    stop();setIndex(next);setQuestionsOpen(false);setQuestion('');setExchange(null);setVoiceError('');setFinished(false);
+    stop();setIndex(next);setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setQuestion('');setExchange(null);setVoiceError('');setFinished(false);
     if(read)speak(lesson.slides[next].title+'. '+lesson.slides[next].text,true);
   }
   function ask(){
@@ -116,8 +157,13 @@ export default function SmartTeacher(){
     stop();setExchange({question:question.trim(),reply:answerQuestion(lesson,question.trim())});setQuestion('');
   }
   function openQuestions(){
-    stop();setQuestionsOpen(true);setExchange(null);setQuestion('');
+    stop();setQuizIndex(null);setRevealed(false);setQuestionsOpen(true);setExchange(null);setQuestion('');
   }
+  function openQuiz(){
+    if(!lesson?.questions.length)return;
+    stop();setQuestionsOpen(false);setQuizIndex(0);setRevealed(false);
+  }
+  function closeQuiz(){stop();setQuizIndex(null);setRevealed(false);}
   async function fullscreen(){
     const element=dialog.current;
     if(!element)return;
@@ -128,6 +174,7 @@ export default function SmartTeacher(){
     }catch{setVoiceError('Fullscreen is unavailable; the classroom view still fills the application window.');}
   }
   const slide=lesson?.slides[index];
+  const quiz=quizIndex===null?undefined:lesson?.questions[quizIndex];
   return <section className="smart-teacher" aria-label="Smart Teacher workspace">
     <div className="page-title"><div><span className="eyebrow">SCOOLABS · CLASSROOM TEACHING</span>
       <h1>Smart Teacher</h1><p>Prepare a lesson, project it on a TV or classroom screen, and pause for learner questions. No student account or internet connection is needed.</p></div>
@@ -135,10 +182,20 @@ export default function SmartTeacher(){
     <div className="st-setup">
       <div className="st-panel"><h2>Prepare a lesson</h2>
         <p>Paste the actual teaching notes, not just a list of objectives. Use headings starting with # to divide the lesson. Optional Q: and A: pairs supply approved answers.</p>
+        <div className="st-library-tools">
+          <h3>Prepare from the offline reference library</h3>
+          <p>Choose a bundled science reference to assemble an editable lesson draft with its original facts and limitations.</p>
+          <label className="st-field">Reference subject<select value={referenceSubject} onChange={e=>{setReferenceSubject(e.target.value);setReferenceId('');}}><option value="physics">Physics</option><option value="chemistry">Chemistry</option><option value="biology">Biology</option><option value="agriculture">Agricultural Science</option></select></label>
+          <label className="st-field">Reference topic<select value={referenceId} onChange={e=>setReferenceId(e.target.value)}><option value="">Choose a topic</option>{lessonReferences.filter(ref=>ref.subject===referenceSubject).map(ref=><option key={ref.id} value={ref.id}>{ref.title}</option>)}</select></label>
+          <button type="button" className="button-outline" disabled={!referenceId||fileBusy} onClick={createDraft}>Prepare reference draft</button>
+          <label className="st-field">Import lesson file<input type="file" accept=".json,.txt,.md" disabled={fileBusy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void openFile(file);}}/></label>
+          {fileStatus&&<p role="status">{fileStatus}</p>}
+        </div>
         <form onSubmit={e=>{e.preventDefault();startLesson();}}>
-          <label className="st-field">Lesson topic<input required maxLength={150} value={topic} onChange={e=>setTopic(e.target.value)} placeholder="e.g. Photosynthesis"/></label>
-          <label className="st-field">Lesson plan<textarea required rows={14} maxLength={20000} value={plan} onChange={e=>setPlan(e.target.value)} placeholder={'# Introduction\nPaste the introduction here.\n# Explanation\nPaste the teaching notes.\n# Class activity\nDescribe the activity.\n# Recap\nSummarise the lesson.\n# Questions and answers\nQ: ...\nA: ...'}/></label>
-          <p className="st-hint">{plan.length.toLocaleString()} / 20,000 characters · session-only, not saved</p>
+          <label className="st-field">Lesson topic<input required maxLength={150} value={topic} disabled={fileBusy} onChange={e=>{setTopic(e.target.value);setReviewed(false);}} placeholder="e.g. Photosynthesis"/></label>
+          <label className="st-field">Lesson plan<textarea required rows={14} maxLength={20000} value={plan} disabled={fileBusy} onChange={e=>{setPlan(e.target.value);setReviewed(false);}} placeholder={'# Introduction\nPaste the introduction here.\n# Explanation\nPaste the teaching notes.\n# Class activity\nDescribe the activity.\n# Recap\nSummarise the lesson.\n# Questions and answers\nQ: ...\nA: ...'}/></label>
+          <p className="st-hint">{plan.length.toLocaleString()} / 20,000 characters · session-only until exported</p>
+          {draftReview&&<label className="st-auto"><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)}/> I have reviewed these notes, answers and limitations for my class.</label>}
           <label className="st-field">Offline narration voice<select value={selectedVoice?.voiceURI??''} onChange={e=>setVoiceId(e.target.value)} disabled={!voices.length}>
             {!voices.length&&<option value="">No local English voice detected</option>}
             {voices.map(v=><option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>)}
@@ -146,13 +203,14 @@ export default function SmartTeacher(){
           <label className="st-field">Speaking speed: {rate.toFixed(1)}×<input type="range" min={0.7} max={1.2} step={0.1} value={rate} onChange={e=>setRate(Number(e.target.value))}/></label>
           <label className="st-auto"><input type="checkbox" checked={autoAdvance} onChange={e=>setAutoAdvance(e.target.checked)}/> Hands-free narration: advance after 20 seconds of discussion; activity sections wait for the supervisor.</label>
           {error&&<p role="alert" className="st-error">{error}</p>}
-          <div className="st-actions"><button ref={launch} className="button-primary" type="submit">Start classroom <ArrowRight size={18}/></button>
-            <button className="button-outline" type="button" onClick={()=>{setTopic(DEMO_TOPIC);setPlan(DEMO_PLAN);setError('');}}>Load sample lesson</button></div>
+          <div className="st-actions"><button ref={launch} className="button-primary" type="submit" disabled={fileBusy||(draftReview&&!reviewed)}>Start classroom <ArrowRight size={18}/></button>
+            <button className="button-outline" type="button" disabled={fileBusy} onClick={()=>{setTopic(DEMO_TOPIC);setPlan(DEMO_PLAN);setError('');setFileStatus('');setDraftReview(false);setReviewed(false);}}>Load sample lesson</button>
+            <button className="button-outline" type="button" disabled={fileBusy||!topic.trim()||!plan.trim()||(draftReview&&!reviewed)} onClick={exportFile}>Export lesson file</button></div>
         </form>
       </div>
       <aside className="st-panel"><h2><BookOpen size={20}/> How it teaches</h2>
         <ol><li>Present a large, readable section of the lesson.</li><li>Read it aloud using an installed local English voice, when available.</li><li>Pause for discussion and classroom activities after every section.</li><li>Type learner questions. Approved answers are repeated verbatim; related notes are labelled as excerpts.</li><li>Advance to the next section and recap.</li></ol>
-        <p><MicOff size={17}/> This version uses typed questions. Microphone recognition, generative explanations and automatic lesson authoring are not yet included.</p>
+        <p><MicOff size={17}/> This version uses typed questions. Microphone recognition and generative explanations are not yet included. Reference drafts assemble existing science facts; they are not automatically qualified lesson plans.</p>
         <p>Keep a responsible adult present, verify the lesson content before teaching, and do not enter student personal information. Project the application onto a connected TV or projector using Windows display settings.</p>
       </aside>
     </div>
@@ -164,7 +222,7 @@ export default function SmartTeacher(){
         <div className="st-stage" role="region" aria-label="Lesson content" aria-live="polite">
           {finished?<><span className="st-overline">LESSON COMPLETE</span><h2>Well done, class.</h2><p>Review the lesson and discuss any questions with your teacher.</p></>:
             <><span className="st-overline">SECTION {index+1} OF {lesson.slides.length}</span><h2>{slide.title}</h2><div className="st-slide-text">{slide.text}</div></>}
-          {speech==='checkpoint'&&!questionsOpen&&!finished&&<p className="st-checkpoint" role="status">Discussion break. Ask the class a question or invite learners to ask theirs before continuing. {autoAdvance&&!voiceError&&index<lesson.slides.length-1&&!/activity|exercise|discussion|practice|assessment/i.test(slide.title)?'Next section begins automatically after 20 seconds.':''}</p>}
+          {speech==='checkpoint'&&!questionsOpen&&quizIndex===null&&!finished&&<p className="st-checkpoint" role="status">Discussion break. Ask the class a question or invite learners to ask theirs before continuing. {autoAdvance&&!voiceError&&index<lesson.slides.length-1&&!/activity|exercise|discussion|practice|assessment/i.test(slide.title)?'Next section begins automatically after 20 seconds.':''}</p>}
           {questionsOpen&&<section className="st-questions" aria-label="Class questions">
             <h3><MessageCircle size={24}/> Ask the Smart Teacher</h3>
             <form onSubmit={e=>{e.preventDefault();ask();}}>
@@ -175,18 +233,20 @@ export default function SmartTeacher(){
               <button type="button" onClick={()=>speak(exchange.reply.text,false)}><Volume2 size={19}/> Read response</button></div>}
             <button type="button" onClick={()=>{stop();setQuestionsOpen(false);}}>Return to lesson</button>
           </section>}
+          {quiz&&quizIndex!==null&&<section className="st-questions" aria-label="Class assessment"><h3>Class check · {quizIndex+1} / {lesson.questions.length}</h3><p className="st-quiz-question">{quiz.question}</p><button type="button" onClick={()=>speak(quiz.question,false)}><Volume2 size={19}/> Read question</button><p>Discuss your answer before the supervisor reveals it.</p>{revealed?<div className="st-answer"><strong>Approved answer</strong><p>{quiz.answer}</p><button type="button" onClick={()=>speak(quiz.answer,false)}><Volume2 size={19}/> Read answer</button></div>:<button type="button" onClick={()=>{stop();setRevealed(true);}}>Reveal answer</button>}<div className="st-actions"><button type="button" disabled={quizIndex===0} onClick={()=>{stop();setQuizIndex(quizIndex-1);setRevealed(false);}}>Previous question</button>{quizIndex<lesson.questions.length-1&&<button type="button" disabled={!revealed} onClick={()=>{stop();setQuizIndex(quizIndex+1);setRevealed(false);}}>Next question</button>}<button type="button" onClick={closeQuiz}>Return to lesson</button></div></section>}
           {voiceError&&<p role="alert" className="st-checkpoint">{voiceError}</p>}
         </div>
         <footer className="st-controls">
           <div className="st-actions">
             <button type="button" disabled={index===0} onClick={()=>move(index-1)}><ArrowLeft size={19}/> Previous</button>
-            {!finished&&<button type="button" disabled={questionsOpen||speech==='speaking'||speech==='paused'} onClick={()=>speak(slide.title+'. '+slide.text,true)}><Play size={20}/> Read section</button>}
+            {!finished&&<button type="button" disabled={questionsOpen||quizIndex!==null||speech==='speaking'||speech==='paused'} onClick={()=>speak(slide.title+'. '+slide.text,true)}><Play size={20}/> Read section</button>}
             <button type="button" disabled={speech!=='speaking'&&speech!=='paused'} onClick={togglePause}>{speech==='paused'?<Play size={19}/>:<Pause size={19}/>} {speech==='paused'?'Resume':'Pause'}</button>
             <button type="button" disabled={speech!=='speaking'&&speech!=='paused'} onClick={stop}><Square size={18}/> Stop</button>
             <button type="button" aria-pressed={autoAdvance} onClick={()=>setAutoAdvance(v=>!v)}>Auto advance: {autoAdvance?'on':'off'}</button>
             <button type="button" disabled={questionsOpen} onClick={openQuestions}><MessageCircle size={20}/> Questions</button>
+            <button type="button" disabled={quizIndex!==null||!lesson.questions.length} onClick={openQuiz}>Class check</button>
           </div>
-          <div className="st-actions">{index<lesson.slides.length-1?<><button type="button" onClick={()=>move(index+1)}>Next <ArrowRight size={19}/></button><button type="button" onClick={()=>move(index+1,true)}>Next and read <Volume2 size={19}/></button></>:<button type="button" disabled={finished} onClick={()=>{stop();setQuestionsOpen(false);setFinished(true);}}>Finish lesson</button>}</div>
+          <div className="st-actions">{index<lesson.slides.length-1?<><button type="button" onClick={()=>move(index+1)}>Next <ArrowRight size={19}/></button><button type="button" onClick={()=>move(index+1,true)}>Next and read <Volume2 size={19}/></button></>:<button type="button" disabled={finished} onClick={()=>{stop();setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setFinished(true);}}>Finish lesson</button>}</div>
         </footer>
       </div>
     </dialog>}
