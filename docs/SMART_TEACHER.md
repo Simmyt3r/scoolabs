@@ -41,3 +41,6 @@ References: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2 ; http
 
 ## Fourth milestone: optional local generative adapter
 See [local model installation and qualification](LOCAL_TEACHER_MODEL.md). The separately installed llama.cpp service can draft a lesson from a topic and human-provided outline, and propose short source-scoped answers after the base Q&A flow. The model is not bundled or qualified. Drafts require review, and suggested answers must be reviewed before narration. All requests are explicit and loopback-only. No live autonomous teacher claim is made.
+
+## Shared Silabs AI provider
+Scoolabs now defaults to the existing shared Silabs AI Qwen3-1.7B runtime on the same PC. The larger 4B model pack remains an explicit alternative. See [shared provider setup and qualification](SHARED_SILABS_AI.md). No silent provider or cloud fallback occurs.

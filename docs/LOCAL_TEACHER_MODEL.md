@@ -1,5 +1,7 @@
 # Optional local Smart Teacher model (experimental)
 
+**Default provider:** [Shared Silabs AI Qwen3-1.7B](SHARED_SILABS_AI.md). The llama.cpp instructions below describe the explicitly selected alternative provider.
+
 For the reproducible separate CPU pilot model pack and Windows launcher, see [offline model pack](OFFLINE_MODEL_PACK.md). The base installer still includes MiniLM for retrieval, teacher-reviewed lessons, OS-local narration and experimental Windows speech recognition. These work without a generative model. MiniLM does not generate lessons. This optional adapter communicates with a separately installed local llama.cpp server; it does not download, embed, launch or authenticate a model.
 
 ## Pilot installation (school technician)
