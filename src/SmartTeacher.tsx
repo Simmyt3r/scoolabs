@@ -8,6 +8,7 @@ import ClassroomBoard from './WhiteboardPanel';
 import {elapsedClock,newBoard,publicFrame,type BoardState} from './classroomBoard';
 import {useProjector} from './ClassroomProjector';
 import {discussionDelay,needsSupervisor,queueQuestion,removeQueuedQuestion,QUEUE_LIMIT} from './teachingCues';
+import {captureQuestion,type Capture} from './whisperCapture';
 import './smart-teacher.css';
 
 type SpeechState='idle'|'speaking'|'paused'|'checkpoint';
@@ -52,6 +53,12 @@ export default function SmartTeacher(){
   const [quizIndex,setQuizIndex]=useState<number|null>(null);
   const [revealed,setRevealed]=useState(false);
   const [listening,setListening]=useState(false);
+  const [recognizer,setRecognizer]=useState<'windows'|'whisper'>('windows');
+  const [whisperReady,setWhisperReady]=useState(false);
+  const [whisperChecking,setWhisperChecking]=useState(false);
+  const [whisperNotice,setWhisperNotice]=useState('');
+  const [voicePhase,setVoicePhase]=useState<'idle'|'permission'|'recording'|'transcribing'|'windows'|'stopping'>('idle');
+  const capture=useRef<Capture|null>(null);
   const [voiceNotice,setVoiceNotice]=useState('');
   const [autoSpeakReply,setAutoSpeakReply]=useState(true);
   const [modelProvider,setModelProvider]=useState<'silabs'|'llama'>('silabs');
@@ -76,7 +83,7 @@ export default function SmartTeacher(){
 
   useEffect(()=>{
     mounted.current=true;
-    return ()=>{mounted.current=false;voiceRun.current++;modelRun.current++;modelCheckRun.current++;if(voiceRequest.current)void invoke('cancel_class_question',{requestId:voiceRequest.current}).catch(()=>undefined);};
+    return ()=>{mounted.current=false;capture.current?.cancel();voiceRun.current++;modelRun.current++;modelCheckRun.current++;if(voiceRequest.current)void invoke('cancel_class_question',{requestId:voiceRequest.current}).catch(()=>undefined);};
   },[]);
   useEffect(()=>{
     if(!supported())return;
@@ -111,19 +118,46 @@ export default function SmartTeacher(){
   },[autoAdvance,agendaOpen,projectorBlank,questionQueue.length,discussionSeconds,lesson,index,questionsOpen,quizIndex,finished,speech,voiceError,followCues]);
   function cancelListening(){
     if(!voicePending.current)return;
-    voiceRun.current++;setVoiceNotice('Stopping microphone…');
+    voiceRun.current++;setVoicePhase('stopping');capture.current?.cancel();setVoiceNotice('Stopping microphone or discarding pending transcription…');
     if(voiceRequest.current)void invoke('cancel_class_question',{requestId:voiceRequest.current}).catch(()=>undefined);
   }
-  async function listen(){
-    if(!isTauri()||voicePending.current)return;
-    stop();setVoiceNotice('Listening for one question on the local Windows recognizer. Speak now.');
-    const id=++voiceRun.current;const requestId=crypto.randomUUID();voiceRequest.current=requestId;voicePending.current=true;setListening(true);
+  async function checkWhisper(){
+    if(!isTauri()||whisperChecking)return;
+    setWhisperChecking(true);setWhisperReady(false);setWhisperNotice('Checking the offline speech service…');
     try{
-      const result=await invoke<{text:string;confidence:number}>('recognize_class_question',{requestId});
-      if(!mounted.current||voiceRun.current!==id)return;
-      setQuestion(result.text);setVoiceNotice('Check or correct the transcript, then select Ask question.');
-    }catch(e){if(mounted.current&&voiceRun.current===id)setVoiceNotice(typeof e==='string'?e:'Microphone recognition failed. Type the question instead.');}
-    finally{voicePending.current=false;voiceRequest.current=null;if(mounted.current){setListening(false);if(voiceRun.current!==id)setVoiceNotice('Microphone stopped.');}}
+      const result=await invoke<{available:boolean;message:string}>('classroom_whisper_status');
+      if(mounted.current){setWhisperReady(result.available);setWhisperNotice(result.message);}
+    }catch{if(mounted.current)setWhisperNotice('Local Whisper is unavailable. Windows speech and typing still work.');}
+    finally{if(mounted.current)setWhisperChecking(false);}
+  }
+  async function listen(){
+    if(!isTauri()||voicePending.current||modelBusy||(recognizer==='whisper'&&!whisperReady))return;
+    stop();
+    const id=++voiceRun.current;const requestId=crypto.randomUUID();voiceRequest.current=requestId;voicePending.current=true;setListening(true);
+    const current=()=>mounted.current&&voiceRun.current===id;
+    try{
+      let text:string;
+      if(recognizer==='whisper'){
+        setVoicePhase('permission');setVoiceNotice('Allow microphone access if prompted. Wait until recording begins.');
+        const session=captureQuestion(()=>{if(current()){setVoicePhase('recording');setVoiceNotice('Speak now. Select Finish recording when done, or wait up to 12 seconds.');}});
+        capture.current=session;
+        const pcm=await session.result;
+        let samples:number[]=[];
+        try{
+          if(!current())return;
+          setVoicePhase('transcribing');setVoiceNotice('Microphone closed. Transcribing locally…');
+          samples=Array.from(pcm);pcm.fill(0);
+          const result=await invoke<{text:string}>('transcribe_class_question',{requestId,samples});
+          text=result.text;
+        }finally{pcm.fill(0);samples.fill(0);}
+      }else{
+        setVoicePhase('windows');setVoiceNotice('Listening for one question on the local Windows recognizer. Speak now.');
+        const result=await invoke<{text:string;confidence:number}>('recognize_class_question',{requestId});text=result.text;
+      }
+      if(!current())return;
+      setQuestion(text);setVoiceNotice('Check or correct the transcript, then select Ask question.');
+    }catch(e){if(current())setVoiceNotice(typeof e==='string'?e:e instanceof Error?e.message:'Microphone recognition failed. Type the question instead.');}
+    finally{capture.current=null;voicePending.current=false;voiceRequest.current=null;if(mounted.current){setListening(false);setVoicePhase('idle');if(voiceRun.current!==id)setVoiceNotice('Microphone stopped; pending transcript discarded.');}}
   }
   function stop(){
     cancelListening();
@@ -316,6 +350,8 @@ export default function SmartTeacher(){
           <button className="button-outline" type="button" disabled={!modelReady||fileBusy||modelBusy||!topic.trim()||!plan.trim()} onClick={()=>void generateDraft()}>Generate AI lesson draft</button>
           {modelBusy&&<button className="button-outline" type="button" onClick={invalidateModel}>Discard pending generation</button>}
           {draftReview&&<label className="st-auto"><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)}/> I have reviewed these notes, answers and limitations for my class.</label>}
+          <label className="st-field">Speech recognizer<select value={recognizer} disabled={listening} onChange={e=>setRecognizer(e.target.value==='whisper'?'whisper':'windows')}><option value="windows">Windows offline speech (built-in)</option><option value="whisper">Whisper local service (optional)</option></select></label>
+          {recognizer==='whisper'&&<div className="st-model-card"><p>Install and start the optional offline Whisper service on this PC. A microphone permission prompt may appear. Only short, explicitly requested recordings are transcribed.</p><button type="button" className="button-outline" disabled={!isTauri()||whisperChecking} onClick={()=>void checkWhisper()}>{whisperChecking?'Checking…':whisperReady?'Recheck Whisper':'Check Whisper service'}</button><p role="status">{whisperNotice||'Local Whisper not checked.'}</p></div>}
           <label className="st-field">Offline narration voice<select value={selectedVoice?.voiceURI??''} onChange={e=>setVoiceId(e.target.value)} disabled={!voices.length}>
             {!voices.length&&<option value="">No local English voice detected</option>}
             {voices.map(v=><option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>)}
@@ -333,7 +369,7 @@ export default function SmartTeacher(){
       </div>
       <aside className="st-panel"><h2><BookOpen size={20}/> How it teaches</h2>
         <ol><li>Present a large, readable section of the lesson.</li><li>Read it aloud using an installed local English voice, when available.</li><li>Pause for discussion and classroom activities after every section.</li><li>Type learner questions. Approved answers are repeated verbatim; related notes are labelled as excerpts.</li><li>Advance to the next section and recap.</li></ol>
-        <p><Mic size={17}/> Windows desktop users can explicitly start one short offline microphone session using an installed English recognizer. Confirm the transcript before asking. Browser preview and unavailable microphones retain typed questions. An optional local language model can propose lesson drafts and answers, but a supervisor must review them before use.</p>
+        <p><Mic size={17}/> Windows desktop users can explicitly start one short offline microphone session using Windows speech or the optional local Whisper service. Confirm the transcript before asking. Browser preview and unavailable microphones retain typed questions. An optional local language model can propose lesson drafts and answers, but a supervisor must review them before use.</p>
         <p>Keep a responsible adult present, verify the lesson content before teaching, and do not enter student personal information. Extend your Windows desktop to the connected TV, open the separate classroom display, move it to the TV and maximize it. Use the main classroom view if a separate window is unavailable. Mirrored displays show the operator screen.</p>
       </aside>
     </div>
@@ -356,14 +392,14 @@ export default function SmartTeacher(){
               <label className="st-field">Learner question<input autoFocus value={question} onChange={e=>setQuestion(e.target.value)} maxLength={300} disabled={listening} placeholder="Type a question from the class"/></label>
               <button type="submit" disabled={!question.trim()||listening}>Ask question</button><button type="button" disabled={!question.trim()||listening||questionQueue.length>=QUEUE_LIMIT} onClick={deferQuestion}>Queue for later</button>
             </form>
-            <div className="st-actions"><button type="button" disabled={!isTauri()||listening||modelBusy} onClick={()=>void listen()}><Mic size={20}/> Listen to question</button><button type="button" disabled={!listening} onClick={()=>cancelListening()}><MicOff size={20}/> Stop listening</button></div>
-            {listening&&<p className="st-checkpoint" role="status">Microphone active or stopping. One short session only.</p>}
-            <p className="st-voice-note" role="status">{voiceNotice||(!isTauri()?'Microphone recognition is available in the Windows desktop application only. Type a question here.':'The microphone opens only after Listen to question. Audio is not saved by Scoolabs. Confirm the transcript before submitting.')}</p>
+            <div className="st-actions"><button type="button" disabled={!isTauri()||listening||modelBusy||(recognizer==='whisper'&&!whisperReady)} onClick={()=>void listen()}><Mic size={20}/> Listen to question</button>{voicePhase==='recording'&&<button type="button" onClick={()=>capture.current?.finish()}>Finish recording</button>}<button type="button" disabled={!listening||voicePhase==='stopping'} onClick={()=>cancelListening()}><MicOff size={20}/> Stop listening</button></div>
+            {listening&&<p className="st-checkpoint" role="status">{voicePhase==='transcribing'?'Local transcription in progress; microphone closed.':voicePhase==='permission'?'Waiting for microphone permission.':voicePhase==='stopping'?'Stopping or discarding speech result.':'Microphone active. One short session only.'}</p>}
+            <p className="st-voice-note" role="status">{voiceNotice||(!isTauri()?'Microphone recognition is available in the Windows desktop application only. Type a question here.':'The microphone opens only after Listen to question or Interrupt and listen. Scoolabs does not save recordings. Confirm the transcript before submitting.')}</p>
             <section className="st-queue" aria-label="Private question queue"><h4>Question queue · {questionQueue.length}/{QUEUE_LIMIT}</h4><p>Only submitted questions appear on the separate TV. Do not enter names or personal information.</p>{queueNotice&&<p role="status">{queueNotice}</p>}{questionQueue.length?questionQueue.map(q=><div className="st-queue-item" key={q}><span>{q}</span><button type="button" disabled={listening||!!question.trim()} onClick={()=>{setQuestion(q);setQueueNotice('Question loaded. Review it, then Ask question to present it.');}}>Load question</button><button type="button" onClick={()=>{setQuestionQueue(prev=>removeQueuedQuestion(prev,q));setQueueNotice('Question removed.');}}>Remove</button></div>):<p>No queued questions.</p>}</section>
             {exchange&&<div className="st-answer"><strong>{exchange.question}</strong><p>{exchange.reply.text}</p><small>{exchange.reply.source}{exchange.reply.kind==='excerpt'?' · This excerpt may not directly answer the question.':''}</small>
               <button type="button" disabled={listening} onClick={()=>speak((exchange.reply.kind==='excerpt'?'Here is a related excerpt, not a confirmed answer. ':'')+exchange.reply.text,false)}><Volume2 size={19}/> Read response</button></div>}
             {modelReady&&exchange&&exchange.reply.kind!=='approved'&&exchange.reply.kind!=='reviewed-ai'&&<div className="st-model-review"><button type="button" disabled={modelBusy||listening} onClick={()=>void suggestAnswer()}>Suggest AI answer</button>{modelBusy&&<button type="button" onClick={invalidateModel}>Discard pending suggestion</button>}<p role="status">{modelNotice}</p>{modelSuggestion&&!showModelReview&&<button type="button" onClick={()=>setShowModelReview(true)}>Show suggestion for supervisor (use extended TV or blank mirrored TV)</button>}{modelSuggestion&&showModelReview&&<div className="st-answer"><strong>Unverified AI suggestion — do not teach until checked</strong><p>{modelSuggestion.text}</p><details open><summary>Supplied evidence (verify the answer against it)</summary>{modelSuggestion.sources.map(p=><p key={p.id}>{p.id}: {p.text}</p>)}</details><div className="st-actions"><button type="button" onClick={acceptSuggestion}>Approve and present answer</button><button type="button" onClick={()=>{setModelSuggestion(null);setShowModelReview(false);setModelNotice('Suggestion rejected.');}}>Reject suggestion</button></div></div>}</div>}
-            <button type="button" onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);}}>Return to lesson</button>
+            <div className="st-actions"><button type="button" onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);}}>Return to lesson</button><button type="button" disabled={listening||finished} onClick={()=>{invalidateModel();setQuestionsOpen(false);speak(slide.title+'. '+slide.text,true);}}>Return and reread section</button></div>
           </section>}
           {quiz&&quizIndex!==null&&<section className="st-questions" aria-label="Class assessment"><h3>Class check · {quizIndex+1} / {lesson.questions.length}</h3><p className="st-quiz-question">{quiz.question}</p><button type="button" onClick={()=>speak(quiz.question,false)}><Volume2 size={19}/> Read question</button><p>Discuss your answer before the supervisor reveals it.</p>{revealed?<div className="st-answer"><strong>Approved answer</strong><p>{quiz.answer}</p><button type="button" onClick={()=>speak(quiz.answer,false)}><Volume2 size={19}/> Read answer</button></div>:<button type="button" onClick={()=>{stop();setRevealed(true);}}>Reveal answer</button>}<div className="st-actions"><button type="button" disabled={quizIndex===0} onClick={()=>{stop();setQuizIndex(quizIndex-1);setRevealed(false);}}>Previous question</button>{quizIndex<lesson.questions.length-1&&<button type="button" disabled={!revealed} onClick={()=>{stop();setQuizIndex(quizIndex+1);setRevealed(false);}}>Next question</button>}<button type="button" onClick={closeQuiz}>Return to lesson</button></div></section>}
           {voiceError&&<p role="alert" className="st-checkpoint">{voiceError}</p>}
@@ -375,7 +411,7 @@ export default function SmartTeacher(){
             <button type="button" disabled={speech!=='speaking'&&speech!=='paused'} onClick={togglePause}>{speech==='paused'?<Play size={19}/>:<Pause size={19}/>} {speech==='paused'?'Resume':'Pause'}</button>
             <button type="button" disabled={speech!=='speaking'&&speech!=='paused'} onClick={stop}><Square size={18}/> Stop</button>
             <button type="button" aria-pressed={autoAdvance} onClick={()=>setAutoAdvance(v=>!v)}>Auto advance: {autoAdvance?'on':'off'}</button>
-            <button type="button" disabled={questionsOpen} onClick={openQuestions}><MessageCircle size={20}/> Questions</button>
+            <button type="button" disabled={questionsOpen} onClick={openQuestions}><MessageCircle size={20}/> Questions</button><button type="button" disabled={!isTauri()||questionsOpen||listening||modelBusy||finished||(recognizer==='whisper'&&!whisperReady)} onClick={()=>{openQuestions();void listen();}}><Mic size={19}/> Interrupt and listen</button>
             <button type="button" disabled={quizIndex!==null||!lesson.questions.length} onClick={openQuiz}>Class check</button>
           </div>
           <div className="st-actions">{index<lesson.slides.length-1?<><button type="button" onClick={()=>move(index+1)}>Next <ArrowRight size={19}/></button><button type="button" onClick={()=>move(index+1,true)}>Next and read <Volume2 size={19}/></button></>:<button type="button" disabled={finished||questionQueue.length>0} onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setAgendaOpen(false);setFinished(true);}}>Finish lesson</button>}</div>
