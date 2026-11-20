@@ -2,7 +2,7 @@
 export type LessonSlide = {title:string; text:string};
 export type LessonQuestion = {question:string; answer:string};
 export type Lesson = {topic:string; slides:LessonSlide[]; questions:LessonQuestion[]};
-export type Reply = {kind:'approved'|'excerpt'|'unanswered'; text:string; source:string};
+export type Reply = {kind:'approved'|'excerpt'|'unanswered'|'reviewed-ai'; text:string; source:string};
 
 export const DEMO_TOPIC = "Ohm's law";
 export const DEMO_PLAN = [
