@@ -22,7 +22,7 @@ impl Board {
             Self::None=>true,
             Self::Circuit{voltage,resistance}=>range(voltage,0.0,24.0)&&range(resistance,1.0,100.0),
             Self::Pendulum{length}=>range(length,0.1,2.0),
-            Self::Microscope{objective}=>matches!(objective,4|10|40),
+            Self::Microscope{objective}=>matches!(*objective,4|10|40),
             Self::Germination{crop,moisture,temperature,day}=>matches!(crop.as_str(),"maize"|"cowpea"|"rice")&&range(moisture,0.0,100.0)&&range(temperature,0.0,55.0)&&*day<=21,
         }
     }
@@ -41,7 +41,7 @@ impl Frame{
         self.topic.chars().count()<=150&&self.title.chars().count()<=150&&self.text.chars().count()<=20000&&
         self.section<=self.total&&self.total<=100&&self.elapsed_seconds<=86400&&
         (1..=180).contains(&self.target_minutes)&&matches!(self.status.as_str(),"Ready"|"Speaking"|"Paused"|"Discussion"|"Listening")&&self.board.valid()&&
-        (self.mode=="lesson"||matches!(self.board,Board::None))&&
+        (self.mode=="lesson"||matches!(&self.board,Board::None))&&
         (matches!(self.mode.as_str(),"question"|"assessment")||(self.response.is_none()&&self.source.is_none()))&&
         self.response.as_ref().map_or(true,|x|x.chars().count()<=20000)&&
         self.source.as_ref().map_or(true,|x|x.chars().count()<=300)&&
