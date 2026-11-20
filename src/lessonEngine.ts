@@ -1,5 +1,6 @@
 /** Teacher-supplied lesson text is the primary classroom authority. No generated facts. */
-export type LessonSlide = {title:string; text:string};
+import {parseTeachingCue,type TeachingCue} from './teachingCues';
+export type LessonSlide = {title:string; text:string; cue?:TeachingCue};
 export type LessonQuestion = {question:string; answer:string};
 export type Lesson = {topic:string; slides:LessonSlide[]; questions:LessonQuestion[]};
 export type Reply = {kind:'approved'|'excerpt'|'unanswered'|'reviewed-ai'; text:string; source:string};
@@ -11,10 +12,15 @@ export const DEMO_PLAN = [
   '# Learning objectives',
   'By the end of this lesson, explain voltage, current and resistance; use V = I × R; and predict what happens when resistance changes at constant voltage.',
   '# Explanation',
+  '@board circuit 12 4',
   'Ohm’s law states that voltage equals current multiplied by resistance for an ohmic conductor at constant temperature. Voltage is measured in volts, current in amperes and resistance in ohms.',
   '# Worked example',
+  '@board circuit 6 3',
   'A 6 volt battery is connected to a 3 ohm resistor. Current = voltage divided by resistance = 6 divided by 3 = 2 amperes.',
   '# Class activity',
+  '@board none',
+  '@pause',
+  '@discuss 30',
   'Ask learners to calculate the current when voltage is 12 volts and resistance is 4 ohms. Allow time for discussion before revealing the answer.',
   '# Recap',
   'The answer to our activity is 3 amperes. Current increases as voltage increases at fixed resistance; current decreases as resistance increases at fixed voltage.',
@@ -49,11 +55,12 @@ export function prepareLesson(topic:string,plan:string):Lesson{
   if(!cleanTopic||cleanTopic.length>150)throw new Error('Enter a topic of 1–150 characters.');
   if(!plan.trim()||plan.length>20000)throw new Error('Enter a lesson plan of 1–20,000 characters.');
   const slides:LessonSlide[]=[]; const questions:LessonQuestion[]=[];
-  let title='Lesson';let lines:string[]=[];let pending='';let inQuestions=false;
+  let title='Lesson';let lines:string[]=[];let pending='';let inQuestions=false;let cue:TeachingCue={};
   const flush=()=>{
     const parts=chunks(lines.join('\n').trim());
-    parts.forEach((part,i)=>slides.push({title:parts.length>1?title+' ('+(i+1)+'/'+parts.length+')':title,text:part}));
-    lines=[];
+    if(!parts.length&&Object.keys(cue).length)throw new Error('Teaching cues must accompany a section with teaching text.');
+    parts.forEach((part,i)=>slides.push({title:parts.length>1?title+' ('+(i+1)+'/'+parts.length+')':title,text:part,...(Object.keys(cue).length?{cue:{...cue}}:{})}));
+    lines=[];cue={};
   };
   for(const raw of plan.replace(/\r\n?/g,'\n').split('\n')){
     const line=raw.trim();
@@ -62,6 +69,11 @@ export function prepareLesson(topic:string,plan:string):Lesson{
       if(pending)throw new Error('Add an A: answer for every Q: question.');
       flush();title=heading[1].slice(0,150);inQuestions=/^(questions?\s*(and|&)\s*answers?|q\s*&\s*a)$/i.test(title);
       continue;
+    }
+    const parsedCue=parseTeachingCue(line,cue);
+    if(parsedCue){
+      if(inQuestions||pending||lines.some(l=>l.trim()))throw new Error('Place teaching cues immediately after the section heading, before the teaching text.');
+      cue=parsedCue;continue;
     }
     const q=line.match(/^Q:\s*(.+)$/i),a=line.match(/^A:\s*(.+)$/i);
     if(q){

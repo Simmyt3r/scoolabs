@@ -152,3 +152,34 @@ test('whiteboard uses live science controls and hides demonstrations during asse
   await classroom.getByRole('button',{name:'Exit lesson'}).click();
   await expect(classroom).not.toBeVisible();
 });
+
+test('lesson agenda launches planned demonstrations and deferred questions survive navigation',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Smart Teacher',exact:true}).click();
+  await page.getByRole('button',{name:'Load sample lesson'}).click();
+  await page.getByRole('button',{name:'Start classroom'}).click();
+  const classroom=page.getByRole('dialog',{name:'Classroom presentation'});
+  await classroom.getByRole('button',{name:'Lesson agenda',exact:true}).click();
+  await classroom.getByRole('region',{name:'Lesson agenda'}).getByRole('button',{name:/Worked example/}).click();
+  const board=classroom.getByRole('region',{name:'Digital whiteboard'});
+  await expect(board.getByText('2.00 A',{exact:true})).toHaveCount(2);
+  await expect(classroom.getByRole('heading',{name:'Worked example',exact:true})).toBeVisible();
+  await classroom.getByRole('button',{name:'Questions',exact:true}).click();
+  await classroom.getByLabel('Learner question').fill("What is the formula for Ohm's law?");
+  await classroom.getByRole('button',{name:'Queue for later'}).click();
+  const queue=classroom.getByRole('region',{name:'Private question queue'});
+  await expect(queue.getByText("What is the formula for Ohm's law?",{exact:true})).toBeVisible();
+  await classroom.getByRole('button',{name:'Return to lesson'}).click();
+  await classroom.getByRole('button',{name:'Next',exact:true}).click();
+  await expect(board).toHaveCount(0);
+  await expect(classroom.getByRole('heading',{name:'Class activity',exact:true})).toBeVisible();
+  await classroom.getByRole('button',{name:'Questions',exact:true}).click();
+  await queue.getByRole('button',{name:'Load question'}).click();
+  await expect(classroom.getByLabel('Learner question')).toHaveValue("What is the formula for Ohm's law?");
+  await classroom.getByRole('button',{name:'Ask question'}).click();
+  await expect(classroom.getByText('Voltage equals current multiplied by resistance: V = I × R.',{exact:true})).toBeVisible();
+  await expect(queue.getByText('No queued questions.')).toBeVisible();
+  await classroom.getByRole('button',{name:'Return to lesson'}).click();
+  await classroom.getByRole('button',{name:'Next',exact:true}).click();
+  await expect(classroom.getByRole('button',{name:'Finish lesson'})).toBeEnabled();
+});

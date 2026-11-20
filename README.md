@@ -133,3 +133,6 @@ Smart Teacher defaults to the existing Qwen3-1.7B runtime from [Silabs AI](https
 
 ### Classroom whiteboard and TV display
 Smart Teacher includes teacher-controlled circuit, pendulum, microscopy and germination demonstrations, a lesson timer, configurable discussion breaks, and a separate read-only Windows classroom display for extended desktops. See [classroom guide](docs/SMART_TEACHER.md). Real dual-monitor and classroom acceptance testing remain required.
+
+### Lesson-directed teaching
+Reviewed lesson plans can now contain bounded whiteboard cues (`@board`), manual checkpoints (`@pause`) and discussion timing (`@discuss`). The operator can jump through a lesson agenda and queue up to 20 private learner questions before explicitly presenting them. See [Smart Teacher guide](docs/SMART_TEACHER.md). AI-generated cues require teacher review; all simulations remain deterministic.
