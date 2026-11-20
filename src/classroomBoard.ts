@@ -26,7 +26,7 @@ export function suggestBoard(topic:string):BoardKind{
 export function boardReadout(board:BoardState):{formula:string;primary:string;secondary:string;note:string}{
   switch(board.kind){
     case 'circuit':{const r=circuit(board.voltage,board.resistance);return {formula:'V = I × R',primary:r.current.toFixed(2)+' A',secondary:r.power.toFixed(2)+' W',note:'Ideal ohmic resistor; constant conditions. Physical wiring requires adult supervision.'};}
-    case 'pendulum':{const r=pendulum(board.length,10);return {formula:'T = 2π√(L/g)',primary:r.period.toFixed(2)+' s',secondary:r.totalTime.toFixed(2)+' s',note:'Small-angle model; g = 9.81 m/s²; negligible air resistance.'};}
+    case 'pendulum':{const r=pendulum(board.length,10);return {formula:'T = 2π√(L/g)',primary:r.periodSeconds.toFixed(2)+' s',secondary:r.totalSeconds.toFixed(2)+' s',note:'Small-angle model; g = 9.81 m/s²; negligible air resistance.'};}
     case 'microscope':{const r=microscope(board.objective);return {formula:'Magnification = eyepiece × objective',primary:r.magnification+'×',secondary:r.fieldOfViewMm.toFixed(2)+' mm',note:'Illustrative cell shapes, not a real microscope image. Field-of-view model uses an 18 mm field number.'};}
     case 'germination':{const r=germination(board.crop,board.moisture,board.temperature,board.day);return {formula:'Seed germination · illustrative model',primary:r.percentage+'%',secondary:r.heightCm.toFixed(1)+' cm',note:'Illustrative classroom prediction; not a validated crop or field forecast.'};}
     default:return {formula:'',primary:'',secondary:'',note:''};
