@@ -11,7 +11,7 @@ Learners' questions can be typed by a facilitator or dictated using the optional
 1. A portable lesson file library and local reference-based drafts are implemented. Next: teacher-authenticated persistent storage, DOCX import, richer lesson planning and curriculum review.
 2. Local voice narration and a Windows System.Speech push-to-listen prototype are implemented. Next: packaged Whisper offline recognition, Nigerian English/noisy-classroom evaluation and improved speech output.
 3. Optional local generative adapter for drafts and lesson-backed answer suggestions is implemented. Before rollout, validate accuracy, hallucinations, contextual answers, safety, memory and response latency. No unsupported claim that topic-only input produces a complete accurate lesson.
-4. First visual board, four interactive demonstrations, lesson timing and a separate operator/projector window are implemented. Next: lesson-plan visual sequences, question queue, more simulations, diagrams and physical dual-display testing.
+4. First visual board, four interactive demonstrations, lesson timing and a separate operator/projector window are implemented. Lesson-plan visual sequences and a private question queue are now implemented. Next: richer diagrams, more simulations, improved speech recognition and physical dual-display testing.
 5. Test on real low-spec Windows computers, offline with actual TV, microphone and speakers; verify typing shortcuts and accessibility, teacher takeover, voice interruption, offline behaviour, scientific correctness, age-appropriate material and classroom acceptance before pilot.
 
 ## Acceptance checks for milestone one
@@ -66,3 +66,38 @@ These are simplified schematic demonstrations rather than physical experiment in
 5. The browser preview intentionally disables the independent TV window, while the full-window classroom and board continue to work. If native window creation or sync fails, use the main view; manually blank any mirrored TV before reviewing unapproved generated content.
 
 The native display receives an explicit, bounded snapshot, not the entire lesson/editor state. Requests are scoped by originating window label and a random display-session ID; stale sequence numbers cannot replace newer frames. Browser unit/E2E tests cover board values, timing workflows and public-frame omission, and native unit tests cover validation. This is not yet a verified dual-monitor deployment: test real extended display, Windows DPI, audio routing, drag/maximize, disconnect/reconnect, blanking, operator close and privacy while reviewing on physical hardware. No automatic monitor detection or placement is implemented.
+
+## Sixth milestone: lesson-directed classroom orchestration
+
+Teaching cues are optional, bounded instructions embedded in the same portable lesson text. Place them immediately below a section heading, before its teaching notes, one per line. Older lesson files continue to work. Example:
+
+    # Worked example
+    @board circuit 6 3
+    @discuss 30
+    A 6 volt source across a 3 ohm resistor gives 2 amperes under ideal conditions.
+
+    # Class activity
+    @board none
+    @pause
+    Invite the class to calculate the current for a 12 volt source and a 4 ohm resistor.
+
+Supported board cues:
+- `@board circuit VOLTS OHMS` (0–24 V, 1–100 ohms)
+- `@board pendulum METRES` (0.1–2 m)
+- `@board microscope OBJECTIVE` (4, 10, 40)
+- `@board germination CROP MOISTURE TEMPERATURE DAY` (maize/cowpea/rice; 0–100%; 0–55°C; integer day 0–21)
+- `@board none` (clear the visual)
+- `@pause` (manual supervisor checkpoint)
+- `@discuss SECONDS` (integer 5–180; overrides the default discussion interval for automated progress)
+
+Only explicit cues are interpreted. Validation rejects duplicate cues, invalid parameters, misplaced cues and cue-only sections. Cues never become spoken text, lesson excerpts or arbitrary executable commands. The same validated science engine supplies the diagram results. Long sections split into slides with the same cue applied at each slide entry.
+
+AI-generated drafts can suggest these optional cues, but teachers must review their values and relevance along with the notes and questions before starting. The system does not verify that the chosen diagram actually matches the narrative. Teachers should avoid revealing assessment answers via a visual or an earlier slide. The sample lesson contains synchronized circuit examples and an explicit hold before the class activity. In cue-enabled lessons the board follows the next section, clearing when no board cue exists. Teachers may turn Planned board off or manually override the current visual; a later planned section reapplies its own cue when enabled. Lessons with no board cues retain manual controls.
+
+Use Lesson agenda to inspect or jump to a section. Opening the agenda stops current narration and suspends automatic advance. Hands-free mode observes the configured discussion time, section-specific holds and default activity/assessment holds. It also waits while the TV is blank, question queue is non-empty, or a question/assessment/agenda is open. Manual navigation remains available. Timing is elapsed wall time, not enforced curriculum duration.
+
+### Private question queue
+
+During a question break, type or dictate a question and choose Queue for later. The session-only queue holds up to 20 unique questions of 1–300 characters. The operator can return to the lesson, reopen Questions, load a queued item into the editable question field and explicitly submit it. Exact normalized submission removes that item; if editing changes it, the original can be removed manually. Remove irrelevant or withdrawn items. No queued question, count or unsubmitted transcript is sent to the separate projector. Only the explicitly submitted public question/approved response is projected. Avoid personal data; a mirrored desktop still exposes operator controls. Pending queue items block hands-free progression and Finish lesson until resolved; manually skipping sections is allowed. Exiting the session discards all queued questions. No persistent learner tracking is implemented.
+
+Unit and browser tests cover cue parsing, simulation values, agenda navigation, queue lifecycle and omission from public snapshots. Actual Windows speech/narration, physical TV and classroom usability remain school pilot requirements. The shared Silabs AI model can propose cues but has not yet been qualified on real classroom draft generation. No additional model is required for executing these cues.
