@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
-import {ArrowLeft,ArrowRight,BookOpen,GraduationCap,Maximize,MessageCircle,MicOff,Pause,Play,Square,Volume2} from 'lucide-react';
+import {invoke,isTauri} from '@tauri-apps/api/core';
+import {ArrowLeft,ArrowRight,BookOpen,GraduationCap,Maximize,MessageCircle,Mic,MicOff,Pause,Play,Square,Volume2} from 'lucide-react';
 import {answerQuestion,DEMO_PLAN,DEMO_TOPIC,prepareLesson,type Lesson,type Reply} from './lessonEngine';
 import {importTextLesson,lessonReferences,LESSON_FILE_MAX,makeLessonFile,parseLessonFile,referenceDraft,type LessonFile} from './lessonLibrary';
 import './smart-teacher.css';
@@ -35,12 +36,22 @@ export default function SmartTeacher(){
   const [fileBusy,setFileBusy]=useState(false);
   const [quizIndex,setQuizIndex]=useState<number|null>(null);
   const [revealed,setRevealed]=useState(false);
+  const [listening,setListening]=useState(false);
+  const [voiceNotice,setVoiceNotice]=useState('');
+  const [autoSpeakReply,setAutoSpeakReply]=useState(true);
+  const voiceRun=useRef(0);
+  const voicePending=useRef(false);
+  const mounted=useRef(true);
   const dialog=useRef<HTMLDialogElement>(null);
   const generation=useRef(0);
   const active=useRef(false);
   const utterance=useRef<SpeechSynthesisUtterance|null>(null);
   const launch=useRef<HTMLButtonElement>(null);
 
+  useEffect(()=>{
+    mounted.current=true;
+    return ()=>{mounted.current=false;voiceRun.current++;if(voicePending.current)void invoke('cancel_class_question').catch(()=>undefined);};
+  },[]);
   useEffect(()=>{
     if(!supported())return;
     const synth=window.speechSynthesis;
@@ -64,7 +75,24 @@ export default function SmartTeacher(){
     const timer=window.setTimeout(()=>move(index+1,true),20000);
     return ()=>window.clearTimeout(timer);
   },[autoAdvance,lesson,index,questionsOpen,quizIndex,finished,speech,voiceError]);
+  function cancelListening(){
+    if(!voicePending.current)return;
+    voiceRun.current++;setVoiceNotice('Stopping microphone…');
+    void invoke('cancel_class_question').catch(()=>undefined);
+  }
+  async function listen(){
+    if(!isTauri()||voicePending.current)return;
+    stop();setVoiceNotice('Listening for one question on the local Windows recognizer. Speak now.');
+    const id=++voiceRun.current;voicePending.current=true;setListening(true);
+    try{
+      const result=await invoke<{text:string;confidence:number}>('recognize_class_question');
+      if(!mounted.current||voiceRun.current!==id)return;
+      setQuestion(result.text);setVoiceNotice('Check or correct the transcript, then select Ask question.');
+    }catch(e){if(mounted.current&&voiceRun.current===id)setVoiceNotice(typeof e==='string'?e:'Microphone recognition failed. Type the question instead.');}
+    finally{voicePending.current=false;if(mounted.current){setListening(false);if(voiceRun.current!==id)setVoiceNotice('Microphone stopped.');}}
+  }
   function stop(){
+    cancelListening();
     generation.current++;
     if(supported()&&active.current)window.speechSynthesis.cancel();
     active.current=false;utterance.current=null;setSpeech('idle');
@@ -153,11 +181,12 @@ export default function SmartTeacher(){
     if(read)speak(lesson.slides[next].title+'. '+lesson.slides[next].text,true);
   }
   function ask(){
-    if(!lesson||!question.trim())return;
-    stop();setExchange({question:question.trim(),reply:answerQuestion(lesson,question.trim())});setQuestion('');
+    if(!lesson||!question.trim()||voicePending.current)return;
+    stop();const reply=answerQuestion(lesson,question.trim());setExchange({question:question.trim(),reply});setQuestion('');setVoiceNotice('');
+    if(autoSpeakReply&&selectedVoice)speak((reply.kind==='excerpt'?'Here is a related excerpt, not a confirmed answer. ':'')+reply.text,false);
   }
   function openQuestions(){
-    stop();setQuizIndex(null);setRevealed(false);setQuestionsOpen(true);setExchange(null);setQuestion('');
+    stop();setQuizIndex(null);setRevealed(false);setQuestionsOpen(true);setExchange(null);setQuestion('');setVoiceNotice('');
   }
   function openQuiz(){
     if(!lesson?.questions.length)return;
@@ -201,6 +230,7 @@ export default function SmartTeacher(){
             {voices.map(v=><option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>)}
           </select></label>
           <label className="st-field">Speaking speed: {rate.toFixed(1)}×<input type="range" min={0.7} max={1.2} step={0.1} value={rate} onChange={e=>setRate(Number(e.target.value))}/></label>
+          <label className="st-auto"><input type="checkbox" checked={autoSpeakReply} onChange={e=>setAutoSpeakReply(e.target.checked)}/> Read classroom answers aloud automatically when a local voice is available.</label>
           <label className="st-auto"><input type="checkbox" checked={autoAdvance} onChange={e=>setAutoAdvance(e.target.checked)}/> Hands-free narration: advance after 20 seconds of discussion; activity sections wait for the supervisor.</label>
           {error&&<p role="alert" className="st-error">{error}</p>}
           <div className="st-actions"><button ref={launch} className="button-primary" type="submit" disabled={fileBusy||(draftReview&&!reviewed)}>Start classroom <ArrowRight size={18}/></button>
@@ -210,7 +240,7 @@ export default function SmartTeacher(){
       </div>
       <aside className="st-panel"><h2><BookOpen size={20}/> How it teaches</h2>
         <ol><li>Present a large, readable section of the lesson.</li><li>Read it aloud using an installed local English voice, when available.</li><li>Pause for discussion and classroom activities after every section.</li><li>Type learner questions. Approved answers are repeated verbatim; related notes are labelled as excerpts.</li><li>Advance to the next section and recap.</li></ol>
-        <p><MicOff size={17}/> This version uses typed questions. Microphone recognition and generative explanations are not yet included. Reference drafts assemble existing science facts; they are not automatically qualified lesson plans.</p>
+        <p><Mic size={17}/> Windows desktop users can explicitly start one short offline microphone session using an installed English recognizer. Confirm the transcript before asking. Browser preview and unavailable microphones retain typed questions. Generative explanations are not yet included.</p>
         <p>Keep a responsible adult present, verify the lesson content before teaching, and do not enter student personal information. Project the application onto a connected TV or projector using Windows display settings.</p>
       </aside>
     </div>
@@ -226,11 +256,14 @@ export default function SmartTeacher(){
           {questionsOpen&&<section className="st-questions" aria-label="Class questions">
             <h3><MessageCircle size={24}/> Ask the Smart Teacher</h3>
             <form onSubmit={e=>{e.preventDefault();ask();}}>
-              <label className="st-field">Learner question<input autoFocus value={question} onChange={e=>setQuestion(e.target.value)} maxLength={300} placeholder="Type a question from the class"/></label>
-              <button type="submit" disabled={!question.trim()}>Ask question</button>
+              <label className="st-field">Learner question<input autoFocus value={question} onChange={e=>setQuestion(e.target.value)} maxLength={300} disabled={listening} placeholder="Type a question from the class"/></label>
+              <button type="submit" disabled={!question.trim()||listening}>Ask question</button>
             </form>
+            <div className="st-actions"><button type="button" disabled={!isTauri()||listening} onClick={()=>void listen()}><Mic size={20}/> Listen to question</button><button type="button" disabled={!listening} onClick={cancelListening}><MicOff size={20}/> Stop listening</button></div>
+            {listening&&<p className="st-checkpoint" role="status">Microphone active or stopping. One short session only.</p>}
+            <p className="st-voice-note" role="status">{voiceNotice||(!isTauri()?'Microphone recognition is available in the Windows desktop application only. Type a question here.':'The microphone opens only after Listen to question. Audio is not saved by Scoolabs. Confirm the transcript before submitting.')}</p>
             {exchange&&<div className="st-answer"><strong>{exchange.question}</strong><p>{exchange.reply.text}</p><small>{exchange.reply.source}{exchange.reply.kind==='excerpt'?' · This excerpt may not directly answer the question.':''}</small>
-              <button type="button" onClick={()=>speak(exchange.reply.text,false)}><Volume2 size={19}/> Read response</button></div>}
+              <button type="button" disabled={listening} onClick={()=>speak((exchange.reply.kind==='excerpt'?'Here is a related excerpt, not a confirmed answer. ':'')+exchange.reply.text,false)}><Volume2 size={19}/> Read response</button></div>}
             <button type="button" onClick={()=>{stop();setQuestionsOpen(false);}}>Return to lesson</button>
           </section>}
           {quiz&&quizIndex!==null&&<section className="st-questions" aria-label="Class assessment"><h3>Class check · {quizIndex+1} / {lesson.questions.length}</h3><p className="st-quiz-question">{quiz.question}</p><button type="button" onClick={()=>speak(quiz.question,false)}><Volume2 size={19}/> Read question</button><p>Discuss your answer before the supervisor reveals it.</p>{revealed?<div className="st-answer"><strong>Approved answer</strong><p>{quiz.answer}</p><button type="button" onClick={()=>speak(quiz.answer,false)}><Volume2 size={19}/> Read answer</button></div>:<button type="button" onClick={()=>{stop();setRevealed(true);}}>Reveal answer</button>}<div className="st-actions"><button type="button" disabled={quizIndex===0} onClick={()=>{stop();setQuizIndex(quizIndex-1);setRevealed(false);}}>Previous question</button>{quizIndex<lesson.questions.length-1&&<button type="button" disabled={!revealed} onClick={()=>{stop();setQuizIndex(quizIndex+1);setRevealed(false);}}>Next question</button>}<button type="button" onClick={closeQuiz}>Return to lesson</button></div></section>}
