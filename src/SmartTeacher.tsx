@@ -4,7 +4,7 @@ import {ArrowLeft,ArrowRight,BookOpen,GraduationCap,Maximize,MessageCircle,Mic,M
 import {answerQuestion,DEMO_PLAN,DEMO_TOPIC,prepareLesson,type Lesson,type Reply} from './lessonEngine';
 import {importTextLesson,lessonReferences,LESSON_FILE_MAX,makeLessonFile,parseLessonFile,referenceDraft,type LessonFile} from './lessonLibrary';
 import {answerRequest,draftRequest,parseModelDraft,validateSuggestion,type ModelResult,type ModelSuggestion} from './localTeacherModel';
-import ClassroomBoard from './ClassroomBoard';
+import ClassroomBoard from './WhiteboardPanel';
 import {elapsedClock,newBoard,publicFrame,type BoardState} from './classroomBoard';
 import {useProjector} from './ClassroomProjector';
 import './smart-teacher.css';
