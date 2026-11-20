@@ -1,18 +1,19 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {invoke,isTauri} from '@tauri-apps/api/core';
 import {ArrowLeft,ArrowRight,BookOpen,GraduationCap,Maximize,MessageCircle,Mic,MicOff,Pause,Play,Square,Volume2} from 'lucide-react';
-import {answerQuestion,DEMO_PLAN,DEMO_TOPIC,prepareLesson,type Lesson,type Reply} from './lessonEngine';
+import {DEMO_PLAN,DEMO_TOPIC,prepareLesson,type Lesson,type Reply} from './lessonEngine';
 import {importTextLesson,lessonReferences,LESSON_FILE_MAX,makeLessonFile,parseLessonFile,referenceDraft,type LessonFile} from './lessonLibrary';
-import {answerRequest,draftRequest,parseModelDraft,validateSuggestion,type ModelResult,type ModelSuggestion} from './localTeacherModel';
+import {draftRequest,parseModelDraft,validateSuggestion,type ModelRequest,type ModelResult,type ModelSuggestion} from './localTeacherModel';
 import ClassroomBoard from './WhiteboardPanel';
 import {elapsedClock,newBoard,publicFrame,type BoardState} from './classroomBoard';
 import {useProjector} from './ClassroomProjector';
 import {discussionDelay,needsSupervisor,queueQuestion,removeQueuedQuestion,QUEUE_LIMIT} from './teachingCues';
 import {captureQuestion,type Capture} from './whisperCapture';
+import {answerInContext,canFollowUp,recordTurn,sectionAdaptation,HISTORY_LIMIT,type DialogueTurn} from './classroomDialogue';
 import './smart-teacher.css';
 
 type SpeechState='idle'|'speaking'|'paused'|'checkpoint';
-type Exchange={question:string;reply:Reply};
+type Exchange=DialogueTurn;
 const supported=()=>typeof window!=='undefined'&&'speechSynthesis' in window&&'SpeechSynthesisUtterance' in window;
 function localEnglishVoices():SpeechSynthesisVoice[]{
   return supported()?window.speechSynthesis.getVoices().filter(v=>v.localService&&/^en(-|_|$)/i.test(v.lang)):[];
@@ -25,6 +26,11 @@ export default function SmartTeacher(){
   const [index,setIndex]=useState(0);
   const [question,setQuestion]=useState('');
   const [exchange,setExchange]=useState<Exchange|null>(null);
+  const [dialogue,setDialogue]=useState<DialogueTurn[]>([]);
+  const [followUpAnchor,setFollowUpAnchor]=useState<DialogueTurn|null>(null);
+  const [dialogueOpen,setDialogueOpen]=useState(false);
+  const [answerContext,setAnswerContext]=useState<ModelRequest|null>(null);
+  const dialogueId=useRef(0);
   const [error,setError]=useState('');
   const [voiceError,setVoiceError]=useState('');
   const [voices,setVoices]=useState<SpeechSynthesisVoice[]>([]);
@@ -254,7 +260,7 @@ export default function SmartTeacher(){
   }
   async function suggestAnswer(){
     if(!lesson||!exchange||!modelReady||modelPending.current||voicePending.current||exchange.reply.kind==='approved')return;
-    const request=answerRequest(lesson,exchange.question);
+    const request=answerContext;
     if(!request){setModelNotice('No relevant approved lesson passage was found. Ask the supervising teacher.');return;}
     stop();const id=++modelRun.current;modelPending.current=true;setModelBusy(true);setModelSuggestion(null);setShowModelReview(false);setModelNotice('Preparing a possible answer from this lesson…');
     try{
@@ -268,7 +274,8 @@ export default function SmartTeacher(){
   function acceptSuggestion(){
     if(!modelSuggestion||!exchange||!showModelReview)return;
     const text=modelSuggestion.text;
-    setExchange({question:exchange.question,reply:{kind:'reviewed-ai',text,source:'Supervisor-reviewed AI suggestion · '+modelSuggestion.sources.map(p=>p.id).join(', ')}});
+    const approved:Exchange={...exchange,reply:{kind:'reviewed-ai',text,source:'Supervisor-reviewed AI suggestion · '+modelSuggestion.sources.map(p=>p.id).join(', ')}};
+    setExchange(approved);setDialogue(previous=>recordTurn(previous,approved));
     setModelSuggestion(null);setShowModelReview(false);setModelNotice('Suggestion accepted by the supervisor.');
     if(autoSpeakReply&&selectedVoice)speak(text,false);
   }
@@ -277,7 +284,7 @@ export default function SmartTeacher(){
       if(fileBusy||modelPending.current)throw new Error('Finish preparing the lesson first.');
       if(draftReview&&!reviewed)throw new Error('Confirm that you reviewed this lesson before teaching.');
       const next=prepareLesson(topic,plan);
-      invalidateModel();stop();setError('');setVoiceError('');setLesson(next);setIndex(0);setExchange(null);
+      invalidateModel();stop();setError('');setVoiceError('');setLesson(next);setIndex(0);setExchange(null);setDialogue([]);setFollowUpAnchor(null);setDialogueOpen(false);setAnswerContext(null);dialogueId.current=0;
       setQuestion('');setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setFinished(false);setBoard(followCues?(next.slides[0].cue?.board??newBoard('none')):newBoard('none'));setQuestionQueue([]);setQueueNotice('');setAgendaOpen(false);setProjectorBlank(false);lessonStarted.current=Date.now();setElapsedSeconds(0);
       if(autoAdvance)speak(next.slides[0].title+'. '+next.slides[0].text,true);
     }catch(e){setError(e instanceof Error?e.message:'Unable to prepare this lesson.');}
@@ -285,32 +292,49 @@ export default function SmartTeacher(){
   function exit(){
     projector.close();invalidateModel();stop();
     if(document.fullscreenElement===dialog.current)void document.exitFullscreen().catch(()=>undefined);
-    dialog.current?.close();setLesson(null);
+    dialog.current?.close();setLesson(null);setDialogue([]);setExchange(null);setFollowUpAnchor(null);setAnswerContext(null);setDialogueOpen(false);
     requestAnimationFrame(()=>launch.current?.focus());
   }
   function move(next:number,read=false){
     if(!lesson||next<0||next>=lesson.slides.length)return;
-    invalidateModel();stop();setIndex(next);setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setQuestion('');setExchange(null);setVoiceError('');setFinished(false);
+    invalidateModel();stop();setIndex(next);setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setQuestion('');setExchange(null);setFollowUpAnchor(null);setAnswerContext(null);setDialogueOpen(false);setVoiceError('');setFinished(false);
     if(followCues&&hasPlannedBoard)setBoard(lesson.slides[next].cue?.board??newBoard('none'));
     setAgendaOpen(false);setQueueNotice('');
     if(read)speak(lesson.slides[next].title+'. '+lesson.slides[next].text,true);
   }
+  function presentTurn(questionText:string,reply:Reply,request:ModelRequest|null){
+    const turn:Exchange={id:++dialogueId.current,section:index,question:questionText,reply};
+    setExchange(turn);setDialogue(previous=>recordTurn(previous,turn));setAnswerContext(request);
+  }
   function ask(){
     if(!lesson||!question.trim()||voicePending.current)return;
-    invalidateModel();stop();const reply=answerQuestion(lesson,question.trim());setQuestionQueue(q=>removeQueuedQuestion(q,question));setQueueNotice('');setExchange({question:question.trim(),reply});setQuestion('');setVoiceNotice('');
+    invalidateModel();stop();
+    const {reply,request}=answerInContext(lesson,question.trim(),followUpAnchor??undefined);
+    setQuestionQueue(q=>removeQueuedQuestion(q,question));setQueueNotice('');
+    presentTurn(question.trim(),reply,request);setFollowUpAnchor(null);setQuestion('');setVoiceNotice('');
     if(autoSpeakReply&&selectedVoice)speak((reply.kind==='excerpt'?'Here is a related excerpt, not a confirmed answer. ':'')+reply.text,false);
   }
+  function adaptSection(kind:'simplify'|'example'){
+    if(!lesson||finished||voicePending.current)return;
+    const next=sectionAdaptation(lesson,index,kind);if(!next)return;
+    openQuestions();presentTurn(next.question,next.reply,next.request);
+    setModelNotice(modelReady?'Suggest AI answer to prepare a reviewed adaptation.':'Local AI unavailable. Use the current approved section or have the supervisor explain it.');
+  }
+  function chooseFollowUp(turn:DialogueTurn){
+    if(!canFollowUp(turn)||voicePending.current||question.trim())return;
+    invalidateModel();stop();setFollowUpAnchor(turn);setVoiceNotice('Enter a follow-up referring to the selected question, or clear the context.');
+  }
   function deferQuestion(){
-    if(voicePending.current||!question.trim())return;
+    if(voicePending.current||!question.trim()||followUpAnchor)return;
     try{setQuestionQueue(queueQuestion(questionQueue,question));setQuestion('');setQueueNotice('Question saved privately for later discussion.');}
     catch(e){setQueueNotice(e instanceof Error?e.message:'Unable to queue the question.');}
   }
   function openQuestions(){
-    invalidateModel();stop();setQuizIndex(null);setRevealed(false);setQuestionsOpen(true);setExchange(null);setQuestion('');setVoiceNotice('');setQueueNotice('');setAgendaOpen(false);
+    invalidateModel();stop();setQuizIndex(null);setRevealed(false);setQuestionsOpen(true);setExchange(null);setAnswerContext(null);setFollowUpAnchor(null);setDialogueOpen(false);setQuestion('');setVoiceNotice('');setQueueNotice('');setAgendaOpen(false);
   }
   function openQuiz(){
     if(!lesson?.questions.length)return;
-    invalidateModel();stop();setQuestionsOpen(false);setQuizIndex(0);setRevealed(false);setAgendaOpen(false);
+    invalidateModel();stop();setQuestionsOpen(false);setQuizIndex(0);setRevealed(false);setAgendaOpen(false);setFollowUpAnchor(null);setAnswerContext(null);setDialogueOpen(false);
   }
   function closeQuiz(){stop();setQuizIndex(null);setRevealed(false);}
   async function fullscreen(){
@@ -388,18 +412,20 @@ export default function SmartTeacher(){
           {!finished&&!questionsOpen&&quizIndex===null&&<ClassroomBoard board={board} topic={lesson.topic} onChange={setBoard}/>}
           {questionsOpen&&<section className="st-questions" aria-label="Class questions">
             <h3><MessageCircle size={24}/> Ask the Smart Teacher</h3>
+            {followUpAnchor&&<div className="st-context-note"><strong>Follow-up context (operator only)</strong><p>{followUpAnchor.question}</p><button type="button" disabled={listening} onClick={()=>setFollowUpAnchor(null)}>Clear context</button></div>}
             <form onSubmit={e=>{e.preventDefault();ask();}}>
               <label className="st-field">Learner question<input autoFocus value={question} onChange={e=>setQuestion(e.target.value)} maxLength={300} disabled={listening} placeholder="Type a question from the class"/></label>
-              <button type="submit" disabled={!question.trim()||listening}>Ask question</button><button type="button" disabled={!question.trim()||listening||questionQueue.length>=QUEUE_LIMIT} onClick={deferQuestion}>Queue for later</button>
+              <button type="submit" disabled={!question.trim()||listening}>Ask question</button><button type="button" disabled={!question.trim()||listening||!!followUpAnchor||questionQueue.length>=QUEUE_LIMIT} onClick={deferQuestion}>Queue for later</button>
             </form>
             <div className="st-actions"><button type="button" disabled={!isTauri()||listening||modelBusy||(recognizer==='whisper'&&!whisperReady)} onClick={()=>void listen()}><Mic size={20}/> Listen to question</button>{voicePhase==='recording'&&<button type="button" onClick={()=>capture.current?.finish()}>Finish recording</button>}<button type="button" disabled={!listening||voicePhase==='stopping'} onClick={()=>cancelListening()}><MicOff size={20}/> Stop listening</button></div>
             {listening&&<p className="st-checkpoint" role="status">{voicePhase==='transcribing'?'Local transcription in progress; microphone closed.':voicePhase==='permission'?'Waiting for microphone permission.':voicePhase==='stopping'?'Stopping or discarding speech result.':'Microphone active. One short session only.'}</p>}
             <p className="st-voice-note" role="status">{voiceNotice||(!isTauri()?'Microphone recognition is available in the Windows desktop application only. Type a question here.':'The microphone opens only after Listen to question or Interrupt and listen. Scoolabs does not save recordings. Confirm the transcript before submitting.')}</p>
-            <section className="st-queue" aria-label="Private question queue"><h4>Question queue · {questionQueue.length}/{QUEUE_LIMIT}</h4><p>Only submitted questions appear on the separate TV. Do not enter names or personal information.</p>{queueNotice&&<p role="status">{queueNotice}</p>}{questionQueue.length?questionQueue.map(q=><div className="st-queue-item" key={q}><span>{q}</span><button type="button" disabled={listening||!!question.trim()} onClick={()=>{setQuestion(q);setQueueNotice('Question loaded. Review it, then Ask question to present it.');}}>Load question</button><button type="button" onClick={()=>{setQuestionQueue(prev=>removeQueuedQuestion(prev,q));setQueueNotice('Question removed.');}}>Remove</button></div>):<p>No queued questions.</p>}</section>
+            <section className="st-queue" aria-label="Private question queue"><h4>Question queue · {questionQueue.length}/{QUEUE_LIMIT}</h4><p>Only submitted questions appear on the separate TV. Do not enter names or personal information.</p>{queueNotice&&<p role="status">{queueNotice}</p>}{questionQueue.length?questionQueue.map(q=><div className="st-queue-item" key={q}><span>{q}</span><button type="button" disabled={listening||!!question.trim()} onClick={()=>{setFollowUpAnchor(null);setQuestion(q);setQueueNotice('Question loaded. Review it, then Ask question to present it.');}}>Load question</button><button type="button" onClick={()=>{setQuestionQueue(prev=>removeQueuedQuestion(prev,q));setQueueNotice('Question removed.');}}>Remove</button></div>):<p>No queued questions.</p>}</section>
+            <details className="st-dialogue" open={dialogueOpen} onToggle={e=>setDialogueOpen(e.currentTarget.open)}><summary>Classroom conversation · {dialogue.length}/{HISTORY_LIMIT} (operator only)</summary><p>Only the current submitted question and presented response are shown on the separate TV. Select a previously approved answer to establish follow-up context. History is cleared when the lesson ends.</p>{dialogue.length===0?<p>No submitted questions yet.</p>:dialogue.map(turn=><article key={turn.id}><strong>{turn.question}</strong><p>{turn.reply.text}</p><small>Section {turn.section+1} · {turn.reply.source}</small>{canFollowUp(turn)&&<button type="button" disabled={listening||!!question.trim()||modelBusy} onClick={()=>chooseFollowUp(turn)}>Follow up on this</button>}</article>)}</details>
             {exchange&&<div className="st-answer"><strong>{exchange.question}</strong><p>{exchange.reply.text}</p><small>{exchange.reply.source}{exchange.reply.kind==='excerpt'?' · This excerpt may not directly answer the question.':''}</small>
               <button type="button" disabled={listening} onClick={()=>speak((exchange.reply.kind==='excerpt'?'Here is a related excerpt, not a confirmed answer. ':'')+exchange.reply.text,false)}><Volume2 size={19}/> Read response</button></div>}
             {modelReady&&exchange&&exchange.reply.kind!=='approved'&&exchange.reply.kind!=='reviewed-ai'&&<div className="st-model-review"><button type="button" disabled={modelBusy||listening} onClick={()=>void suggestAnswer()}>Suggest AI answer</button>{modelBusy&&<button type="button" onClick={invalidateModel}>Discard pending suggestion</button>}<p role="status">{modelNotice}</p>{modelSuggestion&&!showModelReview&&<button type="button" onClick={()=>setShowModelReview(true)}>Show suggestion for supervisor (use extended TV or blank mirrored TV)</button>}{modelSuggestion&&showModelReview&&<div className="st-answer"><strong>Unverified AI suggestion — do not teach until checked</strong><p>{modelSuggestion.text}</p><details open><summary>Supplied evidence (verify the answer against it)</summary>{modelSuggestion.sources.map(p=><p key={p.id}>{p.id}: {p.text}</p>)}</details><div className="st-actions"><button type="button" onClick={acceptSuggestion}>Approve and present answer</button><button type="button" onClick={()=>{setModelSuggestion(null);setShowModelReview(false);setModelNotice('Suggestion rejected.');}}>Reject suggestion</button></div></div>}</div>}
-            <div className="st-actions"><button type="button" onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);}}>Return to lesson</button><button type="button" disabled={listening||finished} onClick={()=>{invalidateModel();setQuestionsOpen(false);speak(slide.title+'. '+slide.text,true);}}>Return and reread section</button></div>
+            <div className="st-actions"><button type="button" onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);setFollowUpAnchor(null);}}>Return to lesson</button><button type="button" disabled={listening||finished} onClick={()=>{invalidateModel();setQuestionsOpen(false);setFollowUpAnchor(null);speak(slide.title+'. '+slide.text,true);}}>Return and reread section</button></div>
           </section>}
           {quiz&&quizIndex!==null&&<section className="st-questions" aria-label="Class assessment"><h3>Class check · {quizIndex+1} / {lesson.questions.length}</h3><p className="st-quiz-question">{quiz.question}</p><button type="button" onClick={()=>speak(quiz.question,false)}><Volume2 size={19}/> Read question</button><p>Discuss your answer before the supervisor reveals it.</p>{revealed?<div className="st-answer"><strong>Approved answer</strong><p>{quiz.answer}</p><button type="button" onClick={()=>speak(quiz.answer,false)}><Volume2 size={19}/> Read answer</button></div>:<button type="button" onClick={()=>{stop();setRevealed(true);}}>Reveal answer</button>}<div className="st-actions"><button type="button" disabled={quizIndex===0} onClick={()=>{stop();setQuizIndex(quizIndex-1);setRevealed(false);}}>Previous question</button>{quizIndex<lesson.questions.length-1&&<button type="button" disabled={!revealed} onClick={()=>{stop();setQuizIndex(quizIndex+1);setRevealed(false);}}>Next question</button>}<button type="button" onClick={closeQuiz}>Return to lesson</button></div></section>}
           {voiceError&&<p role="alert" className="st-checkpoint">{voiceError}</p>}
@@ -411,10 +437,10 @@ export default function SmartTeacher(){
             <button type="button" disabled={speech!=='speaking'&&speech!=='paused'} onClick={togglePause}>{speech==='paused'?<Play size={19}/>:<Pause size={19}/>} {speech==='paused'?'Resume':'Pause'}</button>
             <button type="button" disabled={speech!=='speaking'&&speech!=='paused'} onClick={stop}><Square size={18}/> Stop</button>
             <button type="button" aria-pressed={autoAdvance} onClick={()=>setAutoAdvance(v=>!v)}>Auto advance: {autoAdvance?'on':'off'}</button>
-            <button type="button" disabled={questionsOpen} onClick={openQuestions}><MessageCircle size={20}/> Questions</button><button type="button" disabled={!isTauri()||questionsOpen||listening||modelBusy||finished||(recognizer==='whisper'&&!whisperReady)} onClick={()=>{openQuestions();void listen();}}><Mic size={19}/> Interrupt and listen</button>
+            <button type="button" disabled={questionsOpen} onClick={openQuestions}><MessageCircle size={20}/> Questions</button><button type="button" disabled={questionsOpen||quizIndex!==null||finished||listening} onClick={()=>adaptSection('simplify')}>Explain more simply</button><button type="button" disabled={questionsOpen||quizIndex!==null||finished||listening} onClick={()=>adaptSection('example')}>Show an example</button><button type="button" disabled={!isTauri()||questionsOpen||listening||modelBusy||finished||(recognizer==='whisper'&&!whisperReady)} onClick={()=>{openQuestions();void listen();}}><Mic size={19}/> Interrupt and listen</button>
             <button type="button" disabled={quizIndex!==null||!lesson.questions.length} onClick={openQuiz}>Class check</button>
           </div>
-          <div className="st-actions">{index<lesson.slides.length-1?<><button type="button" onClick={()=>move(index+1)}>Next <ArrowRight size={19}/></button><button type="button" onClick={()=>move(index+1,true)}>Next and read <Volume2 size={19}/></button></>:<button type="button" disabled={finished||questionQueue.length>0} onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setAgendaOpen(false);setFinished(true);}}>Finish lesson</button>}</div>
+          <div className="st-actions">{index<lesson.slides.length-1?<><button type="button" onClick={()=>move(index+1)}>Next <ArrowRight size={19}/></button><button type="button" onClick={()=>move(index+1,true)}>Next and read <Volume2 size={19}/></button></>:<button type="button" disabled={finished||questionQueue.length>0} onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setAgendaOpen(false);setDialogue([]);setFollowUpAnchor(null);setAnswerContext(null);setDialogueOpen(false);setFinished(true);}}>Finish lesson</button>}</div>
         </footer>
       </div>
     </dialog>}
