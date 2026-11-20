@@ -137,7 +137,8 @@ fn run_recognition(_: &AtomicBool) -> Result<VoiceResult, String> {
 }
 
 #[tauri::command]
-pub async fn recognize_class_question(state: tauri::State<'_, ClassroomVoice>, request_id: String) -> Result<VoiceResult, String> {
+pub async fn recognize_class_question(window:tauri::WebviewWindow,state: tauri::State<'_, ClassroomVoice>, request_id: String) -> Result<VoiceResult, String> {
+    if window.label()!="main"{return Err("Operator window required.".into());}
     let guard = start_session(state.inner(), request_id)?;
     tauri::async_runtime::spawn_blocking(move || {
         run_recognition(&guard.cancelled)
@@ -145,10 +146,18 @@ pub async fn recognize_class_question(state: tauri::State<'_, ClassroomVoice>, r
 }
 
 #[tauri::command]
-pub fn cancel_class_question(state: tauri::State<'_, ClassroomVoice>, request_id: String) {
+pub fn cancel_class_question(window:tauri::WebviewWindow,state: tauri::State<'_, ClassroomVoice>, request_id: String) {
+    if window.label()!="main"{return;}
     cancel_session(state.inner(), &request_id);
 }
 
+#[tauri::command]
+pub async fn transcribe_class_question(window:tauri::WebviewWindow,state:tauri::State<'_,ClassroomVoice>,request_id:String,samples:Vec<i16>)->Result<crate::classroom_whisper::WhisperResult,String>{
+    if window.label()!="main"{return Err("Operator window required.".into());}
+    let guard=start_session(state.inner(),request_id)?;
+    tauri::async_runtime::spawn_blocking(move||crate::classroom_whisper::transcribe(samples,&guard.cancelled))
+        .await.map_err(|_|"Unable to transcribe the local recording.")?
+}
 #[cfg(test)]
 mod tests {
     use super::*;
