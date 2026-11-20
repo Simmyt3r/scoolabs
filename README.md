@@ -139,3 +139,6 @@ Reviewed lesson plans can now contain bounded whiteboard cues (`@board`), manual
 
 ### Offline Whisper speech
 Smart Teacher can optionally use a separately installed local Whisper Base CPU service. Explicit short recording, transcript confirmation, narration interruption and return-to-section are supported; Windows speech and typed-question fallback remain available. See [offline speech pack](docs/OFFLINE_WHISPER.md). Physical microphone and classroom qualification are pending.
+
+### Adaptive classroom conversation
+Smart Teacher retains a private, session-only history of the latest 20 classroom exchanges and supports explicitly selected follow-up context, simpler explanations and lesson-backed example requests. Generative suggestions from the chosen local model remain subject to supervisor review; previous AI answers are not used as evidence. See [Smart Teacher guide](docs/SMART_TEACHER.md).
