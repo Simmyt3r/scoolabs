@@ -1,7 +1,8 @@
+import type {Adaptation} from './classroomDialogue';
 import {prepareLesson,type Lesson} from './lessonEngine';
 import {lessonReferences,makeLessonFile,type LessonFile} from './lessonLibrary';
 export type ModelPassage={id:string;text:string};
-export type ModelRequest={mode:'draft'|'answer';topic:string;input:string;passages:ModelPassage[]};
+export type ModelRequest={mode:'draft'|'answer';topic:string;input:string;passages:ModelPassage[];adaptation?:Adaptation};
 export type ModelResult={text:string;sourceIds:string[];abstained:boolean};
 export type ModelSuggestion={text:string;sources:ModelPassage[]};
 const tokens=(s:string)=>s.toLowerCase().normalize('NFKC').replace(/[’']/g,'').split(/[^\p{L}\p{N}]+/u)
