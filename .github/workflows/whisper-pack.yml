@@ -1,0 +1,48 @@
+name: Optional offline Whisper speech pack
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/*whisper*.ps1'
+      - 'scripts/whisper-pack.lock.json'
+      - 'docs/OFFLINE_WHISPER.md'
+      - '.github/workflows/whisper-pack.yml'
+permissions:
+  contents: read
+concurrency:
+  group: whisper-pack-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  pack:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and verify pinned speech pack
+        shell: powershell
+        run: .\scripts\prepare-whisper-pack.ps1
+      - name: Actual offline Whisper CPU inference
+        shell: powershell
+        run: .\scripts\smoke-whisper-pack.ps1
+      - name: Upload smoke-tested pilot speech pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: Scoolabs-Whisper-Base-Windows-x64-Pilot
+          path: |
+            whisper-pack/ggml-base.bin
+            whisper-pack/runtime.zip
+            whisper-pack/Start-Whisper.ps1
+            whisper-pack/whisper-pack.lock.json
+            whisper-pack/README.md
+            whisper-pack/*-LICENSE.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+      - name: Upload public sample inference diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: whisper-smoke-diagnostics
+          path: whisper-pack/smoke-*.log
+          if-no-files-found: ignore
+          retention-days: 7
