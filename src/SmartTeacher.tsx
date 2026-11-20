@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import {invoke,isTauri} from '@tauri-apps/api/core';
 import {ArrowLeft,ArrowRight,BookOpen,GraduationCap,Maximize,MessageCircle,Mic,MicOff,Pause,Play,Square,Volume2} from 'lucide-react';
 import {answerQuestion,DEMO_PLAN,DEMO_TOPIC,prepareLesson,type Lesson,type Reply} from './lessonEngine';
@@ -7,6 +7,7 @@ import {answerRequest,draftRequest,parseModelDraft,validateSuggestion,type Model
 import ClassroomBoard from './WhiteboardPanel';
 import {elapsedClock,newBoard,publicFrame,type BoardState} from './classroomBoard';
 import {useProjector} from './ClassroomProjector';
+import {discussionDelay,needsSupervisor,queueQuestion,removeQueuedQuestion,QUEUE_LIMIT} from './teachingCues';
 import './smart-teacher.css';
 
 type SpeechState='idle'|'speaking'|'paused'|'checkpoint';
@@ -32,6 +33,10 @@ export default function SmartTeacher(){
   const [questionsOpen,setQuestionsOpen]=useState(false);
   const [finished,setFinished]=useState(false);
   const [board,setBoard]=useState<BoardState>(newBoard('none'));
+  const [followCues,setFollowCues]=useState(true);
+  const [agendaOpen,setAgendaOpen]=useState(false);
+  const [questionQueue,setQuestionQueue]=useState<string[]>([]);
+  const [queueNotice,setQueueNotice]=useState('');
   const [targetMinutes,setTargetMinutes]=useState(40);
   const [discussionSeconds,setDiscussionSeconds]=useState(20);
   const [elapsedSeconds,setElapsedSeconds]=useState(0);
@@ -94,14 +99,16 @@ export default function SmartTeacher(){
     tick();const timer=window.setInterval(tick,1000);return ()=>window.clearInterval(timer);
   },[lesson,finished]);
   const projector=useProjector(publicFrame({lesson,index,finished,questionsOpen,quizIndex,revealed,exchange,blank:projectorBlank,speech,listening,elapsedSeconds,targetMinutes,board}));
+  const planned=useMemo(()=>{try{return prepareLesson(topic,plan);}catch{return null;}},[topic,plan]);
+  const hasPlannedBoard=lesson?.slides.some(s=>s.cue?.board!==undefined)??false;
   const selectedVoice=voices.find(v=>v.voiceURI===voiceId)??voices[0];
   // In hands-free mode, leave a discussion pause after each narrated section.
   // Activity pages always require the classroom supervisor to continue manually.
   useEffect(()=>{
-    if(!autoAdvance||projectorBlank||!lesson||questionsOpen||quizIndex!==null||finished||speech!=='checkpoint'||voiceError||index>=lesson.slides.length-1||/activity|exercise|discussion|practice|assessment/i.test(lesson.slides[index].title))return;
-    const timer=window.setTimeout(()=>move(index+1,true),discussionSeconds*1000);
+    if(!autoAdvance||projectorBlank||questionQueue.length||!lesson||questionsOpen||quizIndex!==null||finished||speech!=='checkpoint'||voiceError||index>=lesson.slides.length-1||needsSupervisor(lesson.slides[index].title,lesson.slides[index].cue))return;
+    const timer=window.setTimeout(()=>move(index+1,true),discussionDelay(discussionSeconds,lesson.slides[index].cue)*1000);
     return ()=>window.clearTimeout(timer);
-  },[autoAdvance,projectorBlank,discussionSeconds,lesson,index,questionsOpen,quizIndex,finished,speech,voiceError]);
+  },[autoAdvance,projectorBlank,questionQueue.length,discussionSeconds,lesson,index,questionsOpen,quizIndex,finished,speech,voiceError,followCues]);
   function cancelListening(){
     if(!voicePending.current)return;
     voiceRun.current++;setVoiceNotice('Stopping microphone…');
@@ -125,6 +132,7 @@ export default function SmartTeacher(){
     active.current=false;utterance.current=null;setSpeech('idle');
   }
   function speak(text:string,checkpoint:boolean){
+    if(voicePending.current){stop();setVoiceError('Wait until the microphone stops, then read the section or response.');return;}
     stop();setVoiceError('');
     if(!selectedVoice||!supported()){
       setVoiceError('No verified local English voice is available. Read the projected text aloud or install an offline Windows voice.');
@@ -236,7 +244,7 @@ export default function SmartTeacher(){
       if(draftReview&&!reviewed)throw new Error('Confirm that you reviewed this lesson before teaching.');
       const next=prepareLesson(topic,plan);
       invalidateModel();stop();setError('');setVoiceError('');setLesson(next);setIndex(0);setExchange(null);
-      setQuestion('');setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setFinished(false);setBoard(newBoard('none'));setProjectorBlank(false);lessonStarted.current=Date.now();setElapsedSeconds(0);
+      setQuestion('');setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setFinished(false);setBoard(followCues?(next.slides[0].cue?.board??newBoard('none')):newBoard('none'));setQuestionQueue([]);setQueueNotice('');setAgendaOpen(false);setProjectorBlank(false);lessonStarted.current=Date.now();setElapsedSeconds(0);
       if(autoAdvance)speak(next.slides[0].title+'. '+next.slides[0].text,true);
     }catch(e){setError(e instanceof Error?e.message:'Unable to prepare this lesson.');}
   }
@@ -249,15 +257,22 @@ export default function SmartTeacher(){
   function move(next:number,read=false){
     if(!lesson||next<0||next>=lesson.slides.length)return;
     invalidateModel();stop();setIndex(next);setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setQuestion('');setExchange(null);setVoiceError('');setFinished(false);
+    if(followCues&&hasPlannedBoard)setBoard(lesson.slides[next].cue?.board??newBoard('none'));
+    setAgendaOpen(false);setQueueNotice('');
     if(read)speak(lesson.slides[next].title+'. '+lesson.slides[next].text,true);
   }
   function ask(){
     if(!lesson||!question.trim()||voicePending.current)return;
-    invalidateModel();stop();const reply=answerQuestion(lesson,question.trim());setExchange({question:question.trim(),reply});setQuestion('');setVoiceNotice('');
+    invalidateModel();stop();const reply=answerQuestion(lesson,question.trim());setQuestionQueue(q=>removeQueuedQuestion(q,question));setQueueNotice('');setExchange({question:question.trim(),reply});setQuestion('');setVoiceNotice('');
     if(autoSpeakReply&&selectedVoice)speak((reply.kind==='excerpt'?'Here is a related excerpt, not a confirmed answer. ':'')+reply.text,false);
   }
+  function deferQuestion(){
+    if(voicePending.current||!question.trim())return;
+    try{setQuestionQueue(queueQuestion(questionQueue,question));setQuestion('');setQueueNotice('Question saved privately for later discussion.');}
+    catch(e){setQueueNotice(e instanceof Error?e.message:'Unable to queue the question.');}
+  }
   function openQuestions(){
-    invalidateModel();stop();setQuizIndex(null);setRevealed(false);setQuestionsOpen(true);setExchange(null);setQuestion('');setVoiceNotice('');
+    invalidateModel();stop();setQuizIndex(null);setRevealed(false);setQuestionsOpen(true);setExchange(null);setQuestion('');setVoiceNotice('');setQueueNotice('');setAgendaOpen(false);
   }
   function openQuiz(){
     if(!lesson?.questions.length)return;
@@ -296,6 +311,8 @@ export default function SmartTeacher(){
           <label className="st-field">Lesson topic<input required maxLength={150} value={topic} disabled={fileBusy||modelBusy} onChange={e=>{setTopic(e.target.value);setReviewed(false);}} placeholder="e.g. Photosynthesis"/></label>
           <label className="st-field">Lesson plan<textarea required rows={14} maxLength={20000} value={plan} disabled={fileBusy||modelBusy} onChange={e=>{setPlan(e.target.value);setReviewed(false);}} placeholder={'# Introduction\nPaste the introduction here.\n# Explanation\nPaste the teaching notes.\n# Class activity\nDescribe the activity.\n# Recap\nSummarise the lesson.\n# Questions and answers\nQ: ...\nA: ...'}/></label>
           <p className="st-hint">{plan.length.toLocaleString()} / 20,000 characters · session-only until exported</p>
+          <details className="st-cue-help"><summary>Lesson-directed whiteboard and pacing</summary><p>Put cues on their own lines immediately after a heading, before the teaching text. Examples: @board circuit 6 3 (volts, ohms), @board pendulum 1 (metres), @board microscope 10, @board germination maize 60 25 7, @board none, @pause, @discuss 30. Cues are never narrated. Review their values and relevance before starting.</p>{planned&&<p>{planned.slides.length} sections · {planned.slides.filter(s=>s.cue?.board).length} board cues · {planned.slides.filter(s=>needsSupervisor(s.title,s.cue)).length} manual hold points.</p>}</details>
+          <label className="st-auto"><input type="checkbox" checked={followCues} onChange={e=>setFollowCues(e.target.checked)}/> Follow reviewed lesson-plan whiteboard cues automatically.</label>
           <button className="button-outline" type="button" disabled={!modelReady||fileBusy||modelBusy||!topic.trim()||!plan.trim()} onClick={()=>void generateDraft()}>Generate AI lesson draft</button>
           {modelBusy&&<button className="button-outline" type="button" onClick={invalidateModel}>Discard pending generation</button>}
           {draftReview&&<label className="st-auto"><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)}/> I have reviewed these notes, answers and limitations for my class.</label>}
@@ -325,21 +342,24 @@ export default function SmartTeacher(){
         <header className="st-classroom-header"><div><span className="st-overline">SCOOLABS SMART TEACHER</span><strong>{lesson.topic}</strong></div>
           <div className="st-actions"><button type="button" disabled={!isTauri()||projector.opening||projector.active} onClick={()=>void projector.open()}>{projector.opening?'Opening display…':'Open TV display'}</button>{projector.active&&<><button type="button" aria-pressed={projectorBlank} onClick={()=>{stop();setProjectorBlank(v=>!v);}}>{projectorBlank?'Resume TV display':'Blank TV display'}</button><button type="button" onClick={projector.close}>Close TV display</button></>}<button type="button" onClick={()=>void fullscreen()}><Maximize size={20}/> Fullscreen</button><button type="button" onClick={exit}><ArrowLeft size={20}/> Exit lesson</button></div></header>
         <div className="st-sessionbar"><span>Lesson time: {elapsedClock(elapsedSeconds)} / {targetMinutes} min{elapsedSeconds>=targetMinutes*60?' · target reached':''}</span><span role="status">{projector.notice||(!isTauri()?'Separate TV display requires the Windows desktop app.':'TV display not open.')} {projector.connected?' · Display connected':''}</span></div>
+        <div className="st-actions st-agenda-bar"><button type="button" aria-expanded={agendaOpen} onClick={()=>{stop();setAgendaOpen(v=>!v);}}>{agendaOpen?'Hide lesson agenda':'Lesson agenda'}</button>{hasPlannedBoard&&<button type="button" aria-pressed={followCues} onClick={()=>{setFollowCues(v=>!v);if(!followCues)setBoard(slide.cue?.board??newBoard('none'));}}>Planned board: {followCues?'on':'off'}</button>}<span>{questionQueue.length} queued question{questionQueue.length===1?'':'s'}</span></div>
+        {agendaOpen&&<section className="st-agenda" aria-label="Lesson agenda"><h3>Lesson agenda · operator only</h3>{lesson.slides.map((item,i)=><button type="button" key={i} aria-current={i===index?'step':undefined} onClick={()=>move(i)}>{i+1}. {item.title}{item.cue?.board?' · board '+item.cue.board.kind:''}{needsSupervisor(item.title,item.cue)?' · manual hold':''}{item.cue?.discussionSeconds?' · '+item.cue.discussionSeconds+'s discussion':''}</button>)}</section>}
         <progress aria-label="Lesson progress" max={lesson.slides.length} value={finished?lesson.slides.length:index+1}/>
         <div className="st-stage" role="region" aria-label="Lesson content" aria-live="polite">
           {finished?<><span className="st-overline">LESSON COMPLETE</span><h2>Well done, class.</h2><p>Review the lesson and discuss any questions with your teacher.</p></>:
             <><span className="st-overline">SECTION {index+1} OF {lesson.slides.length}</span><h2>{slide.title}</h2><div className="st-slide-text">{slide.text}</div></>}
-          {speech==='checkpoint'&&!questionsOpen&&quizIndex===null&&!finished&&<p className="st-checkpoint" role="status">Discussion break. Ask the class a question or invite learners to ask theirs before continuing. {autoAdvance&&!projectorBlank&&!voiceError&&index<lesson.slides.length-1&&!/activity|exercise|discussion|practice|assessment/i.test(slide.title)?'Next section begins automatically after '+discussionSeconds+' seconds.':''}</p>}
+          {speech==='checkpoint'&&!questionsOpen&&quizIndex===null&&!finished&&<p className="st-checkpoint" role="status">Discussion break. Ask the class a question or invite learners to ask theirs before continuing. {questionQueue.length?' Automatic advancement is held until queued questions are addressed.':needsSupervisor(slide.title,slide.cue)?' Supervisor must continue manually.':autoAdvance&&!projectorBlank&&!voiceError&&index<lesson.slides.length-1?'Next section begins automatically after '+discussionDelay(discussionSeconds,slide.cue)+' seconds.':''}</p>}
           {!finished&&!questionsOpen&&quizIndex===null&&<ClassroomBoard board={board} topic={lesson.topic} onChange={setBoard}/>}
           {questionsOpen&&<section className="st-questions" aria-label="Class questions">
             <h3><MessageCircle size={24}/> Ask the Smart Teacher</h3>
             <form onSubmit={e=>{e.preventDefault();ask();}}>
               <label className="st-field">Learner question<input autoFocus value={question} onChange={e=>setQuestion(e.target.value)} maxLength={300} disabled={listening} placeholder="Type a question from the class"/></label>
-              <button type="submit" disabled={!question.trim()||listening}>Ask question</button>
+              <button type="submit" disabled={!question.trim()||listening}>Ask question</button><button type="button" disabled={!question.trim()||listening||questionQueue.length>=QUEUE_LIMIT} onClick={deferQuestion}>Queue for later</button>
             </form>
             <div className="st-actions"><button type="button" disabled={!isTauri()||listening||modelBusy} onClick={()=>void listen()}><Mic size={20}/> Listen to question</button><button type="button" disabled={!listening} onClick={()=>cancelListening()}><MicOff size={20}/> Stop listening</button></div>
             {listening&&<p className="st-checkpoint" role="status">Microphone active or stopping. One short session only.</p>}
             <p className="st-voice-note" role="status">{voiceNotice||(!isTauri()?'Microphone recognition is available in the Windows desktop application only. Type a question here.':'The microphone opens only after Listen to question. Audio is not saved by Scoolabs. Confirm the transcript before submitting.')}</p>
+            <section className="st-queue" aria-label="Private question queue"><h4>Question queue · {questionQueue.length}/{QUEUE_LIMIT}</h4><p>Only submitted questions appear on the separate TV. Do not enter names or personal information.</p>{queueNotice&&<p role="status">{queueNotice}</p>}{questionQueue.length?questionQueue.map(q=><div className="st-queue-item" key={q}><span>{q}</span><button type="button" disabled={listening||!!question.trim()} onClick={()=>{setQuestion(q);setQueueNotice('Question loaded. Review it, then Ask question to present it.');}}>Load question</button><button type="button" onClick={()=>{setQuestionQueue(prev=>removeQueuedQuestion(prev,q));setQueueNotice('Question removed.');}}>Remove</button></div>):<p>No queued questions.</p>}</section>
             {exchange&&<div className="st-answer"><strong>{exchange.question}</strong><p>{exchange.reply.text}</p><small>{exchange.reply.source}{exchange.reply.kind==='excerpt'?' · This excerpt may not directly answer the question.':''}</small>
               <button type="button" disabled={listening} onClick={()=>speak((exchange.reply.kind==='excerpt'?'Here is a related excerpt, not a confirmed answer. ':'')+exchange.reply.text,false)}><Volume2 size={19}/> Read response</button></div>}
             {modelReady&&exchange&&exchange.reply.kind!=='approved'&&exchange.reply.kind!=='reviewed-ai'&&<div className="st-model-review"><button type="button" disabled={modelBusy||listening} onClick={()=>void suggestAnswer()}>Suggest AI answer</button>{modelBusy&&<button type="button" onClick={invalidateModel}>Discard pending suggestion</button>}<p role="status">{modelNotice}</p>{modelSuggestion&&!showModelReview&&<button type="button" onClick={()=>setShowModelReview(true)}>Show suggestion for supervisor (use extended TV or blank mirrored TV)</button>}{modelSuggestion&&showModelReview&&<div className="st-answer"><strong>Unverified AI suggestion — do not teach until checked</strong><p>{modelSuggestion.text}</p><details open><summary>Supplied evidence (verify the answer against it)</summary>{modelSuggestion.sources.map(p=><p key={p.id}>{p.id}: {p.text}</p>)}</details><div className="st-actions"><button type="button" onClick={acceptSuggestion}>Approve and present answer</button><button type="button" onClick={()=>{setModelSuggestion(null);setShowModelReview(false);setModelNotice('Suggestion rejected.');}}>Reject suggestion</button></div></div>}</div>}
@@ -358,7 +378,7 @@ export default function SmartTeacher(){
             <button type="button" disabled={questionsOpen} onClick={openQuestions}><MessageCircle size={20}/> Questions</button>
             <button type="button" disabled={quizIndex!==null||!lesson.questions.length} onClick={openQuiz}>Class check</button>
           </div>
-          <div className="st-actions">{index<lesson.slides.length-1?<><button type="button" onClick={()=>move(index+1)}>Next <ArrowRight size={19}/></button><button type="button" onClick={()=>move(index+1,true)}>Next and read <Volume2 size={19}/></button></>:<button type="button" disabled={finished} onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setFinished(true);}}>Finish lesson</button>}</div>
+          <div className="st-actions">{index<lesson.slides.length-1?<><button type="button" onClick={()=>move(index+1)}>Next <ArrowRight size={19}/></button><button type="button" onClick={()=>move(index+1,true)}>Next and read <Volume2 size={19}/></button></>:<button type="button" disabled={finished||questionQueue.length>0} onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setAgendaOpen(false);setFinished(true);}}>Finish lesson</button>}</div>
         </footer>
       </div>
     </dialog>}
