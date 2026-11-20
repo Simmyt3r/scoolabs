@@ -112,3 +112,16 @@ test('optional generative model is disabled in browser and ordinary classroom re
   await expect(classroom.getByRole('button',{name:'Suggest AI answer'})).toHaveCount(0);
   await expect(classroom.getByText(/Related lesson excerpt:/)).toBeVisible();
 });
+
+test('shared Silabs AI is the default and optional local pack is explicit',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Smart Teacher',exact:true}).click();
+  const provider=page.getByLabel('AI provider');
+  await expect(provider).toHaveValue('silabs');
+  await provider.selectOption('llama');
+  await expect(provider).toHaveValue('llama');
+  await expect(page.getByRole('button',{name:'Check local model'})).toBeDisabled();
+  await provider.selectOption('silabs');
+  await page.getByRole('button',{name:'Load sample lesson'}).click();
+  await expect(page.getByRole('button',{name:'Start classroom'})).toBeEnabled();
+});
