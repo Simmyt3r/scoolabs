@@ -40,6 +40,7 @@ export default function SmartTeacher(){
   const [listening,setListening]=useState(false);
   const [voiceNotice,setVoiceNotice]=useState('');
   const [autoSpeakReply,setAutoSpeakReply]=useState(true);
+  const [modelProvider,setModelProvider]=useState<'silabs'|'llama'>('silabs');
   const [modelReady,setModelReady]=useState(false);
   const [modelChecking,setModelChecking]=useState(false);
   const [modelBusy,setModelBusy]=useState(false);
@@ -177,7 +178,7 @@ export default function SmartTeacher(){
     if(!isTauri()||modelChecking||modelPending.current)return;
     const id=++modelCheckRun.current;setModelChecking(true);setModelReady(false);setModelNotice('Checking local model service…');
     try{
-      const result=await invoke<{available:boolean;message:string}>('local_teacher_status');
+      const result=await invoke<{available:boolean;message:string}>('local_teacher_status',{provider:modelProvider});
       if(mounted.current&&modelCheckRun.current===id){setModelReady(result.available);setModelNotice(result.message);}
     }catch{if(mounted.current&&modelCheckRun.current===id)setModelNotice('Local model connection failed. Prepared lessons still work.');}
     finally{if(mounted.current&&modelCheckRun.current===id)setModelChecking(false);}
@@ -188,7 +189,7 @@ export default function SmartTeacher(){
     try{request=draftRequest(topic,plan,referenceId);}catch(e){setError(e instanceof Error?e.message:'Enter valid lesson details.');return;}
     const id=++modelRun.current;modelPending.current=true;setModelBusy(true);setModelNotice('Preparing a local AI draft. This may take several minutes.');setError('');
     try{
-      const result=await invoke<ModelResult>('local_teacher_generate',{request});
+      const result=await invoke<ModelResult>('local_teacher_generate',{request,provider:modelProvider});
       if(!mounted.current||modelRun.current!==id)return;
       useFile(parseModelDraft(request.topic,result),'AI-generated draft. Check every claim, example and answer before classroom use.');setModelNotice('Draft prepared for supervisor review.');
     }catch(e){if(mounted.current&&modelRun.current===id)setModelNotice(typeof e==='string'?e:e instanceof Error?e.message:'Generation failed. Your original notes remain unchanged.');}
@@ -200,7 +201,7 @@ export default function SmartTeacher(){
     if(!request){setModelNotice('No relevant approved lesson passage was found. Ask the supervising teacher.');return;}
     stop();const id=++modelRun.current;modelPending.current=true;setModelBusy(true);setModelSuggestion(null);setShowModelReview(false);setModelNotice('Preparing a possible answer from this lesson…');
     try{
-      const result=await invoke<ModelResult>('local_teacher_generate',{request});
+      const result=await invoke<ModelResult>('local_teacher_generate',{request,provider:modelProvider});
       if(!mounted.current||modelRun.current!==id)return;
       const suggestion=validateSuggestion(request,result);
       setModelSuggestion(suggestion);setModelNotice(suggestion?'A suggestion is ready for supervisor review. Blank the TV before revealing it.':'The model abstained. Ask the supervising teacher.');
@@ -274,7 +275,7 @@ export default function SmartTeacher(){
           <button type="button" className="button-outline" disabled={!referenceId||fileBusy||modelBusy} onClick={createDraft}>Prepare reference draft</button>
           <label className="st-field">Import lesson file<input type="file" accept=".json,.txt,.md" disabled={fileBusy||modelBusy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void openFile(file);}}/></label>
           {fileStatus&&<p role="status">{fileStatus}</p>}
-          <div className="st-model-card"><h3>Optional local generative teacher</h3><p>Requires a separately installed, school-approved llama-server model. No model is downloaded by Scoolabs. Prepared lessons work without it. Use the topic and teaching outline below to request a draft; verify the draft before teaching.</p><button type="button" className="button-outline" disabled={!isTauri()||modelChecking||modelBusy} onClick={()=>void checkModel()}>{modelChecking?'Checking…':modelReady?'Recheck local model':'Check local model'}</button>{modelReady&&<button className="button-outline" type="button" onClick={()=>{invalidateModel();setModelReady(false);}}>Disconnect model</button>}<p role="status">{modelNotice||(!isTauri()?'Generative model connection is available in the installed desktop application only.':'Local model is not connected.')}</p></div>
+          <div className="st-model-card"><h3>Local generative teacher</h3><p>Reuse the Silabs AI shared Qwen3-1.7B service, or deliberately select the optional Qwen 4B model pack. Both are local services; no model is downloaded by Scoolabs. Review generated teaching content before presenting.</p><label className="st-field">AI provider<select value={modelProvider} disabled={modelBusy||modelChecking} onChange={e=>{invalidateModel();setModelReady(false);setModelProvider(e.target.value==='llama'?'llama':'silabs');}}><option value="silabs">Silabs AI · Qwen3-1.7B (shared)</option><option value="llama">Optional Qwen 4B pack · llama.cpp</option></select></label><button type="button" className="button-outline" disabled={!isTauri()||modelChecking||modelBusy} onClick={()=>void checkModel()}>{modelChecking?'Checking…':modelReady?'Recheck local model':'Check local model'}</button>{modelReady&&<button className="button-outline" type="button" onClick={()=>{invalidateModel();setModelReady(false);}}>Disconnect model</button>}<p role="status">{modelNotice||(!isTauri()?'Generative model connection is available in the installed desktop application only.':'Selected local model is not connected.')}</p></div>
         </div>
         <form onSubmit={e=>{e.preventDefault();startLesson();}}>
           <label className="st-field">Lesson topic<input required maxLength={150} value={topic} disabled={fileBusy||modelBusy} onChange={e=>{setTopic(e.target.value);setReviewed(false);}} placeholder="e.g. Photosynthesis"/></label>
