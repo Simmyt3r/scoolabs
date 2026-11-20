@@ -98,3 +98,17 @@ test('browser preview falls back to typing and never starts a microphone session
   await classroom.getByRole('button',{name:'Ask question'}).click();
   await expect(classroom.getByText('Voltage equals current multiplied by resistance: V = I × R.',{exact:true})).toBeVisible();
 });
+test('optional generative model is disabled in browser and ordinary classroom remains functional',async({page})=>{
+  await page.goto('/');
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Smart Teacher',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Check local model'})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'Generate AI lesson draft'})).toBeDisabled();
+  await page.getByRole('button',{name:'Load sample lesson'}).click();
+  await page.getByRole('button',{name:'Start classroom'}).click();
+  const classroom=page.getByRole('dialog',{name:'Classroom presentation'});
+  await classroom.getByRole('button',{name:'Questions',exact:true}).click();
+  await classroom.getByLabel('Learner question').fill('Explain voltage and resistance');
+  await classroom.getByRole('button',{name:'Ask question'}).click();
+  await expect(classroom.getByRole('button',{name:'Suggest AI answer'})).toHaveCount(0);
+  await expect(classroom.getByText(/Related lesson excerpt:/)).toBeVisible();
+});

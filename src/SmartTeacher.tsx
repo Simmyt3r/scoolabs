@@ -3,6 +3,7 @@ import {invoke,isTauri} from '@tauri-apps/api/core';
 import {ArrowLeft,ArrowRight,BookOpen,GraduationCap,Maximize,MessageCircle,Mic,MicOff,Pause,Play,Square,Volume2} from 'lucide-react';
 import {answerQuestion,DEMO_PLAN,DEMO_TOPIC,prepareLesson,type Lesson,type Reply} from './lessonEngine';
 import {importTextLesson,lessonReferences,LESSON_FILE_MAX,makeLessonFile,parseLessonFile,referenceDraft,type LessonFile} from './lessonLibrary';
+import {answerRequest,draftRequest,parseModelDraft,validateSuggestion,type ModelResult,type ModelSuggestion} from './localTeacherModel';
 import './smart-teacher.css';
 
 type SpeechState='idle'|'speaking'|'paused'|'checkpoint';
@@ -39,6 +40,15 @@ export default function SmartTeacher(){
   const [listening,setListening]=useState(false);
   const [voiceNotice,setVoiceNotice]=useState('');
   const [autoSpeakReply,setAutoSpeakReply]=useState(true);
+  const [modelReady,setModelReady]=useState(false);
+  const [modelChecking,setModelChecking]=useState(false);
+  const [modelBusy,setModelBusy]=useState(false);
+  const [modelNotice,setModelNotice]=useState('');
+  const [modelSuggestion,setModelSuggestion]=useState<ModelSuggestion|null>(null);
+  const [showModelReview,setShowModelReview]=useState(false);
+  const modelRun=useRef(0);
+  const modelPending=useRef(false);
+  const modelCheckRun=useRef(0);
   const voiceRun=useRef(0);
   const voicePending=useRef(false);
   const voiceRequest=useRef<string|null>(null);
@@ -51,7 +61,7 @@ export default function SmartTeacher(){
 
   useEffect(()=>{
     mounted.current=true;
-    return ()=>{mounted.current=false;voiceRun.current++;if(voiceRequest.current)void invoke('cancel_class_question',{requestId:voiceRequest.current}).catch(()=>undefined);};
+    return ()=>{mounted.current=false;voiceRun.current++;modelRun.current++;modelCheckRun.current++;if(voiceRequest.current)void invoke('cancel_class_question',{requestId:voiceRequest.current}).catch(()=>undefined);};
   },[]);
   useEffect(()=>{
     if(!supported())return;
@@ -160,38 +170,82 @@ export default function SmartTeacher(){
     }catch(e){setError(e instanceof Error?e.message:'Unable to export lesson.');}
     finally{if(url){const release=url;window.setTimeout(()=>URL.revokeObjectURL(release),1000);}}
   }
+  function invalidateModel(){
+    modelRun.current++;modelPending.current=false;setModelBusy(false);setModelSuggestion(null);setShowModelReview(false);setModelNotice('');
+  }
+  async function checkModel(){
+    if(!isTauri()||modelChecking||modelPending.current)return;
+    const id=++modelCheckRun.current;setModelChecking(true);setModelReady(false);setModelNotice('Checking local model service…');
+    try{
+      const result=await invoke<{available:boolean;message:string}>('local_teacher_status');
+      if(mounted.current&&modelCheckRun.current===id){setModelReady(result.available);setModelNotice(result.message);}
+    }catch{if(mounted.current&&modelCheckRun.current===id)setModelNotice('Local model connection failed. Prepared lessons still work.');}
+    finally{if(mounted.current&&modelCheckRun.current===id)setModelChecking(false);}
+  }
+  async function generateDraft(){
+    if(!isTauri()||!modelReady||modelPending.current||fileBusy)return;
+    let request;
+    try{request=draftRequest(topic,plan,referenceId);}catch(e){setError(e instanceof Error?e.message:'Enter valid lesson details.');return;}
+    const id=++modelRun.current;modelPending.current=true;setModelBusy(true);setModelNotice('Preparing a local AI draft. This may take several minutes.');setError('');
+    try{
+      const result=await invoke<ModelResult>('local_teacher_generate',{request});
+      if(!mounted.current||modelRun.current!==id)return;
+      useFile(parseModelDraft(request.topic,result),'AI-generated draft. Check every claim, example and answer before classroom use.');setModelNotice('Draft prepared for supervisor review.');
+    }catch(e){if(mounted.current&&modelRun.current===id)setModelNotice(typeof e==='string'?e:e instanceof Error?e.message:'Generation failed. Your original notes remain unchanged.');}
+    finally{if(mounted.current&&modelRun.current===id){modelPending.current=false;setModelBusy(false);}}
+  }
+  async function suggestAnswer(){
+    if(!lesson||!exchange||!modelReady||modelPending.current||voicePending.current||exchange.reply.kind==='approved')return;
+    const request=answerRequest(lesson,exchange.question);
+    if(!request){setModelNotice('No relevant approved lesson passage was found. Ask the supervising teacher.');return;}
+    stop();const id=++modelRun.current;modelPending.current=true;setModelBusy(true);setModelSuggestion(null);setShowModelReview(false);setModelNotice('Preparing a possible answer from this lesson…');
+    try{
+      const result=await invoke<ModelResult>('local_teacher_generate',{request});
+      if(!mounted.current||modelRun.current!==id)return;
+      const suggestion=validateSuggestion(request,result);
+      setModelSuggestion(suggestion);setModelNotice(suggestion?'A suggestion is ready for supervisor review. Blank the TV before revealing it.':'The model abstained. Ask the supervising teacher.');
+    }catch(e){if(mounted.current&&modelRun.current===id)setModelNotice(typeof e==='string'?e:e instanceof Error?e.message:'Model unavailable. The original response is still available.');}
+    finally{if(mounted.current&&modelRun.current===id){modelPending.current=false;setModelBusy(false);}}
+  }
+  function acceptSuggestion(){
+    if(!modelSuggestion||!exchange||!showModelReview)return;
+    const text=modelSuggestion.text;
+    setExchange({question:exchange.question,reply:{kind:'reviewed-ai',text,source:'Supervisor-reviewed AI suggestion · '+modelSuggestion.sources.map(p=>p.id).join(', ')}});
+    setModelSuggestion(null);setShowModelReview(false);setModelNotice('Suggestion accepted by the supervisor.');
+    if(autoSpeakReply&&selectedVoice)speak(text,false);
+  }
   function startLesson(){
     try{
-      if(fileBusy)throw new Error('Finish importing the lesson first.');
+      if(fileBusy||modelPending.current)throw new Error('Finish preparing the lesson first.');
       if(draftReview&&!reviewed)throw new Error('Confirm that you reviewed this lesson before teaching.');
       const next=prepareLesson(topic,plan);
-      stop();setError('');setVoiceError('');setLesson(next);setIndex(0);setExchange(null);
+      invalidateModel();stop();setError('');setVoiceError('');setLesson(next);setIndex(0);setExchange(null);
       setQuestion('');setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setFinished(false);
       if(autoAdvance)speak(next.slides[0].title+'. '+next.slides[0].text,true);
     }catch(e){setError(e instanceof Error?e.message:'Unable to prepare this lesson.');}
   }
   function exit(){
-    stop();
+    invalidateModel();stop();
     if(document.fullscreenElement===dialog.current)void document.exitFullscreen().catch(()=>undefined);
     dialog.current?.close();setLesson(null);
     requestAnimationFrame(()=>launch.current?.focus());
   }
   function move(next:number,read=false){
     if(!lesson||next<0||next>=lesson.slides.length)return;
-    stop();setIndex(next);setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setQuestion('');setExchange(null);setVoiceError('');setFinished(false);
+    invalidateModel();stop();setIndex(next);setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setQuestion('');setExchange(null);setVoiceError('');setFinished(false);
     if(read)speak(lesson.slides[next].title+'. '+lesson.slides[next].text,true);
   }
   function ask(){
     if(!lesson||!question.trim()||voicePending.current)return;
-    stop();const reply=answerQuestion(lesson,question.trim());setExchange({question:question.trim(),reply});setQuestion('');setVoiceNotice('');
+    invalidateModel();stop();const reply=answerQuestion(lesson,question.trim());setExchange({question:question.trim(),reply});setQuestion('');setVoiceNotice('');
     if(autoSpeakReply&&selectedVoice)speak((reply.kind==='excerpt'?'Here is a related excerpt, not a confirmed answer. ':'')+reply.text,false);
   }
   function openQuestions(){
-    stop();setQuizIndex(null);setRevealed(false);setQuestionsOpen(true);setExchange(null);setQuestion('');setVoiceNotice('');
+    invalidateModel();stop();setQuizIndex(null);setRevealed(false);setQuestionsOpen(true);setExchange(null);setQuestion('');setVoiceNotice('');
   }
   function openQuiz(){
     if(!lesson?.questions.length)return;
-    stop();setQuestionsOpen(false);setQuizIndex(0);setRevealed(false);
+    invalidateModel();stop();setQuestionsOpen(false);setQuizIndex(0);setRevealed(false);
   }
   function closeQuiz(){stop();setQuizIndex(null);setRevealed(false);}
   async function fullscreen(){
@@ -217,14 +271,17 @@ export default function SmartTeacher(){
           <p>Choose a bundled science reference to assemble an editable lesson draft with its original facts and limitations.</p>
           <label className="st-field">Reference subject<select value={referenceSubject} onChange={e=>{setReferenceSubject(e.target.value);setReferenceId('');}}><option value="physics">Physics</option><option value="chemistry">Chemistry</option><option value="biology">Biology</option><option value="agriculture">Agricultural Science</option></select></label>
           <label className="st-field">Reference topic<select value={referenceId} onChange={e=>setReferenceId(e.target.value)}><option value="">Choose a topic</option>{lessonReferences.filter(ref=>ref.subject===referenceSubject).map(ref=><option key={ref.id} value={ref.id}>{ref.title}</option>)}</select></label>
-          <button type="button" className="button-outline" disabled={!referenceId||fileBusy} onClick={createDraft}>Prepare reference draft</button>
-          <label className="st-field">Import lesson file<input type="file" accept=".json,.txt,.md" disabled={fileBusy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void openFile(file);}}/></label>
+          <button type="button" className="button-outline" disabled={!referenceId||fileBusy||modelBusy} onClick={createDraft}>Prepare reference draft</button>
+          <label className="st-field">Import lesson file<input type="file" accept=".json,.txt,.md" disabled={fileBusy||modelBusy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void openFile(file);}}/></label>
           {fileStatus&&<p role="status">{fileStatus}</p>}
+          <div className="st-model-card"><h3>Optional local generative teacher</h3><p>Requires a separately installed, school-approved llama-server model. No model is downloaded by Scoolabs. Prepared lessons work without it. Use the topic and teaching outline below to request a draft; verify the draft before teaching.</p><button type="button" className="button-outline" disabled={!isTauri()||modelChecking||modelBusy} onClick={()=>void checkModel()}>{modelChecking?'Checking…':modelReady?'Recheck local model':'Check local model'}</button>{modelReady&&<button className="button-outline" type="button" onClick={()=>{invalidateModel();setModelReady(false);}}>Disconnect model</button>}<p role="status">{modelNotice||(!isTauri()?'Generative model connection is available in the installed desktop application only.':'Local model is not connected.')}</p></div>
         </div>
         <form onSubmit={e=>{e.preventDefault();startLesson();}}>
-          <label className="st-field">Lesson topic<input required maxLength={150} value={topic} disabled={fileBusy} onChange={e=>{setTopic(e.target.value);setReviewed(false);}} placeholder="e.g. Photosynthesis"/></label>
-          <label className="st-field">Lesson plan<textarea required rows={14} maxLength={20000} value={plan} disabled={fileBusy} onChange={e=>{setPlan(e.target.value);setReviewed(false);}} placeholder={'# Introduction\nPaste the introduction here.\n# Explanation\nPaste the teaching notes.\n# Class activity\nDescribe the activity.\n# Recap\nSummarise the lesson.\n# Questions and answers\nQ: ...\nA: ...'}/></label>
+          <label className="st-field">Lesson topic<input required maxLength={150} value={topic} disabled={fileBusy||modelBusy} onChange={e=>{setTopic(e.target.value);setReviewed(false);}} placeholder="e.g. Photosynthesis"/></label>
+          <label className="st-field">Lesson plan<textarea required rows={14} maxLength={20000} value={plan} disabled={fileBusy||modelBusy} onChange={e=>{setPlan(e.target.value);setReviewed(false);}} placeholder={'# Introduction\nPaste the introduction here.\n# Explanation\nPaste the teaching notes.\n# Class activity\nDescribe the activity.\n# Recap\nSummarise the lesson.\n# Questions and answers\nQ: ...\nA: ...'}/></label>
           <p className="st-hint">{plan.length.toLocaleString()} / 20,000 characters · session-only until exported</p>
+          <button className="button-outline" type="button" disabled={!modelReady||fileBusy||modelBusy||!topic.trim()||!plan.trim()} onClick={()=>void generateDraft()}>Generate AI lesson draft</button>
+          {modelBusy&&<button className="button-outline" type="button" onClick={invalidateModel}>Discard pending generation</button>}
           {draftReview&&<label className="st-auto"><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)}/> I have reviewed these notes, answers and limitations for my class.</label>}
           <label className="st-field">Offline narration voice<select value={selectedVoice?.voiceURI??''} onChange={e=>setVoiceId(e.target.value)} disabled={!voices.length}>
             {!voices.length&&<option value="">No local English voice detected</option>}
@@ -234,14 +291,14 @@ export default function SmartTeacher(){
           <label className="st-auto"><input type="checkbox" checked={autoSpeakReply} onChange={e=>setAutoSpeakReply(e.target.checked)}/> Read classroom answers aloud automatically when a local voice is available.</label>
           <label className="st-auto"><input type="checkbox" checked={autoAdvance} onChange={e=>setAutoAdvance(e.target.checked)}/> Hands-free narration: advance after 20 seconds of discussion; activity sections wait for the supervisor.</label>
           {error&&<p role="alert" className="st-error">{error}</p>}
-          <div className="st-actions"><button ref={launch} className="button-primary" type="submit" disabled={fileBusy||(draftReview&&!reviewed)}>Start classroom <ArrowRight size={18}/></button>
-            <button className="button-outline" type="button" disabled={fileBusy} onClick={()=>{setTopic(DEMO_TOPIC);setPlan(DEMO_PLAN);setError('');setFileStatus('');setDraftReview(false);setReviewed(false);}}>Load sample lesson</button>
-            <button className="button-outline" type="button" disabled={fileBusy||!topic.trim()||!plan.trim()||(draftReview&&!reviewed)} onClick={exportFile}>Export lesson file</button></div>
+          <div className="st-actions"><button ref={launch} className="button-primary" type="submit" disabled={fileBusy||modelBusy||(draftReview&&!reviewed)}>Start classroom <ArrowRight size={18}/></button>
+            <button className="button-outline" type="button" disabled={fileBusy||modelBusy} onClick={()=>{setTopic(DEMO_TOPIC);setPlan(DEMO_PLAN);setError('');setFileStatus('');setDraftReview(false);setReviewed(false);}}>Load sample lesson</button>
+            <button className="button-outline" type="button" disabled={fileBusy||modelBusy||!topic.trim()||!plan.trim()||(draftReview&&!reviewed)} onClick={exportFile}>Export lesson file</button></div>
         </form>
       </div>
       <aside className="st-panel"><h2><BookOpen size={20}/> How it teaches</h2>
         <ol><li>Present a large, readable section of the lesson.</li><li>Read it aloud using an installed local English voice, when available.</li><li>Pause for discussion and classroom activities after every section.</li><li>Type learner questions. Approved answers are repeated verbatim; related notes are labelled as excerpts.</li><li>Advance to the next section and recap.</li></ol>
-        <p><Mic size={17}/> Windows desktop users can explicitly start one short offline microphone session using an installed English recognizer. Confirm the transcript before asking. Browser preview and unavailable microphones retain typed questions. Generative explanations are not yet included.</p>
+        <p><Mic size={17}/> Windows desktop users can explicitly start one short offline microphone session using an installed English recognizer. Confirm the transcript before asking. Browser preview and unavailable microphones retain typed questions. An optional local language model can propose lesson drafts and answers, but a supervisor must review them before use.</p>
         <p>Keep a responsible adult present, verify the lesson content before teaching, and do not enter student personal information. Project the application onto a connected TV or projector using Windows display settings.</p>
       </aside>
     </div>
@@ -260,12 +317,13 @@ export default function SmartTeacher(){
               <label className="st-field">Learner question<input autoFocus value={question} onChange={e=>setQuestion(e.target.value)} maxLength={300} disabled={listening} placeholder="Type a question from the class"/></label>
               <button type="submit" disabled={!question.trim()||listening}>Ask question</button>
             </form>
-            <div className="st-actions"><button type="button" disabled={!isTauri()||listening} onClick={()=>void listen()}><Mic size={20}/> Listen to question</button><button type="button" disabled={!listening} onClick={()=>cancelListening()}><MicOff size={20}/> Stop listening</button></div>
+            <div className="st-actions"><button type="button" disabled={!isTauri()||listening||modelBusy} onClick={()=>void listen()}><Mic size={20}/> Listen to question</button><button type="button" disabled={!listening} onClick={()=>cancelListening()}><MicOff size={20}/> Stop listening</button></div>
             {listening&&<p className="st-checkpoint" role="status">Microphone active or stopping. One short session only.</p>}
             <p className="st-voice-note" role="status">{voiceNotice||(!isTauri()?'Microphone recognition is available in the Windows desktop application only. Type a question here.':'The microphone opens only after Listen to question. Audio is not saved by Scoolabs. Confirm the transcript before submitting.')}</p>
             {exchange&&<div className="st-answer"><strong>{exchange.question}</strong><p>{exchange.reply.text}</p><small>{exchange.reply.source}{exchange.reply.kind==='excerpt'?' · This excerpt may not directly answer the question.':''}</small>
               <button type="button" disabled={listening} onClick={()=>speak((exchange.reply.kind==='excerpt'?'Here is a related excerpt, not a confirmed answer. ':'')+exchange.reply.text,false)}><Volume2 size={19}/> Read response</button></div>}
-            <button type="button" onClick={()=>{stop();setQuestionsOpen(false);}}>Return to lesson</button>
+            {modelReady&&exchange&&exchange.reply.kind!=='approved'&&exchange.reply.kind!=='reviewed-ai'&&<div className="st-model-review"><button type="button" disabled={modelBusy||listening} onClick={()=>void suggestAnswer()}>Suggest AI answer</button>{modelBusy&&<button type="button" onClick={invalidateModel}>Discard pending suggestion</button>}<p role="status">{modelNotice}</p>{modelSuggestion&&!showModelReview&&<button type="button" onClick={()=>setShowModelReview(true)}>Show suggestion for supervisor (blank TV first)</button>}{modelSuggestion&&showModelReview&&<div className="st-answer"><strong>Unverified AI suggestion — do not teach until checked</strong><p>{modelSuggestion.text}</p><details open><summary>Supplied evidence (verify the answer against it)</summary>{modelSuggestion.sources.map(p=><p key={p.id}>{p.id}: {p.text}</p>)}</details><div className="st-actions"><button type="button" onClick={acceptSuggestion}>Approve and present answer</button><button type="button" onClick={()=>{setModelSuggestion(null);setShowModelReview(false);setModelNotice('Suggestion rejected.');}}>Reject suggestion</button></div></div>}</div>}
+            <button type="button" onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);}}>Return to lesson</button>
           </section>}
           {quiz&&quizIndex!==null&&<section className="st-questions" aria-label="Class assessment"><h3>Class check · {quizIndex+1} / {lesson.questions.length}</h3><p className="st-quiz-question">{quiz.question}</p><button type="button" onClick={()=>speak(quiz.question,false)}><Volume2 size={19}/> Read question</button><p>Discuss your answer before the supervisor reveals it.</p>{revealed?<div className="st-answer"><strong>Approved answer</strong><p>{quiz.answer}</p><button type="button" onClick={()=>speak(quiz.answer,false)}><Volume2 size={19}/> Read answer</button></div>:<button type="button" onClick={()=>{stop();setRevealed(true);}}>Reveal answer</button>}<div className="st-actions"><button type="button" disabled={quizIndex===0} onClick={()=>{stop();setQuizIndex(quizIndex-1);setRevealed(false);}}>Previous question</button>{quizIndex<lesson.questions.length-1&&<button type="button" disabled={!revealed} onClick={()=>{stop();setQuizIndex(quizIndex+1);setRevealed(false);}}>Next question</button>}<button type="button" onClick={closeQuiz}>Return to lesson</button></div></section>}
           {voiceError&&<p role="alert" className="st-checkpoint">{voiceError}</p>}
@@ -280,7 +338,7 @@ export default function SmartTeacher(){
             <button type="button" disabled={questionsOpen} onClick={openQuestions}><MessageCircle size={20}/> Questions</button>
             <button type="button" disabled={quizIndex!==null||!lesson.questions.length} onClick={openQuiz}>Class check</button>
           </div>
-          <div className="st-actions">{index<lesson.slides.length-1?<><button type="button" onClick={()=>move(index+1)}>Next <ArrowRight size={19}/></button><button type="button" onClick={()=>move(index+1,true)}>Next and read <Volume2 size={19}/></button></>:<button type="button" disabled={finished} onClick={()=>{stop();setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setFinished(true);}}>Finish lesson</button>}</div>
+          <div className="st-actions">{index<lesson.slides.length-1?<><button type="button" onClick={()=>move(index+1)}>Next <ArrowRight size={19}/></button><button type="button" onClick={()=>move(index+1,true)}>Next and read <Volume2 size={19}/></button></>:<button type="button" disabled={finished} onClick={()=>{invalidateModel();stop();setQuestionsOpen(false);setQuizIndex(null);setRevealed(false);setFinished(true);}}>Finish lesson</button>}</div>
         </footer>
       </div>
     </dialog>}
