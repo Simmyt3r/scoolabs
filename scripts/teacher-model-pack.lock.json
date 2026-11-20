@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "pack": "scoolabs-teacher-qwen3-4b-cpu-x64-pilot",
+  "model": {
+    "name": "model.gguf",
+    "url": "https://huggingface.co/bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF/resolve/d3037fec123e6fcf1b894f42ff01bd83d4622955/Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf",
+    "revision": "d3037fec123e6fcf1b894f42ff01bd83d4622955",
+    "sha256": "2fde00ce69dd4899c70d020845e2638353015bba0fdf161b3eb965f2bca4464e",
+    "bytes": 2497280736,
+    "license": "Apache-2.0",
+    "license_url": "https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507/resolve/cdbee75/LICENSE",
+    "source": "https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507"
+  },
+  "runtime": {
+    "name": "runtime.zip",
+    "url": "https://github.com/ggml-org/llama.cpp/releases/download/b10883/llama-b10883-bin-win-cpu-x64.zip",
+    "revision": "b10883",
+    "sha256": "05865586d8cc235e7ed1e975e0df4c6d02ba81cab637845aed888ad5fe4ba061",
+    "max_bytes": 536870912,
+    "license": "MIT",
+    "license_url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/91f6a6cf361385700bbe15981f0f39909df77498/LICENSE",
+    "attestation": "https://github.com/ggml-org/llama.cpp/attestations/46324023"
+  }
+}
