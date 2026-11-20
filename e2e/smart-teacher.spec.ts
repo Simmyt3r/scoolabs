@@ -80,3 +80,21 @@ test('import and export a reusable local lesson',async({page})=>{
   const download=await downloadPromise;
   expect(download.suggestedFilename()).toBe('scoolabs-light.lesson.json');
 });
+
+test('browser preview falls back to typing and never starts a microphone session',async({page})=>{
+  await page.addInitScript(()=>{
+    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:()=>{throw new Error('Unexpected microphone capture');}}});
+  });
+  await page.goto('/');
+  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('button',{name:'Smart Teacher',exact:true}).click();
+  await page.getByRole('button',{name:'Load sample lesson'}).click();
+  await page.getByRole('button',{name:'Start classroom'}).click();
+  const classroom=page.getByRole('dialog',{name:'Classroom presentation'});
+  await classroom.getByRole('button',{name:'Questions',exact:true}).click();
+  await expect(classroom.getByRole('button',{name:'Listen to question'})).toBeDisabled();
+  await expect(classroom.getByRole('button',{name:'Stop listening'})).toBeDisabled();
+  await expect(classroom.getByText(/Microphone recognition is available in the Windows desktop application only/)).toBeVisible();
+  await classroom.getByLabel('Learner question').fill("What is the formula for Ohm's law?");
+  await classroom.getByRole('button',{name:'Ask question'}).click();
+  await expect(classroom.getByText('Voltage equals current multiplied by resistance: V = I × R.',{exact:true})).toBeVisible();
+});
